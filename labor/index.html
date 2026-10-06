@@ -64,7 +64,11 @@ footer p{margin:.2rem 0}
 footer a{font-weight:800}
 @media (max-width:720px){.hero{grid-template-columns:1fr;text-align:center}.tagline{margin-left:auto;margin-right:auto}.flask{max-width:180px;order:-1}}
 @media (max-width:640px){.steps{grid-template-columns:1fr}}
-@media (prefers-reduced-motion:reduce){.bubble,.puff{animation:none}}
+.peek{position:fixed;right:0;top:42%;z-index:10;width:170px;height:150px;overflow:hidden;pointer-events:none}
+.peek svg{display:block;width:120px;height:130px;margin-left:auto;transform:translateX(110%);transform-origin:100% 100%;animation:peek 9s ease-in-out infinite}
+@keyframes peek{0%,78%{transform:translateX(110%) rotate(14deg)}83%{transform:translateX(6%) rotate(-6deg)}88%{transform:translateX(6%) rotate(-1deg)}93%{transform:translateX(6%) rotate(-6deg)}98%,100%{transform:translateX(110%) rotate(14deg)}}
+@media (max-width:640px){.peek{width:120px;height:106px}.peek svg{width:84px;height:91px}}
+@media (prefers-reduced-motion:reduce){.bubble,.puff{animation:none}.peek{display:none}}
 </style>
 </head>
 <body>
@@ -116,5 +120,16 @@ footer a{font-weight:800}
 <p><strong>Suvemäe labor</strong> · <a href="https://xn--suveme-fua.ee/">suvemäe.ee</a> · <a href="https://tkg.xn--suveme-fua.ee/">Kooli koduleht</a></p>
 <p>Leht on alles valmimas.</p>
 </footer>
+<div class="peek" aria-hidden="true"><svg viewBox="0 0 120 130">
+<path d="M22 18q2 8 10 10q-8 2-10 10q-2-8-10-10q8-2 10-10z" fill="#ffc933"/>
+<g fill="#e6defd" stroke="#2b2340" stroke-width="4"><circle cx="50" cy="46" r="15"/><circle cx="64" cy="28" r="16"/><circle cx="86" cy="22" r="16"/><circle cx="106" cy="32" r="14"/><circle cx="44" cy="68" r="12"/></g>
+<circle cx="78" cy="72" r="34" fill="#ffd9b8" stroke="#2b2340" stroke-width="4"/>
+<path d="M44 68H112" stroke="#2b2340" stroke-width="5"/>
+<g fill="#d4ecff" stroke="#2b2340" stroke-width="4"><circle cx="64" cy="68" r="12"/><circle cx="92" cy="68" r="12"/></g>
+<circle cx="59" cy="70" r="4.5" fill="#2b2340"/><circle cx="87" cy="70" r="4.5" fill="#2b2340"/>
+<path d="M52 50Q62 44 70 50M84 50Q94 44 102 50" fill="none" stroke="#2b2340" stroke-width="4" stroke-linecap="round"/>
+<circle cx="100" cy="88" r="5" fill="#ffb3c6"/>
+<path d="M64 88Q76 100 90 88Z" fill="#fff" stroke="#2b2340" stroke-width="3.5" stroke-linejoin="round"/>
+</svg></div>
 </body>
 </html>

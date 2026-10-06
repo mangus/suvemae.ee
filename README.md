@@ -1,6 +1,6 @@
 # suvemae.ee
 
-Source for [suvemäe.ee](https://suvemäe.ee/), the landing page of Suvemäe, the democratic school division of Tallinna Kunstigümnaasium, and the **Suvemäe labor**, where the school's children publish the games, animations and experiments they build together with [mintbot.ai AI agents](https://mintbot.ai/).
+Source for [suvemäe.ee](https://suvemäe.ee/), the landing page of Suvemäe, the democratic school division of Tallinna Kunstigümnaasium, and the **Suvemäe labor**, where the school's children publish the games, animations and experiments they build together with [mintbot AI agents](https://mintbot.ai/).
 
 | Folder | What it is |
 |---|---|

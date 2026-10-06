@@ -20,7 +20,7 @@ old=$(cat "$STATE/deployed" 2>/dev/null || true)
 
 git merge -q --ff-only origin/main
 
-if [ -z "$old" ] || ! git diff --quiet "$old" "$new" -- server; then
+if [ -z "$old" ] || ! git diff --quiet "$old" "$new" -- server deploy/preview.json; then
   (cd server && npm ci --omit=dev --no-audit --no-fund --loglevel=error)
   systemctl restart suvemae-preview
 fi

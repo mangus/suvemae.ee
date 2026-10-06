@@ -15,6 +15,12 @@
 
 const API = new URL('api/', import.meta.url);
 const BASE = new URL('./', import.meta.url).pathname;
+// The agent server's preview proxy passes WebSockets only under /app/ws/, so
+// in a preview the rooms are reached through /app/ws/<group>/api/.
+const WS_API = new URL(API);
+if (WS_API.pathname.startsWith('/app/') && !WS_API.pathname.startsWith('/app/ws/')) {
+  WS_API.pathname = '/app/ws/' + WS_API.pathname.slice('/app/'.length);
+}
 
 function slugFromPage() {
   const slug = location.pathname.startsWith(BASE) ? location.pathname.slice(BASE.length).split('/')[0] : '';
@@ -71,7 +77,7 @@ export function lab(slug = slugFromPage()) {
     },
     // Joins a realtime room: everyone in the same room gets each other's messages.
     join(room = 'main') {
-      return new Room(new URL('ws', base), room);
+      return new Room(new URL(`p/${encodeURIComponent(slug)}/ws`, WS_API), room);
     },
   };
 }

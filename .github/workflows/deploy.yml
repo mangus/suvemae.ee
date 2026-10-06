@@ -1,0 +1,48 @@
+# Publishes main to Opalstack on every push: suvemäe.ee, labor.suvemäe.ee and
+# the lab API. Needs the repository secrets OPALSTACK_SSH_KEY (a private key
+# allowed to log in as suvemaeweb) and OPALSTACK_KNOWN_HOSTS (ssh-keyscan
+# output for the host); without them the run publishes nothing and warns.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# One deploy at a time; a push during a deploy waits, then publishes the newest main.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  SSH_TARGET: suvemaeweb@opal11.opalstack.com
+  WWW_DIR: /home/suvemaeweb/apps/suvemaeweb_avaleht
+  LABOR_DIR: /home/suvemaeweb/apps/suvemaeweb_labor
+  API_DIR: /home/suvemaeweb/apps/suvemaeweb_laborapi/server
+  # Set to "1" once the first deploy looks right: also deletes files removed from the repo.
+  RSYNC_DELETE: "0"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up SSH
+        id: ssh
+        env:
+          KEY: ${{ secrets.OPALSTACK_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.OPALSTACK_KNOWN_HOSTS }}
+        run: |
+          if [ -z "$KEY" ] || [ -z "$KNOWN_HOSTS" ]; then
+            echo "::warning::OPALSTACK_SSH_KEY or OPALSTACK_KNOWN_HOSTS is not set; nothing was published."
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519
+          echo ready=1 >> "$GITHUB_OUTPUT"
+      - name: Publish
+        if: steps.ssh.outputs.ready == '1'
+        run: deploy/opalstack.sh

@@ -79,7 +79,6 @@ const sql = {
   scoresAsc: db.prepare(
     'SELECT id, name, score, created FROM scores WHERE project = ? AND board = ? ORDER BY score ASC, created ASC LIMIT ?',
   ),
-  scoreDelete: db.prepare('DELETE FROM scores WHERE project = ? AND id = ?'),
   scoreCount: db.prepare('SELECT count(*) AS n FROM scores WHERE project = ? AND board = ?'),
   // Keeps the 500 best scores in both directions, so the board works for points and for times.
   scoreTrim: db.prepare(
@@ -105,38 +104,10 @@ function loadConfig() {
     origins: c.origins || [],
     // JSON array of existing project slugs; without it, mount directories are checked.
     projectsFile: c.projectsFile ? path.resolve(__dirname, c.projectsFile) : null,
-    // Teacher's secret for deleting high score entries; without it nobody can delete them.
-    adminToken: process.env.ADMIN_TOKEN || c.adminToken || null,
+    // Extra URL prefixes for WebSockets, mapped onto mount prefixes: the agent
+    // server's proxy passes WebSockets only under /app/ws/.
+    wsAliases: c.wsAliases || {},
   };
-}
-
-function isAdmin(req) {
-  if (!config.adminToken) return false;
-  const given = Buffer.from((req.headers.authorization || '').replace(/^Bearer /, ''));
-  const wanted = Buffer.from(config.adminToken);
-  return given.length === wanted.length && crypto.timingSafeEqual(given, wanted);
-}
-
-// Rude words, one per line in blocked-words.txt, matched inside names after
-// folding case, Estonian letters and look-alike digits.
-const blockedWords = fs
-  .readFileSync(path.join(__dirname, 'blocked-words.txt'), 'utf8')
-  .split('\n')
-  .map((line) => fold(line.replace(/#.*/, '')))
-  .filter(Boolean);
-
-function fold(text) {
-  return text
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[013457@$]/g, (c) => ({ 0: 'o', 1: 'i', 3: 'e', 4: 'a', 5: 's', 7: 't', '@': 'a', $: 's' })[c])
-    .replace(/[^a-z]/g, '');
-}
-
-function isRude(text) {
-  const folded = fold(text);
-  return blockedWords.some((word) => folded.includes(word));
 }
 
 function openDb(file) {
@@ -387,11 +358,6 @@ async function api(req, res, rest, url) {
   }
   if (kind === 'kv') return kv(req, res, project, item);
   if (kind === 'scores' && item === undefined) return scores(req, res, project, url);
-  if (kind === 'scores' && /^\d+$/.test(item) && req.method === 'DELETE') {
-    if (!isAdmin(req)) return send(res, 403, { error: 'Kustutada saab ainult õpetaja' });
-    sql.scoreDelete.run(project, Number(item));
-    return send(res, 200, { ok: true });
-  }
   if (kind === 'ws') return send(res, 426, { error: 'Siia ühendutakse WebSocketiga' });
   return send(res, 404, { error: 'Sellist API aadressi pole' });
 }
@@ -442,7 +408,6 @@ async function scores(req, res, project, url) {
     const name = cleanName(body.name);
     const score = Number(body.score);
     if (!name) return send(res, 400, { error: 'Nimi puudub' });
-    if (isRude(name)) return send(res, 400, { error: 'Seda nime ei saa kasutada, vali mõni teine' });
     if (typeof body.score !== 'number' || !Number.isFinite(score) || Math.abs(score) > 1e12) {
       return send(res, 400, { error: 'Tulemus peab olema number' });
     }
@@ -519,7 +484,14 @@ function onUpgrade(req, socket, head) {
   let hit;
   try {
     url = new URL(req.url, 'http://localhost');
-    hit = route(decodeURIComponent(url.pathname));
+    let pathname = decodeURIComponent(url.pathname);
+    for (const [from, to] of Object.entries(config.wsAliases)) {
+      if (pathname.startsWith(from)) {
+        pathname = to + pathname.slice(from.length);
+        break;
+      }
+    }
+    hit = route(pathname);
   } catch {
     return reject(400, 'Bad Request');
   }

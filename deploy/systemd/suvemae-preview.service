@@ -6,8 +6,6 @@ After=network.target
 
 [Service]
 Environment=LABOR_CONFIG=/srv/suvemae/main/deploy/preview.json
-# ADMIN_TOKEN=… (the teacher's delete secret), kept out of the repository.
-EnvironmentFile=-/etc/suvemae/preview.env
 ExecStart=/usr/bin/node /srv/suvemae/main/server/server.js
 Restart=always
 RestartSec=2

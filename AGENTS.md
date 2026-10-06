@@ -14,9 +14,9 @@ Suvemäe is the democratic school division of Tallinna Kunstigümnaasium. This r
 | `labor/lab.js` | the helper projects use to save data and play together |
 | `labor/naidis/` | a small demo project that uses `lab.js`: copy from it |
 | `server/` | the lab server behind `https://labor.suvemäe.ee/api/` |
-| `deploy/` | the scripts that publish `main` |
+| `deploy/`, `.github/` | the scripts that publish `main` |
 
-**Everything pushed to `main` is published automatically within about two minutes.**
+**Everything pushed to `main` goes live automatically about a minute later. There is no copy in between: what you push is what visitors see.**
 
 ## Working with the child
 
@@ -28,16 +28,16 @@ Suvemäe is the democratic school division of Tallinna Kunstigümnaasium. This r
 
 ## Boundaries
 
-- Work only in your project's folder, `labor/<slug>/`. Leave other projects and `www/` alone.
-- The one shared file you may edit is `labor/index.html`, to add your project's card (see *Publishing*).
-- Never change `labor/lab.js`, `server/` or `deploy/`. If a project needs something the lab server cannot do, tell the child to ask a grown-up.
+- Work in your project's folder, `labor/<slug>/`, and leave other projects alone.
+- Two things are shared by all groups: `labor/index.html`, where you add your project's card (see *Publishing*), and the landing page `www/`. Change `www/` only when the child asks to, keep the change small, keep it plain HTML and CSS that works as it is, and publish it soon so the other groups build on it.
+- Never change `labor/lab.js`, `server/`, `deploy/` or `.github/`. If a project needs something the lab server cannot do, tell the child to ask a grown-up.
 - Never force-push, rewrite `main`'s history, or remove anyone else's work, not even to get out of a conflict.
 
 ## Starting a project
 
 1. Agree on a name with the child.
-2. Derive the slug from it: lowercase `a-z`, `0-9` and `-`, with Estonian letters transliterated (`ä`→`a`, `ö`→`o`, `õ`→`o`, `ü`→`u`, `š`→`s`, `ž`→`z`). "Kosmosemäng" becomes `kosmosemang`. `api` is taken.
-3. Run `git pull --rebase origin main` and check that `labor/<slug>/` does not exist yet, then create the folder.
+2. Derive the slug from it: lowercase `a-z`, `0-9` and `-`, with Estonian letters transliterated (`ä`→`a`, `ö`→`o`, `õ`→`o`, `ü`→`u`, `š`→`s`, `ž`→`z`). "Kosmosemäng" becomes `kosmosemang`. `api` and `www` are taken.
+3. Run `git pull --rebase --autostash origin main` and check that `labor/<slug>/` does not exist yet, then create the folder.
 
 ## Project rules
 
@@ -46,7 +46,7 @@ Suvemäe is the democratic school division of Tallinna Kunstigümnaasium. This r
 - **Scripts in files.** Put JavaScript in `.js` files and load them with `<script src="…">` (`type="module"` when importing `lab.js`). Inline `<script>` blocks and `onclick="…"` attributes are blocked on the preview server. `style="…"` and `<style>` are fine.
 - **No outside requests.** No CDNs, web fonts, analytics, ads, trackers or embeds. The only server a project talks to is the lab server, through `lab.js`.
 - **Saved data is public.** Anything saved with `lab.js` can be read, changed or deleted by anyone. Save game data only: nicknames, scores, drawings, settings. Never full names, e-mail addresses, ages, contacts or photos of people.
-- **Play together, don't chat.** Realtime rooms are for game moves and shared drawings. Visitors must not be able to type free text to each other; offer preset words or emoji instead. High score names are the one free text, kept to a nickname; the server filters rude words and a teacher can delete entries.
+- **Play together, don't chat.** Realtime rooms are for game moves and shared drawings. Visitors must not be able to type free text to each other; offer preset words or emoji instead. High score names are the one free text, kept to a nickname.
 - **No cookies.** Keeping a personal best in `localStorage` is fine.
 - **Own or free material only.** Use images, sounds and music that the child made, that you generated, or that are CC0, and credit them in the project's README. No characters, music or logos from games, films or cartoons: invent new ones.
 - **Fine for everyone.** Every child at the school, and their parents, should be glad to see it.
@@ -93,14 +93,14 @@ The room does not keep any state: if newcomers need to see the game so far, have
 
 On the Suvemäe agent server each group has its own working copy with a live preview, which shows saved changes after a page reload:
 
-| Group | Working copy | Preview |
-|---|---|---|
-| 🦊 Rebased | `/srv/suvemae/rebased` | `https://agent1122.mintbot.ai/app/rebased/<slug>/` |
-| 🐆 Ilvesed | `/srv/suvemae/ilvesed` | `https://agent1122.mintbot.ai/app/ilvesed/<slug>/` |
-| 🦉 Kakud | `/srv/suvemae/kakud` | `https://agent1122.mintbot.ai/app/kakud/<slug>/` |
-| 🦦 Saarmad | `/srv/suvemae/saarmad` | `https://agent1122.mintbot.ai/app/saarmad/<slug>/` |
+| Group | Working copy | Project preview | Landing page preview |
+|---|---|---|---|
+| 🦊 Rebased | `/srv/suvemae/rebased` | `https://agent1122.mintbot.ai/app/rebased/<slug>/` | `https://agent1122.mintbot.ai/app/rebased/www/` |
+| 🐆 Ilvesed | `/srv/suvemae/ilvesed` | `https://agent1122.mintbot.ai/app/ilvesed/<slug>/` | `https://agent1122.mintbot.ai/app/ilvesed/www/` |
+| 🦉 Kakud | `/srv/suvemae/kakud` | `https://agent1122.mintbot.ai/app/kakud/<slug>/` | `https://agent1122.mintbot.ai/app/kakud/www/` |
+| 🦦 Saarmad | `/srv/suvemae/saarmad` | `https://agent1122.mintbot.ai/app/saarmad/<slug>/` | `https://agent1122.mintbot.ai/app/saarmad/www/` |
 
-Work only in your group's working copy. The preview's saved data is separate from the live site's. `/srv/suvemae/main` is what is live: never edit it.
+Work only in your group's working copy. A preview serves the files in your working copy straight from disk, with no build or deploy step: a saved change shows up on the next reload, before anything is pushed. Start each session with `git pull --rebase --autostash origin main` so you see the others' work too. The preview's saved data is separate from the live site's. `/srv/suvemae/main` holds the shared repository and runs the preview server: never edit it.
 
 Elsewhere, run the lab server locally, which also serves `labor/`:
 
@@ -112,13 +112,13 @@ It is done when the browser console shows no errors, it works on a phone-sized s
 
 ## Publishing
 
-Publish small steps often: small steps make small conflicts.
+Push to `main` every time the child is happy with a step: that is how it goes live, and small steps make small conflicts.
 
-1. Commit only your project, and its card if you added one: `git add labor/<slug> labor/index.html`, then `git commit -m "Add kosmosemang, a space dodging game"`.
+1. Commit only your own changes: `git add labor/<slug>`, plus `labor/index.html` and `www/` if you changed them, then `git commit -m "Add kosmosemang, a space dodging game"`.
 2. Put your commit on top of everyone else's: `git pull --rebase origin main`.
-3. If git reports a conflict, keep **both** sides: in `labor/index.html` that means keeping every card. Then `git add` the file and `git rebase --continue`. If you cannot tell how to combine them, `git rebase --abort` and ask a grown-up.
+3. If git reports a conflict, keep **both** sides: in `labor/index.html` that means keeping every card, in `www/` every group's change. Then `git add` the file and `git rebase --continue`. If you cannot tell how to combine them, `git rebase --abort` and ask a grown-up.
 4. Push: `git push origin HEAD:main`. If it is rejected because someone pushed in between, go back to step 2.
-5. Tell the child that in about two minutes it is live at `https://labor.suvemäe.ee/<slug>/`.
+5. Tell the child that in about a minute it is live at `https://labor.suvemäe.ee/<slug>/`, or at `https://suvemäe.ee/` for the landing page.
 
 When a project is ready to show, add its card to the *Laste tööd* list in `labor/index.html`, before the *tulekul* placeholders:
 

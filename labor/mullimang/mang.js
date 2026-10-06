@@ -1,5 +1,5 @@
 // Bubble popping game: a 15-second round, live pops from others via a realtime room,
-// a shared all-time pop counter (save/load) and a high score table.
+// a shared all-time pop counter (save/load) and two high score tables (normal and hard).
 import { lab } from '../lab.js';
 
 const mang = lab();
@@ -8,11 +8,18 @@ const olek = document.getElementById('olek');
 const kokkuEl = document.getElementById('kokku');
 const nupp = document.getElementById('nupp');
 const nimi = document.getElementById('nimi');
+const raske = document.getElementById('raske');
 const tulemus = document.getElementById('tulemus');
 const tabel = document.getElementById('tabel');
+const tabelRaske = document.getElementById('tabel-raske');
 
 const VOORU_PIKKUS = 15000;
 const VARVID = ['#ff7eb6', '#7ed6ff', '#ffd23f', '#9cf27e', '#c39bff', '#ff9f5a'];
+// How often a bubble appears and how long it stays, in milliseconds.
+const TASE = {
+  tavaline: { vahe: 450, eluiga: 1600, klass: 'mull' },
+  raske: { vahe: 330, eluiga: 900, klass: 'mull vaike' },
+};
 
 let kaib = false;
 let punktid = 0;
@@ -37,11 +44,11 @@ tuba.on('leave', naitaOlekut);
 tuba.on('close', naitaOlekut);
 tuba.on('message', (andmed) => {
   if (typeof andmed?.x === 'number' && typeof andmed?.y === 'number') {
-    sadeh(Math.min(1, Math.max(0, andmed.x)), Math.min(1, Math.max(0, andmed.y)), '⭐');
+    naitaPauku(Math.min(1, Math.max(0, andmed.x)), Math.min(1, Math.max(0, andmed.y)), '⭐');
   }
 });
 
-function sadeh(x, y, mark) {
+function naitaPauku(x, y, mark) {
   const el = document.createElement('div');
   el.className = 'pauk';
   el.textContent = mark;
@@ -51,10 +58,10 @@ function sadeh(x, y, mark) {
   setTimeout(() => el.remove(), 700);
 }
 
-function uusMull() {
+function uusMull(tase) {
   const mull = document.createElement('button');
   mull.type = 'button';
-  mull.className = 'mull';
+  mull.className = tase.klass;
   mull.setAttribute('aria-label', 'Mull');
   const x = 0.08 + Math.random() * 0.84;
   const y = 0.1 + Math.random() * 0.8;
@@ -67,11 +74,11 @@ function uusMull() {
     punktid += 1;
     nupp.textContent = `${punktid} 🫧`;
     mull.remove();
-    sadeh(x, y, '💥');
+    naitaPauku(x, y, '💥');
     tuba.send({ x, y });
   });
   valjak.append(mull);
-  setTimeout(() => mull.remove(), 1600);
+  setTimeout(() => mull.remove(), tase.eluiga);
 }
 
 nupp.addEventListener('click', () => {
@@ -80,9 +87,11 @@ nupp.addEventListener('click', () => {
   punktid = 0;
   tulemus.textContent = '';
   nupp.disabled = true;
+  raske.disabled = true;
   nupp.textContent = '0 🫧';
-  uusMull();
-  tekitaja = setInterval(uusMull, 450);
+  const tase = raske.checked ? TASE.raske : TASE.tavaline;
+  uusMull(tase);
+  tekitaja = setInterval(() => uusMull(tase), tase.vahe);
   setTimeout(lopeta, VOORU_PIKKUS);
 });
 
@@ -94,7 +103,7 @@ async function lopeta() {
 
   const kes = nimi.value.trim();
   try {
-    if (kes && punktid > 0) await mang.addScore(kes, punktid);
+    if (kes && punktid > 0) await mang.addScore(kes, punktid, raske.checked ? 'raske' : 'main');
     else if (!kes) tulemus.textContent += ' Kirjuta hüüdnimi, et pääseda edetabelisse.';
     if (punktid > 0) {
       const kokku = await mang.load('kokku', 0);
@@ -107,21 +116,22 @@ async function lopeta() {
     console.warn(err);
   }
 
-  await naitaTabelit();
+  await naitaTabeleid();
   setTimeout(() => {
     nupp.disabled = false;
+    raske.disabled = false;
     nupp.textContent = 'Uuesti';
   }, 1000);
 }
 
-async function naitaTabelit() {
+async function naitaTabelit(el, board) {
   try {
-    const parimad = await mang.topScores(10);
+    const parimad = await mang.topScores(10, { board });
     if (parimad.length === 0) {
-      tabel.textContent = 'Edetabel on veel tühi. Ole esimene!';
+      el.textContent = 'Edetabel on veel tühi. Ole esimene!';
       return;
     }
-    tabel.replaceChildren(
+    el.replaceChildren(
       ...parimad.map((t) => {
         const li = document.createElement('li');
         li.textContent = `${t.name}: ${t.score}`;
@@ -129,9 +139,13 @@ async function naitaTabelit() {
       }),
     );
   } catch (err) {
-    tabel.textContent = 'Edetabelit ei saanud laadida.';
+    el.textContent = 'Edetabelit ei saanud laadida.';
     console.warn(err);
   }
+}
+
+function naitaTabeleid() {
+  return Promise.all([naitaTabelit(tabel, 'main'), naitaTabelit(tabelRaske, 'raske')]);
 }
 
 async function naitaKokku() {
@@ -144,4 +158,4 @@ async function naitaKokku() {
 }
 
 naitaKokku();
-naitaTabelit();
+naitaTabeleid();

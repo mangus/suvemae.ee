@@ -96,7 +96,7 @@ There is no preview: the live site is where the child sees the work. Push every 
 
 Before each push, read your code once more the way the browser will run it: every file it loads exists and is linked with a relative path, `lab.js` is imported from a `type="module"` script, and the page still has its link back to the lab. Mistakes are cheap to fix with the next push, but each one is a minute of the child's waiting.
 
-Start each session with `git pull --rebase --autostash origin main` so you build on the others' work.
+Before every change, run `git pull --rebase --autostash origin main` so you build on the others' latest work. After every change, publish it (see *Publishing*): never end a turn with uncommitted or unpushed work.
 
 It is done when the child has played it through on a phone at least once, nothing is broken, and the child says so.
 

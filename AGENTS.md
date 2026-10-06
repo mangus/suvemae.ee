@@ -23,7 +23,7 @@ Suvemäe is the democratic school division of Tallinna Kunstigümnaasium. This r
 
 - The child is the author. They decide what to make and how it looks; you help them build it. When they are stuck, offer two or three ideas and let them choose.
 - Speak the child's language (usually Estonian) in short, simple sentences without jargon.
-- Build in small steps and let the child try the result after each one.
+- Build in small steps, push each one and let the child try it live before the next.
 - Never ask for personal details. If the child shares any (full name, address, phone number, photos of people), keep them out of the repository.
 - If a wish breaks the rules below, explain kindly why and suggest something that works instead.
 
@@ -44,7 +44,7 @@ Suvemäe is the democratic school division of Tallinna Kunstigümnaasium. This r
 
 - **Self-contained.** Everything the project needs lives in its folder and is linked with relative paths (`img/rakett.svg`, never `/img/rakett.svg`). The one exception is `../lab.js`.
 - **Runs in the browser as it is.** Plain HTML, CSS and JavaScript; canvas, SVG and Web Audio are all fine. No npm, bundlers or build steps. If a library is truly needed, copy its file into the folder and keep its license header.
-- **Scripts in files.** Put JavaScript in `.js` files and load them with `<script src="…">` (`type="module"` when importing `lab.js`). Inline `<script>` blocks and `onclick="…"` attributes are blocked on the preview server. `style="…"` and `<style>` are fine.
+- **Scripts in files.** Put JavaScript in `.js` files and load them with `<script src="…">` (`type="module"` when importing `lab.js`). No inline `<script>` blocks or `onclick="…"` attributes. `style="…"` and `<style>` are fine.
 - **No outside requests.** No CDNs, web fonts, analytics, ads, trackers or embeds. The only server a project talks to is the lab server, through `lab.js`.
 - **Saved data is public.** Anything saved with `lab.js` can be read, changed or deleted by anyone. Save game data only: nicknames, scores, drawings, settings. Never full names, e-mail addresses, ages, contacts or photos of people.
 - **Play together, don't chat.** Realtime rooms are for game moves and shared drawings. Visitors must not be able to type free text to each other; offer preset words or emoji instead. High score names are the one free text, kept to a nickname.
@@ -92,24 +92,13 @@ The room does not keep any state: if newcomers need to see the game so far, have
 
 ## Trying it out
 
-On the Suvemäe agent server each group has its own working copy with a live preview, which shows saved changes after a page reload:
+There is no preview: the live site is where the child sees the work. Push every small step (see *Publishing*) and about a minute later it is at `https://labor.suvemäe.ee/<slug>/`, where the child opens it on their phone or computer. A project is reachable at its address as soon as it is pushed, but it appears on the lab page only once its card is in `labor/index.html`, so a half-finished project is not on show: add the card when the child says it is ready.
 
-| Group | Working copy | Project preview | Landing page preview |
-|---|---|---|---|
-| 🦊 Rebased | `/srv/suvemae/rebased` | `https://agent1122.mintbot.ai/app/rebased/<slug>/` | `https://agent1122.mintbot.ai/app/rebased/www/` |
-| 🐆 Ilvesed | `/srv/suvemae/ilvesed` | `https://agent1122.mintbot.ai/app/ilvesed/<slug>/` | `https://agent1122.mintbot.ai/app/ilvesed/www/` |
-| 🦉 Kakud | `/srv/suvemae/kakud` | `https://agent1122.mintbot.ai/app/kakud/<slug>/` | `https://agent1122.mintbot.ai/app/kakud/www/` |
-| 🦦 Saarmad | `/srv/suvemae/saarmad` | `https://agent1122.mintbot.ai/app/saarmad/<slug>/` | `https://agent1122.mintbot.ai/app/saarmad/www/` |
+Before each push, read your code once more the way the browser will run it: every file it loads exists and is linked with a relative path, `lab.js` is imported from a `type="module"` script, and the page still has its link back to the lab. Mistakes are cheap to fix with the next push, but each one is a minute of the child's waiting.
 
-Work only in your group's working copy. A preview serves the files in your working copy straight from disk, with no build or deploy step: a saved change shows up on the next reload, before anything is pushed. Start each session with `git pull --rebase --autostash origin main` so you see the others' work too. The preview's saved data is separate from the live site's. `/srv/suvemae/main` holds the shared repository and runs the preview server: never edit it.
+Start each session with `git pull --rebase --autostash origin main` so you build on the others' work.
 
-Elsewhere, run the lab server locally, which also serves `labor/`:
-
-```sh
-cd server && npm ci && npm run dev   # then open http://localhost:8000/<slug>/
-```
-
-It is done when the browser console shows no errors, it works on a phone-sized screen, and the child has played it through at least once.
+It is done when the child has played it through on a phone at least once, nothing is broken, and the child says so.
 
 ## Publishing
 

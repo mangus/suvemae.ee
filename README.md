@@ -10,7 +10,7 @@ Source for [suvemäe.ee](https://suvemäe.ee/), the landing page of Suvemäe, th
 | [`redirect/`](redirect/) | suvemae.ee, www.suvemae.ee and www.suvemäe.ee, all redirected to suvemäe.ee |
 | [`labor/lab.js`](labor/lab.js) | storage, high scores and realtime rooms for projects |
 | [`server/`](server/) | the lab server at `labor.suvemäe.ee/api/` |
-| [`deploy/`](deploy/), [`.github/workflows/`](.github/workflows/) | how `main` is published, and the previews |
+| [`deploy/`](deploy/), [`.github/workflows/`](.github/workflows/) | how `main` is published |
 
 The school homepage, [tkg.suvemäe.ee](https://tkg.suvemäe.ee/), is a separate WordPress site and does not live here.
 
@@ -18,7 +18,7 @@ What agents must and must not do while working with a child is in [AGENTS.md](AG
 
 ## From an idea to the lab
 
-1. A child tells their agent what to make. The agent builds it in the group's working copy on the Suvemäe agent server, and the child tries every step in the group's preview.
+1. A child tells their agent what to make. The agent builds it in its own clone of this repository. There is no preview: every small step is pushed, and the child tries it live.
 2. When the child is happy, the agent commits, puts the commit on top of `main` and pushes it (the steps are in [AGENTS.md](AGENTS.md), *Publishing*).
 3. GitHub Actions publishes `main` to Opalstack. About a minute after the push the work is at `labor.suvemäe.ee/<slug>/`.
 
@@ -55,7 +55,3 @@ Every push to `main` goes live: [`.github/workflows/deploy.yml`](.github/workflo
 | `server/` | `~/apps/suvemaeweb_laborapi/server` | labor.suvemäe.ee/api/ (a proxy-port app on port 1534, started by `server/run.sh` from the user's crontab) |
 
 The workflow runs in the repository's `production` environment, which only `main` may deploy to. Its one secret, `DEPLOY_SSH_KEY`, is an SSH key made for this workflow alone and installed with `restrict` in `~/.ssh/authorized_keys` on Opalstack; deleting the `github-actions@mangus/suvemae.ee` line there revokes it. The API's database, config and logs live in its `data/` folder and `config.json` on Opalstack and are never overwritten. Files are never edited by hand on Opalstack: the next deploy overwrites them. To see what a deploy would change without doing it, run the script with `DRY_RUN=1` and the same environment variables as the workflow from a machine with SSH access.
-
-## Previews
-
-The agent server keeps one working copy per group (`/srv/suvemae/<group>`) and serves each one, with its own preview database, at `https://agent1122.mintbot.ai/app/<group>/` (the lab) and `/app/<group>/www/` (the landing page), straight from the files on disk with no build or deploy step. The platform proxy passes WebSockets only under `/app/ws/`, so in a preview `lab.js` connects there and the server maps `/app/ws/` back onto `/app/`. The configuration is [`deploy/preview.json`](deploy/preview.json); the systemd unit is in [`deploy/systemd/`](deploy/systemd/). The preview server itself runs from `/srv/suvemae/main`, which is updated by hand when `server/` changes.

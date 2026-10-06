@@ -7,13 +7,22 @@ Source for [suvemäe.ee](https://suvemäe.ee/), the landing page of Suvemäe, th
 | [`www/`](www/) | [suvemäe.ee](https://suvemäe.ee/) |
 | [`labor/`](labor/) | [labor.suvemäe.ee](https://labor.suvemäe.ee/) |
 | `labor/<slug>/` | `labor.suvemäe.ee/<slug>/`, one project |
+| [`redirect/`](redirect/) | suvemae.ee, www.suvemae.ee and www.suvemäe.ee, all redirected to suvemäe.ee |
 | [`labor/lab.js`](labor/lab.js) | storage, high scores and realtime rooms for projects |
 | [`server/`](server/) | the lab server at `labor.suvemäe.ee/api/` |
-| [`deploy/`](deploy/), [`.github/workflows/`](.github/workflows/) | publishing `main` to Opalstack, and the previews |
+| [`deploy/`](deploy/), [`.github/workflows/`](.github/workflows/) | how `main` is published, and the previews |
 
 The school homepage, [tkg.suvemäe.ee](https://tkg.suvemäe.ee/), is a separate WordPress site and does not live here.
 
 What agents must and must not do while working with a child is in [AGENTS.md](AGENTS.md).
+
+## From an idea to the lab
+
+1. A child tells their agent what to make. The agent builds it in the group's working copy on the Suvemäe agent server, and the child tries every step in the group's preview.
+2. When the child is happy, the agent commits, puts the commit on top of `main` and pushes it (the steps are in [AGENTS.md](AGENTS.md), *Publishing*).
+3. GitHub Actions publishes `main` to Opalstack. About a minute after the push the work is at `labor.suvemäe.ee/<slug>/`.
+
+Nobody reviews the work on the way: what is pushed is what the children, their parents and the school see. The rules in AGENTS.md are the safeguard, so keep them current.
 
 ## The lab server
 
@@ -36,7 +45,16 @@ Then open <http://localhost:8000/naidis/>.
 
 ## Publishing
 
-Every push to `main` goes live: [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) runs [`deploy/opalstack.sh`](deploy/opalstack.sh), which copies `www/` and `labor/` to their Opalstack apps and `server/` to the API app, backs up the API's database into `data/backup/` and restarts the server. There is no staging copy in between. The workflow needs the repository secrets `OPALSTACK_SSH_KEY` and `OPALSTACK_KNOWN_HOSTS`. The API's database, config and logs live in its `data/` folder and `config.json` on Opalstack and are never overwritten. Files are never edited by hand on Opalstack.
+Every push to `main` goes live: [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) runs [`deploy/opalstack.sh`](deploy/opalstack.sh), which mirrors `www/`, `labor/` and `redirect/` onto their Opalstack apps with rsync over SSH (files removed here are removed there too), copies `server/` to the API app, backs up the API's database into `data/backup/` and restarts the server. The job then checks that both pages serve what was pushed and that the API answers. There is no staging copy in between. A deploy takes about a minute; every commit on GitHub gets its ✔ or ✖, the log is under *Actions*, and a deploy can be started by hand there too.
+
+| Folder | Opalstack app | Serves |
+|---|---|---|
+| `www/` | `~/apps/suvemaeweb_avaleht` | suvemäe.ee |
+| `labor/` | `~/apps/suvemaeweb_labor` | labor.suvemäe.ee |
+| `redirect/` | `~/apps/suvemaeweb_redirect` | suvemae.ee, www.suvemae.ee and www.suvemäe.ee, redirected to suvemäe.ee |
+| `server/` | `~/apps/suvemaeweb_laborapi/server` | labor.suvemäe.ee/api/ (a proxy-port app on port 1534, started by `server/run.sh` from the user's crontab) |
+
+The workflow runs in the repository's `production` environment, which only `main` may deploy to. Its one secret, `DEPLOY_SSH_KEY`, is an SSH key made for this workflow alone and installed with `restrict` in `~/.ssh/authorized_keys` on Opalstack; deleting the `github-actions@mangus/suvemae.ee` line there revokes it. The API's database, config and logs live in its `data/` folder and `config.json` on Opalstack and are never overwritten. Files are never edited by hand on Opalstack: the next deploy overwrites them. To see what a deploy would change without doing it, run the script with `DRY_RUN=1` and the same environment variables as the workflow from a machine with SSH access.
 
 ## Previews
 

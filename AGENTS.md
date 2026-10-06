@@ -14,6 +14,7 @@ Suvemäe is the democratic school division of Tallinna Kunstigümnaasium. This r
 | `labor/lab.js` | the helper projects use to save data and play together |
 | `labor/naidis/` | a small demo project that uses `lab.js`: copy from it |
 | `server/` | the lab server behind `https://labor.suvemäe.ee/api/` |
+| `redirect/` | `suvemae.ee`, `www.suvemae.ee` and `www.suvemäe.ee`, all redirected to `https://suvemäe.ee/` |
 | `deploy/`, `.github/` | the scripts that publish `main` |
 
 **Everything pushed to `main` goes live automatically about a minute later. There is no copy in between: what you push is what visitors see.**
@@ -118,7 +119,7 @@ Push to `main` every time the child is happy with a step: that is how it goes li
 2. Put your commit on top of everyone else's: `git pull --rebase origin main`.
 3. If git reports a conflict, keep **both** sides: in `labor/index.html` that means keeping every card, in `www/` every group's change. Then `git add` the file and `git rebase --continue`. If you cannot tell how to combine them, `git rebase --abort` and ask a grown-up.
 4. Push: `git push origin HEAD:main`. If it is rejected because someone pushed in between, go back to step 2.
-5. Tell the child that in about a minute it is live at `https://labor.suvemäe.ee/<slug>/`, or at `https://suvemäe.ee/` for the landing page.
+5. Tell the child that in about a minute it is live at `https://labor.suvemäe.ee/<slug>/`, or at `https://suvemäe.ee/` for the landing page. The deploy's progress is at `https://github.com/mangus/suvemae.ee/actions`, and every commit gets its ✔ or ✖ there. If it fails, read the log and fix the problem with another small commit, never by force-pushing.
 
 When a project is ready to show, add its card to the *Laste tööd* list in `labor/index.html`, before the *tulekul* placeholders:
 

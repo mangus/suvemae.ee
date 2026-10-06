@@ -1,13 +1,16 @@
-# Publishes main to Opalstack on every push: suvemäe.ee, labor.suvemäe.ee and
-# the lab API. Needs the repository secrets OPALSTACK_SSH_KEY (a private key
-# allowed to log in as suvemaeweb) and OPALSTACK_KNOWN_HOSTS (ssh-keyscan
-# output for the host); without them the run publishes nothing and warns.
+# Publishes main to Opalstack on every push: suvemäe.ee, labor.suvemäe.ee, the
+# redirect domains and the lab API. Runs in the "production" environment, which
+# only main may deploy to and which holds the one secret, DEPLOY_SSH_KEY: a
+# private key that may log in as suvemaeweb on opal11 (deploy/opalstack.sh).
 name: Deploy
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 # One deploy at a time; a push during a deploy waits, then publishes the newest main.
 concurrency:
@@ -16,33 +19,41 @@ concurrency:
 
 env:
   SSH_TARGET: suvemaeweb@opal11.opalstack.com
+  SSH_HOST_KEY: opal11.opalstack.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINfP6S08Zs0s1gOI8vMqkWky5n1WSDScsvfh+EI3GudP
   WWW_DIR: /home/suvemaeweb/apps/suvemaeweb_avaleht
   LABOR_DIR: /home/suvemaeweb/apps/suvemaeweb_labor
+  REDIRECT_DIR: /home/suvemaeweb/apps/suvemaeweb_redirect
   API_DIR: /home/suvemaeweb/apps/suvemaeweb_laborapi/server
-  # Set to "1" once the first deploy looks right: also deletes files removed from the repo.
-  RSYNC_DELETE: "0"
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment:
+      name: production
+      url: https://labor.xn--suveme-fua.ee/
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+
       - name: Set up SSH
-        id: ssh
         env:
-          KEY: ${{ secrets.OPALSTACK_SSH_KEY }}
-          KNOWN_HOSTS: ${{ secrets.OPALSTACK_KNOWN_HOSTS }}
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
-          if [ -z "$KEY" ] || [ -z "$KNOWN_HOSTS" ]; then
-            echo "::warning::OPALSTACK_SSH_KEY or OPALSTACK_KNOWN_HOSTS is not set; nothing was published."
-            exit 0
-          fi
-          mkdir -p ~/.ssh
+          install -d -m 700 ~/.ssh
           printf '%s\n' "$KEY" > ~/.ssh/id_ed25519
-          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/id_ed25519
-          echo ready=1 >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$SSH_HOST_KEY" > ~/.ssh/known_hosts
+
       - name: Publish
-        if: steps.ssh.outputs.ready == '1'
         run: deploy/opalstack.sh
+
+      - name: Check the live site
+        run: |
+          curl --fail --silent --show-error https://xn--suveme-fua.ee/ | cmp - www/index.html
+          curl --fail --silent --show-error https://labor.xn--suveme-fua.ee/ | cmp - labor/index.html
+          for attempt in 1 2 3 4 5 6; do
+            curl --fail --silent --show-error https://labor.xn--suveme-fua.ee/api/health && exit 0
+            sleep 5
+          done
+          echo "the lab API did not come back after the restart" >&2
+          exit 1

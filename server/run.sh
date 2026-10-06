@@ -8,6 +8,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")"
+# Opalstack's default node is too old for node:sqlite; use the Node 22 it ships.
+[ -d /opt/nodejs22/bin ] && PATH=/opt/nodejs22/bin:$PATH
 mkdir -p data
 pidfile=data/server.pid
 

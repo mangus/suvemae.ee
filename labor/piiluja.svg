@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 130" width="120" height="130">
+<style>.zap{animation:zap .4s steps(2,jump-none) infinite}@keyframes zap{50%{opacity:.15}}</style>
+<g class="zap" fill="none" stroke="#ffc933" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 22l9 5-7 4 9 6"/><path d="M60 2l-3 9 6-1-3 9"/><path d="M114 12l-8 6 7 2-8 7"/></g>
+<path d="M44 70L22 60L36 52L14 38L38 36L28 14L52 28L58 6L70 26L84 4L90 26L108 10L104 32L120 30L108 48L116 62Z" fill="#9be15d" stroke="#2b2340" stroke-width="4" stroke-linejoin="round"/>
+<path d="M38 132Q44 104 76 102Q108 104 114 132Z" fill="#fff" stroke="#2b2340" stroke-width="4" stroke-linejoin="round"/>
+<path d="M64 104L76 124L88 104Z" fill="#8fd3ff" stroke="#2b2340" stroke-width="3" stroke-linejoin="round"/>
+<path d="M66 106L76 111L66 116ZM86 106L76 111L86 116Z" fill="#ff6f91" stroke="#2b2340" stroke-width="2.5" stroke-linejoin="round"/>
+<rect x="97" y="108" width="7" height="20" rx="3.5" fill="#fff" stroke="#2b2340" stroke-width="2.5"/><path d="M98.5 118h4v7a2 2 0 0 1-4 0z" fill="#5dbb63"/>
+<circle cx="107" cy="72" r="7" fill="#ffe0c2" stroke="#2b2340" stroke-width="3.5"/>
+<ellipse cx="76" cy="70" rx="32" ry="34" fill="#ffe0c2" stroke="#2b2340" stroke-width="4"/>
+<path d="M40 63H108" stroke="#2b2340" stroke-width="5"/>
+<circle cx="56" cy="64" r="18" fill="#d4ecff" stroke="#2b2340" stroke-width="5"/>
+<circle cx="54" cy="66" r="11" fill="#fff" stroke="#2b2340" stroke-width="2"/><circle cx="50" cy="67" r="6" fill="#2b2340"/><circle cx="48" cy="65" r="2" fill="#fff"/>
+<path d="M45 52Q50 48 56 50" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+<circle cx="94" cy="62" r="9" fill="#ffc933" stroke="#2b2340" stroke-width="4"/><circle cx="91" cy="63" r="3" fill="#2b2340"/>
+<path d="M38 40Q54 28 72 40M86 50L102 44" fill="none" stroke="#2b2340" stroke-width="5" stroke-linecap="round"/>
+<path d="M72 74Q60 88 72 90" fill="#ffe0c2" stroke="#2b2340" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M56 94Q74 110 96 92Z" fill="#fff" stroke="#2b2340" stroke-width="3.5" stroke-linejoin="round"/>
+<path d="M68 96V102M82 95V103" stroke="#2b2340" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

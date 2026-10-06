@@ -33,7 +33,7 @@ Projects stay plain HTML and JavaScript. For saving data and playing together th
 - high score names are cleaned and limited to 20 characters; there is no word filter, and a teacher removes unwanted entries through the agent, straight from the SQLite database;
 - errors are logged on the server; visitors only see a short message.
 
-The server reads a JSON config named by `LABOR_CONFIG`: `port`, `db`, `mounts` (URL prefix to a static folder, or `null` for API only; the API answers at `<prefix>api/`), `origins`, `projectsFile`, `indexPath` and `wsAliases` (extra WebSocket prefixes mapped onto mount prefixes).
+The server reads a JSON config named by `LABOR_CONFIG`: `port`, `db`, `mounts` (URL prefix to a static folder, or `null` for API only; the API answers at `<prefix>api/`), `origins` and `projectsFile`.
 
 Run it locally with the lab included:
 

@@ -1,6 +1,6 @@
 'use strict';
 // Suvemäe labor server: per-project storage, high scores and realtime rooms for
-// the children's projects, plus an optional static file server for previews.
+// the children's projects, plus an optional static file server for local runs.
 //
 // Configuration comes from the JSON file named by LABOR_CONFIG (see README.md);
 // PORT, HOST, DB_PATH and STATIC override it for quick local runs.
@@ -98,15 +98,10 @@ function loadConfig() {
     db: process.env.DB_PATH || c.db || path.join(__dirname, 'data', 'labor.db'),
     // Mount prefix -> static directory, or null for API only. The API lives at <prefix>api/.
     mounts: c.mounts || { '/': null },
-    // Path that lists the mounts (handy for previews), or null.
-    indexPath: c.indexPath || null,
     // Allowed Origin headers for writes and WebSockets; empty allows any.
     origins: c.origins || [],
     // JSON array of existing project slugs; without it, mount directories are checked.
     projectsFile: c.projectsFile ? path.resolve(__dirname, c.projectsFile) : null,
-    // Extra URL prefixes for WebSockets, mapped onto mount prefixes: the agent
-    // server's proxy passes WebSockets only under /app/ws/.
-    wsAliases: c.wsAliases || {},
   };
 }
 
@@ -292,33 +287,11 @@ async function handle(req, res) {
     return send(res, 400, { error: 'Vigane aadress' });
   }
   const hit = route(pathname);
-  if (!hit) {
-    if (config.indexPath && (pathname === config.indexPath || pathname + '/' === config.indexPath)) {
-      return sendIndex(res);
-    }
-    return sendHtml(res, 404, notFound);
-  }
+  if (!hit) return sendHtml(res, 404, notFound);
   if (hit.rest === null) return redirect(res, url.pathname + '/' + url.search);
   if (hit.rest === 'api' || hit.rest.startsWith('api/')) return api(req, res, hit.rest.slice(4), url);
   if (hit.mount.dir) return serveStatic(req, res, hit.mount.dir, hit.rest, url);
   return sendHtml(res, 404, notFound);
-}
-
-function sendIndex(res) {
-  const items = mounts
-    .filter((m) => m.dir)
-    .reverse()
-    .map((m) => `<li><a href="${escapeHtml(m.prefix)}">${escapeHtml(m.label)}</a></li>`)
-    .join('');
-  sendHtml(
-    res,
-    200,
-    '<!doctype html><html lang="et"><meta charset="utf-8">' +
-      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
-      '<title>Suvemäe labori eelvaated</title>' +
-      '<body style="font-family:system-ui,sans-serif;max-width:40rem;margin:2rem auto;padding:0 1rem;font-size:1.2rem">' +
-      `<h1>Suvemäe labori eelvaated</h1><ul>${items}</ul></body></html>`,
-  );
 }
 
 function serveStatic(req, res, root, rest, url) {
@@ -484,14 +457,7 @@ function onUpgrade(req, socket, head) {
   let hit;
   try {
     url = new URL(req.url, 'http://localhost');
-    let pathname = decodeURIComponent(url.pathname);
-    for (const [from, to] of Object.entries(config.wsAliases)) {
-      if (pathname.startsWith(from)) {
-        pathname = to + pathname.slice(from.length);
-        break;
-      }
-    }
-    hit = route(pathname);
+    hit = route(decodeURIComponent(url.pathname));
   } catch {
     return reject(400, 'Bad Request');
   }

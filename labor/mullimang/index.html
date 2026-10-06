@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mullimäng</title>
+<meta name="description" content="Paugutad mulle koos teistega: näed reaalajas, kui keegi teine mulli lõhub, ja parimad pääsevad edetabelisse.">
+<link rel="stylesheet" href="stiil.css">
+<script type="module" src="mang.js"></script>
+</head>
+<body>
+<a class="tagasi" href="../">← labor</a>
+<h1>🫧 Mullimäng</h1>
+<p>Paugutad 15 sekundiga nii palju mulle kui jõuad. Kui keegi teine samal ajal mängib, näed tema pauke tähekestena. <span id="olek">Ühendan…</span></p>
+<p class="kokku">Kõik kokku on paugutanud <b id="kokku">…</b> mulli.</p>
+<p><input id="nimi" maxlength="20" placeholder="Hüüdnimi" aria-label="Hüüdnimi edetabelisse"> <button id="nupp" type="button">Alusta</button> <span id="tulemus"></span></p>
+<div id="valjak"></div>
+<section>
+<h2>Edetabel</h2>
+<ol id="tabel"></ol>
+</section>
+</body>
+</html>

@@ -1,0 +1,77 @@
+body {
+  margin: 0 auto;
+  max-width: 760px;
+  padding: 16px;
+  font-family: ui-rounded, "Nunito", system-ui, sans-serif;
+  color: #2b2340;
+  background: #f0f8ff;
+}
+
+.tagasi {
+  font-weight: 800;
+  color: inherit;
+}
+
+.kokku {
+  font-size: 1.15rem;
+}
+
+#valjak {
+  position: relative;
+  height: min(60vh, 420px);
+  overflow: hidden;
+  background: linear-gradient(#bfe9ff, #e8f7ff);
+  border: 3px solid #2b2340;
+  border-radius: 18px;
+  touch-action: none;
+  user-select: none;
+}
+
+.mull {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  padding: 0;
+  border: 3px solid #2b2340;
+  border-radius: 50%;
+  box-shadow: inset -8px -8px 0 rgb(255 255 255 / 0.45);
+  cursor: pointer;
+  animation: kasva 0.25s ease-out;
+}
+
+.pauk {
+  position: absolute;
+  font-size: 2rem;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: kao 0.7s ease-out forwards;
+}
+
+@keyframes kasva {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+@keyframes kao {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(0.6); }
+  to { opacity: 0; transform: translate(-50%, -90%) scale(1.4); }
+}
+
+button,
+input {
+  font: inherit;
+  padding: 0.4rem 0.9rem;
+  border: 3px solid #2b2340;
+  border-radius: 999px;
+}
+
+#nupp {
+  font-weight: 800;
+  background: #ff6fa5;
+  color: #fff;
+}
+
+#nupp:disabled {
+  opacity: 0.85;
+}

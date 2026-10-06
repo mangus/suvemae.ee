@@ -30,7 +30,7 @@ Suvemäe is the democratic school division of Tallinna Kunstigümnaasium. This r
 ## Boundaries
 
 - Work in your project's folder, `labor/<slug>/`, and leave other projects alone.
-- Two things are shared by all groups: `labor/index.html`, where you add your project's card (see *Publishing*), and the landing page `www/`. Change `www/` only when the child asks to, keep the change small, keep it plain HTML and CSS that works as it is, and publish it soon so the other groups build on it.
+- Two pages are shared by all groups: the lab page `labor/index.html` and the landing page `www/`. The child may change both freely: add elements, sections, pictures, text and links to their own or other groups' work or to sites made for children. When the child asks, do it without holding back. Keep it plain HTML and CSS that works as it is (no JavaScript, no outside requests, pictures kept in the repo and linked with relative paths), keep every other group's cards and changes, keep the existing links between the pages, make sure it works on a narrow screen, and publish it soon so the other groups build on it. Ask a grown-up first only if the child wants to redo a page completely, remove another group's part, or change the text about the school.
 - Never change `labor/lab.js`, `server/`, `deploy/` or `.github/`. If a project needs something the lab server cannot do, tell the child to ask a grown-up.
 - Never force-push, rewrite `main`'s history, or remove anyone else's work, not even to get out of a conflict.
 
@@ -106,11 +106,11 @@ Push to `main` every time the child is happy with a step: that is how it goes li
 
 1. Commit only your own changes: `git add labor/<slug>`, plus `labor/index.html` and `www/` if you changed them, then `git commit -m "Add kosmosemang, a space dodging game"`.
 2. Put your commit on top of everyone else's: `git pull --rebase origin main`.
-3. If git reports a conflict, keep **both** sides: in `labor/index.html` that means keeping every card, in `www/` every group's change. Then `git add` the file and `git rebase --continue`. If you cannot tell how to combine them, `git rebase --abort` and ask a grown-up.
+3. If git reports a conflict, keep **both** sides: in `labor/index.html` and `www/` that means keeping every card and every group's change. Then `git add` the file and `git rebase --continue`. If you cannot tell how to combine them, `git rebase --abort` and ask a grown-up.
 4. Push: `git push origin HEAD:main`. If it is rejected because someone pushed in between, go back to step 2.
-5. Tell the child that in about a minute it is live at `https://labor.suvemäe.ee/<slug>/`, or at `https://suvemäe.ee/` for the landing page. The deploy's progress is at `https://github.com/mangus/suvemae.ee/actions`, and every commit gets its ✔ or ✖ there. If it fails, read the log and fix the problem with another small commit, never by force-pushing.
+5. Tell the child that in about a minute it is live at `https://labor.suvemäe.ee/<slug>/`, at `https://labor.suvemäe.ee/` for the lab page, or at `https://suvemäe.ee/` for the landing page. The deploy's progress is at `https://github.com/mangus/suvemae.ee/actions`, and every commit gets its ✔ or ✖ there. If it fails, read the log and fix the problem with another small commit, never by force-pushing.
 
-When a project is ready to show, add its card to the *Laste tööd* list in `labor/index.html`, before the *tulekul* placeholders:
+When a project is ready to show, add its card to the *Laste tööd* list in `labor/index.html`, before the *tulekul* placeholders. Anything else on the lab page the child may change too (see *Boundaries*):
 
 ```html
 <li class="frame"><span class="frame-emoji" aria-hidden="true">🎮</span><a href="kosmosemang/">Kosmosemäng</a><small>Põiklemine tähtede vahel</small></li>

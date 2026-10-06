@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suvemäe</title>
+<meta name="description" content="Suvemäe on Tallinna Kunstigümnaasiumi demokraatlik kooliosa. Siit pääseb kooli kodulehele ja Suvemäe laborisse, kus lapsed teevad mänge, animatsioone ja katsetusi.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Suvemäe">
+<meta property="og:description" content="Tallinna Kunstigümnaasiumi demokraatlik kooliosa: kooli koduleht ja laste labor.">
+<meta property="og:url" content="https://xn--suveme-fua.ee/">
+<meta name="theme-color" content="#fff1bf">
+<link rel="canonical" href="https://xn--suveme-fua.ee/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='26' r='15' fill='%23ffc933'/%3E%3Cpath d='M0 64C14 40 30 44 40 50S58 42 64 46V64Z' fill='%235dbb63'/%3E%3C/svg%3E">
+<style>
+:root{--ink:#2b2340;--ink-soft:#574d6b;--paper:#fffaf0;--pink:#ff6f91;--violet:#8c6cf2;--blue:#3fa7f5;--font:ui-rounded,"SF Pro Rounded","Nunito","Varela Round","Quicksand","Segoe UI",system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:var(--font);color:var(--ink);background:var(--paper);line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.hero{position:relative;overflow:hidden;text-align:center;padding:clamp(104px,13vw,150px) 20px 0;background:linear-gradient(180deg,#fff1bf 0%,#ffe9d8 55%,#e2f3ff 100%)}
+.sun{position:absolute;top:-28px;right:-28px;width:clamp(128px,24vw,260px);height:auto}
+.rays{transform-box:view-box;transform-origin:100px 100px;animation:spin 90s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.doodle{position:absolute;height:auto}
+.d-star{top:30px;left:6%;width:clamp(42px,6vw,66px);transform:rotate(-12deg)}
+.d-plane{top:46%;left:7%;width:clamp(72px,8vw,104px)}
+.d-squiggle{top:56%;right:7%;width:clamp(92px,10vw,132px)}
+h1{margin:0;font-size:clamp(3.4rem,13vw,7.5rem);line-height:1;font-weight:900;letter-spacing:-.01em;text-shadow:3px 4px 0 rgba(43,35,64,.1)}
+h1 span span{display:inline-block;color:var(--c);transform:rotate(var(--r))}
+.underline{display:block;width:min(340px,70vw);height:22px;margin:.3rem auto 0}
+.tagline{margin:1rem auto 0;max-width:30ch;font-size:clamp(1.1rem,2.6vw,1.4rem);font-weight:700;color:var(--ink-soft)}
+.hills{display:block;width:calc(100% + 40px);height:clamp(90px,14vw,190px);margin:clamp(28px,6vw,64px) -20px 0}
+main{max-width:1000px;margin:0 auto;padding:0 20px}
+.doors{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:clamp(30px,5vw,48px);padding:clamp(24px,4vw,40px) 0 clamp(48px,8vw,80px)}
+.door{position:relative;display:block;padding:38px 28px 28px;background:#fff;text-decoration:none;border:3px solid var(--ink);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;box-shadow:7px 9px 0 var(--shadow);transform:rotate(var(--tilt));transition:transform .2s ease,box-shadow .2s ease}
+.door:hover{transform:rotate(0deg) translateY(-4px);box-shadow:10px 13px 0 var(--shadow)}
+.door:focus-visible{outline:4px dashed var(--violet);outline-offset:8px}
+.door::before{content:"";position:absolute;top:-15px;left:50%;width:100px;height:30px;margin-left:-50px;background:var(--tape);border-radius:4px;transform:rotate(-4deg)}
+.door-school{--shadow:var(--pink);--tape:rgba(255,201,51,.85);--tilt:-1.3deg}
+.door-lab{--shadow:var(--blue);--tape:rgba(140,108,242,.5);--tilt:1.2deg}
+.door-emoji{display:block;font-size:2.7rem;line-height:1}
+.door h2{margin:.7rem 0 .35rem;font-size:1.75rem;line-height:1.15;font-weight:900}
+.door p{margin:0 0 1.3rem;color:var(--ink-soft);font-size:1.06rem}
+.door-link{display:inline-block;padding:.35rem 1rem;font-weight:800;border:2.5px solid var(--ink);border-radius:999px;background:#ffe27a}
+.door-lab .door-link{background:#cfe8ff}
+.projects{text-align:center;padding:0 0 clamp(52px,8vw,92px)}
+.projects h2{margin:0;font-size:clamp(1.8rem,4.5vw,2.4rem);line-height:1.2;font-weight:900}
+.projects>p{margin:.5rem auto 0;max-width:46ch;color:var(--ink-soft);font-size:1.06rem}
+.frames{list-style:none;margin:30px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:22px}
+.frame{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;min-height:150px;padding:20px;border:3px dashed var(--c);border-radius:22px;background:#fff;background:color-mix(in srgb,var(--c) 9%,#fff);font-weight:800;font-size:1.1rem;transform:rotate(var(--t))}
+.frame:nth-child(1){--c:#ff6f91;--t:-1.5deg}
+.frame:nth-child(2){--c:#3fa7f5;--t:1deg}
+.frame:nth-child(3){--c:#5dbb63;--t:-.6deg}
+.frame-emoji{font-size:2.2rem;line-height:1.1}
+.frame small{font-size:.92rem;font-weight:700;color:var(--ink-soft)}
+footer{padding:26px 20px 34px;text-align:center;color:var(--ink-soft);font-size:.98rem;border-top:3px dashed #eadfc4}
+footer p{margin:.2rem 0}
+@media (max-width:720px){.d-plane,.d-squiggle{display:none}}
+@media (prefers-reduced-motion:reduce){.rays{animation:none}.door{transition:none}}
+</style>
+</head>
+<body>
+<header class="hero">
+<svg class="sun" viewBox="0 0 200 200" aria-hidden="true">
+<g class="rays" stroke="#ffad1f" stroke-width="9" stroke-linecap="round">
+<line x1="100" y1="8" x2="100" y2="36"/>
+<line x1="100" y1="16" x2="100" y2="36" transform="rotate(30 100 100)"/>
+<line x1="100" y1="8" x2="100" y2="36" transform="rotate(60 100 100)"/>
+<line x1="100" y1="16" x2="100" y2="36" transform="rotate(90 100 100)"/>
+<line x1="100" y1="8" x2="100" y2="36" transform="rotate(120 100 100)"/>
+<line x1="100" y1="16" x2="100" y2="36" transform="rotate(150 100 100)"/>
+<line x1="100" y1="8" x2="100" y2="36" transform="rotate(180 100 100)"/>
+<line x1="100" y1="16" x2="100" y2="36" transform="rotate(210 100 100)"/>
+<line x1="100" y1="8" x2="100" y2="36" transform="rotate(240 100 100)"/>
+<line x1="100" y1="16" x2="100" y2="36" transform="rotate(270 100 100)"/>
+<line x1="100" y1="8" x2="100" y2="36" transform="rotate(300 100 100)"/>
+<line x1="100" y1="16" x2="100" y2="36" transform="rotate(330 100 100)"/>
+</g>
+<circle cx="100" cy="100" r="54" fill="#ffc933"/>
+<circle cx="82" cy="94" r="5.5" fill="#2b2340"/>
+<circle cx="118" cy="94" r="5.5" fill="#2b2340"/>
+<circle cx="70" cy="112" r="8" fill="#ff8a8a" opacity=".55"/>
+<circle cx="130" cy="112" r="8" fill="#ff8a8a" opacity=".55"/>
+<path d="M82 114q18 16 36 0" fill="none" stroke="#2b2340" stroke-width="5" stroke-linecap="round"/>
+</svg>
+<svg class="doodle d-star" viewBox="0 0 60 60" aria-hidden="true"><path d="M30 5l7 18h19l-15 12 6 19-17-11-17 11 6-19L4 23h19z" fill="none" stroke="#ff6f91" stroke-width="4" stroke-linejoin="round"/></svg>
+<svg class="doodle d-plane" viewBox="0 0 100 70" aria-hidden="true"><path d="M8 34L92 8 68 62 50 42zM50 42L92 8" fill="none" stroke="#3fa7f5" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M4 60q10-9 20-1t20-1" fill="none" stroke="#3fa7f5" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 8"/></svg>
+<svg class="doodle d-squiggle" viewBox="0 0 120 40" aria-hidden="true"><path d="M4 26C18 4 30 4 36 22s20 18 28-4 24-18 32 2 16 16 20-6" fill="none" stroke="#8c6cf2" stroke-width="5" stroke-linecap="round"/></svg>
+<h1 aria-label="Suvemäe"><span aria-hidden="true"><span style="--c:#e23d6d;--r:-6deg">S</span><span style="--c:#d95a00;--r:4deg">u</span><span style="--c:#2f9a45;--r:-3deg">v</span><span style="--c:#1f7fd1;--r:5deg">e</span><span style="--c:#7b55e0;--r:-4deg">m</span><span style="--c:#148f8a;--r:3deg">ä</span><span style="--c:#e23d6d;--r:-5deg">e</span></span></h1>
+<svg class="underline" viewBox="0 0 300 24" preserveAspectRatio="none" aria-hidden="true"><path d="M6 15C60 4 120 22 180 11s90-3 114 3" fill="none" stroke="#ff8a3d" stroke-width="6" stroke-linecap="round"/></svg>
+<p class="tagline">Tallinna Kunstigümnaasiumi demokraatlik kooliosa</p>
+<svg class="hills" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
+<path d="M0 118C220 40 420 50 640 104s420-64 800-10V200H0z" fill="#b6e4a3"/>
+<path d="M0 150c260-55 520-40 780 0s420-50 660-15V200H0z" fill="#80cc73"/>
+<path d="M0 186c380-34 1060 26 1440-14V200H0z" fill="#fffaf0"/>
+</svg>
+</header>
+<main>
+<section class="doors" aria-label="Suvemäe lehed">
+<a class="door door-school" href="https://tkg.xn--suveme-fua.ee/">
+<span class="door-emoji" aria-hidden="true">🏫</span>
+<h2>Kooli koduleht</h2>
+<p>Kuidas Suvemäel õpitakse, kes me oleme ja kuidas meiega liituda.</p>
+<span class="door-link">tkg.suvemäe.ee <span aria-hidden="true">→</span></span>
+</a>
+<a class="door door-lab" href="https://labor.xn--suveme-fua.ee/">
+<span class="door-emoji" aria-hidden="true">🧪</span>
+<h2>Suvemäe labor</h2>
+<p>Laste mängud, animatsioonid ja katsetused, mida nad teevad koos AI-agentidega.</p>
+<span class="door-link">labor.suvemäe.ee <span aria-hidden="true">→</span></span>
+</a>
+</section>
+<section class="projects" aria-labelledby="projektid">
+<h2 id="projektid">Laste projektid</h2>
+<p>Iga valminud mäng, animatsioon ja katsetus saab siia oma kaardi. Praegu ootavad need raamid veel esimesi töid.</p>
+<ul class="frames">
+<li class="frame"><span class="frame-emoji" aria-hidden="true">🎮</span>Mäng<small>tulekul</small></li>
+<li class="frame"><span class="frame-emoji" aria-hidden="true">🎞️</span>Animatsioon<small>tulekul</small></li>
+<li class="frame"><span class="frame-emoji" aria-hidden="true">🔭</span>Katsetus<small>tulekul</small></li>
+</ul>
+</section>
+</main>
+<footer>
+<p><strong>Suvemäe</strong> · Tallinna Kunstigümnaasiumi demokraatlik kooliosa</p>
+<p>Leht on alles valmimas.</p>
+</footer>
+</body>
+</html>

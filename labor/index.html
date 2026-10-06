@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suvemäe labor</title>
+<meta name="description" content="Suvemäe labor on koht, kuhu tulevad Suvemäe laste mängud, animatsioonid ja katsetused, mida nad teevad koos AI-agentidega.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Suvemäe labor">
+<meta property="og:description" content="Suvemäe laste mängud, animatsioonid ja katsetused.">
+<meta property="og:url" content="https://labor.xn--suveme-fua.ee/">
+<meta name="theme-color" content="#f7fbff">
+<link rel="canonical" href="https://labor.xn--suveme-fua.ee/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M15 40h34l7 14q2 6-5 6H13q-7 0-5-6z' fill='%238c6cf2'/%3E%3Cpath d='M24 6h16v18l16 30q2 6-5 6H13q-7 0-5-6l16-30z' fill='none' stroke='%232b2340' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{--ink:#2b2340;--ink-soft:#574d6b;--paper:#f7fbff;--violet:#8c6cf2;--yellow:#ffc933;--font:ui-rounded,"SF Pro Rounded","Nunito","Varela Round","Quicksand","Segoe UI",system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:var(--font);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased;background-color:var(--paper);background-image:linear-gradient(rgba(63,167,245,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(63,167,245,.14) 1px,transparent 1px);background-size:28px 28px}
+a{color:inherit}
+a:focus-visible{outline:4px dashed var(--violet);outline-offset:6px}
+.wrap{max-width:1000px;margin:0 auto;padding-left:20px;padding-right:20px}
+.topbar{padding-top:18px}
+.back{display:inline-block;padding:.3rem 1rem;font-weight:800;text-decoration:none;background:#fff;border:2.5px solid var(--ink);border-radius:999px;box-shadow:3px 4px 0 var(--yellow)}
+.back:hover{background:#fff1bf}
+.hero{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:clamp(20px,4vw,48px);align-items:center;padding-top:clamp(24px,5vw,56px);padding-bottom:clamp(36px,6vw,64px)}
+h1{margin:0;line-height:.95;font-weight:900}
+.kicker{display:block;font-size:clamp(1.5rem,4vw,2.2rem);color:var(--ink-soft)}
+.big{display:block;margin-top:.15em;font-size:clamp(4.2rem,15vw,8.5rem);text-shadow:3px 4px 0 rgba(43,35,64,.1)}
+.big span{display:inline-block;color:var(--c);transform:rotate(var(--r))}
+.tagline{margin:1.1rem 0 0;max-width:34ch;font-size:clamp(1.1rem,2.6vw,1.35rem);font-weight:700;color:var(--ink-soft)}
+.flask{display:block;width:100%;max-width:290px;height:auto;justify-self:center}
+.bubble{animation:rise 3.6s ease-in infinite}
+.b2{animation-delay:1.2s}
+.b3{animation-delay:2.4s}
+@keyframes rise{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-140px);opacity:0}}
+.puff{animation:puff 4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.p2{animation-delay:1.3s}
+.p3{animation-delay:2.6s}
+@keyframes puff{50%{transform:translateY(-6px) scale(1.12)}}
+section{padding-bottom:clamp(48px,8vw,84px)}
+h2{margin:0;font-size:clamp(1.8rem,4.5vw,2.4rem);line-height:1.2;font-weight:900}
+.lead{margin:.5rem 0 0;max-width:52ch;color:var(--ink-soft);font-size:1.06rem}
+.steps{list-style:none;margin:44px 0 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:44px 28px;counter-reset:step}
+.step{position:relative;padding:34px 24px 24px;background:#fff;border:3px solid var(--ink);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;box-shadow:6px 8px 0 var(--c);transform:rotate(var(--t))}
+.step::before{counter-increment:step;content:counter(step);position:absolute;top:-22px;left:20px;width:44px;height:44px;display:grid;place-items:center;font-size:1.3rem;font-weight:900;background:var(--c);border:3px solid var(--ink);border-radius:50%}
+.step:nth-child(1){--c:#ffc933;--t:-1.2deg}
+.step:nth-child(2){--c:#8fd3ff;--t:.9deg}
+.step:nth-child(3){--c:#ffb3c6;--t:-.7deg}
+.step:nth-child(4){--c:#a8e29a;--t:1.1deg}
+.step-emoji{display:block;font-size:2.2rem;line-height:1.1}
+.step h3{margin:.45rem 0 .25rem;font-size:1.25rem;line-height:1.2;font-weight:900}
+.step p{margin:0;color:var(--ink-soft)}
+.address{font-weight:800;color:var(--ink);overflow-wrap:anywhere}
+.frames{list-style:none;margin:30px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:22px}
+.frame{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;min-height:150px;padding:20px;text-align:center;border:3px dashed var(--c);border-radius:22px;background:#fff;background:color-mix(in srgb,var(--c) 9%,#fff);font-weight:800;font-size:1.1rem;transform:rotate(var(--t))}
+.frame:nth-child(1){--c:#ff6f91;--t:-1.5deg}
+.frame:nth-child(2){--c:#3fa7f5;--t:1deg}
+.frame:nth-child(3){--c:#5dbb63;--t:-.6deg}
+.frame-emoji{font-size:2.2rem;line-height:1.1}
+.frame small{font-size:.92rem;font-weight:700;color:var(--ink-soft)}
+footer{padding:26px 20px 34px;text-align:center;color:var(--ink-soft);font-size:.98rem;background:var(--paper);border-top:3px dashed #cfe3f5}
+footer p{margin:.2rem 0}
+footer a{font-weight:800}
+@media (max-width:720px){.hero{grid-template-columns:1fr;text-align:center}.tagline{margin-left:auto;margin-right:auto}.flask{max-width:180px;order:-1}}
+@media (max-width:640px){.steps{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.bubble,.puff{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap topbar"><a class="back" href="https://xn--suveme-fua.ee/"><span aria-hidden="true">←</span> suvemäe.ee</a></div>
+<header class="wrap hero">
+<div>
+<h1 aria-label="Suvemäe labor"><span class="kicker" aria-hidden="true">Suvemäe</span><span class="big" aria-hidden="true"><span style="--c:#e23d6d;--r:-6deg">l</span><span style="--c:#1f7fd1;--r:4deg">a</span><span style="--c:#2f9a45;--r:-3deg">b</span><span style="--c:#7b55e0;--r:5deg">o</span><span style="--c:#d95a00;--r:-4deg">r</span></span></h1>
+<p class="tagline">Siia tulevad Suvemäe laste mängud, animatsioonid ja katsetused, mida nad teevad koos AI-agentidega.</p>
+</div>
+<svg class="flask" viewBox="0 0 200 260" aria-hidden="true">
+<defs><linearGradient id="potion" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6f91"/><stop offset="1" stop-color="#8c6cf2"/></linearGradient></defs>
+<circle class="puff" cx="90" cy="28" r="11" fill="#e6defd"/>
+<circle class="puff p2" cx="110" cy="16" r="8" fill="#ffd6e1"/>
+<circle class="puff p3" cx="124" cy="31" r="6" fill="#d4ecff"/>
+<path d="M82 54V128L34 222Q28 240 48 242H152Q172 240 166 222L118 128V54Z" fill="#fff"/>
+<path d="M57.5 176Q78 166 100 176T142.5 176L166 222Q172 240 152 242H48Q28 240 34 222Z" fill="url(#potion)"/>
+<circle class="bubble" cx="90" cy="214" r="7" fill="#fff" stroke="#8c6cf2" stroke-width="2.5"/>
+<circle class="bubble b2" cx="110" cy="200" r="5" fill="#fff" stroke="#8c6cf2" stroke-width="2.5"/>
+<circle class="bubble b3" cx="100" cy="226" r="4" fill="#fff" stroke="#8c6cf2" stroke-width="2.5"/>
+<path d="M52 222L68 190" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".7"/>
+<path d="M82 54V128L34 222Q28 240 48 242H152Q172 240 166 222L118 128V54Z" fill="none" stroke="#2b2340" stroke-width="5" stroke-linejoin="round"/>
+<rect x="74" y="44" width="52" height="14" rx="7" fill="#fff" stroke="#2b2340" stroke-width="5"/>
+<path d="M36 70q2 8 10 10q-8 2-10 10q-2-8-10-10q8-2 10-10z" fill="#ffc933"/>
+<path d="M166 96q2 7 9 9q-7 2-9 9q-2-7-9-9q7-2 9-9z" fill="#ffc933"/>
+<path d="M172 168q1.5 5 6 6.5q-4.5 1.5-6 6.5q-1.5-5-6-6.5q4.5-1.5 6-6.5z" fill="#3fa7f5"/>
+</svg>
+</header>
+<main class="wrap">
+<section aria-labelledby="kuidas">
+<h2 id="kuidas">Kuidas töö siia jõuab</h2>
+<ol class="steps">
+<li class="step"><span class="step-emoji" aria-hidden="true">💡</span><h3>Idee</h3><p>Laps mõtleb välja mängu, animatsiooni või katsetuse.</p></li>
+<li class="step"><span class="step-emoji" aria-hidden="true">🤖</span><h3>Koos AI-agendiga</h3><p>Laps ehitab oma idee valmis koos AI-agendiga ja proovib selle ise läbi.</p></li>
+<li class="step"><span class="step-emoji" aria-hidden="true">👀</span><h3>Eelvaade ja heakskiit</h3><p>Enne avaldamist vaadatakse töö eelvaates üle ja kiidetakse heaks.</p></li>
+<li class="step"><span class="step-emoji" aria-hidden="true">🚀</span><h3>Oma aadress</h3><p>Iga töö saab oma aadressi, näiteks <span class="address">labor.suvemäe.ee/<wbr>kosmosemang/</span></p></li>
+</ol>
+</section>
+<section aria-labelledby="tood">
+<h2 id="tood">Laste tööd</h2>
+<p class="lead">Esimesed tööd on alles tegemisel. Kui need valmivad, saab iga töö siia oma kaardi.</p>
+<ul class="frames">
+<li class="frame"><span class="frame-emoji" aria-hidden="true">🎮</span>Mäng<small>tulekul</small></li>
+<li class="frame"><span class="frame-emoji" aria-hidden="true">🎞️</span>Animatsioon<small>tulekul</small></li>
+<li class="frame"><span class="frame-emoji" aria-hidden="true">🔭</span>Katsetus<small>tulekul</small></li>
+</ul>
+</section>
+</main>
+<footer>
+<p><strong>Suvemäe labor</strong> · <a href="https://xn--suveme-fua.ee/">suvemäe.ee</a> · <a href="https://tkg.xn--suveme-fua.ee/">Kooli koduleht</a></p>
+<p>Leht on alles valmimas.</p>
+</footer>
+</body>
+</html>

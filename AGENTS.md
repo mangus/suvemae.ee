@@ -58,7 +58,7 @@ Suvemäe is the democratic school division of Tallinna Kunstigümnaasium. This r
 Every project has:
 
 - `index.html` with `<html lang="et">` (or the child's language), a viewport meta tag, the project's name as its `<title>`, a one-sentence `<meta name="description">` written with the child, and a small link back to the lab (`../`).
-- `README.md` saying what it is, how to play or use it, the author's first name or nickname (only if the child wants credit), which AI agent helped, and where any outside material came from.
+- `README.md` saying what it is, how to play or use it, the author's first name or nickname (only if the child wants credit), which AI agent helped (for example: "Made with the help of the Suvemäe labor [AI agent on mintbot.ai](https://mintbot.ai/)."), and where any outside material came from.
 
 Code comments and commit messages are in English; everything a visitor sees is in the child's language.
 

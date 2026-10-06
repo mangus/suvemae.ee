@@ -8,4 +8,4 @@ A small test game by the Ilvesed group, to check that the lab server works: real
 - Write a nickname to get onto the high score table (`addScore`, `topScores`).
 - Tick **🔥 Raske** for smaller, faster bubbles; hard mode has its own high score table (board `raske`).
 
-Made by the Ilvesed group with the help of the Suvemäe labor AI agent (Claude). No outside material: the bubbles are drawn with CSS, the rest is emoji.
+Made by the Ilvesed group with the help of the Suvemäe labor [AI agent on mintbot.ai](https://mintbot.ai/) (Claude). No outside material: the bubbles are drawn with CSS, the rest is emoji.

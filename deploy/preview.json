@@ -1,0 +1,14 @@
+{
+  "port": 8700,
+  "db": "/srv/suvemae/data/preview.db",
+  "indexPath": "/app/",
+  "origins": ["https://agent1122.mintbot.ai"],
+  "mounts": {
+    "/app/rebased/": { "dir": "/srv/suvemae/rebased/labor", "label": "🦊 Rebased" },
+    "/app/ilvesed/": { "dir": "/srv/suvemae/ilvesed/labor", "label": "🐆 Ilvesed" },
+    "/app/kakud/": { "dir": "/srv/suvemae/kakud/labor", "label": "🦉 Kakud" },
+    "/app/saarmad/": { "dir": "/srv/suvemae/saarmad/labor", "label": "🦦 Saarmad" },
+    "/app/main/": { "dir": "/srv/suvemae/main/labor", "label": "🚀 main: labor.suvemäe.ee praegune seis" },
+    "/app/www/": { "dir": "/srv/suvemae/main/www", "label": "🏠 main: suvemäe.ee praegune seis" }
+  }
+}

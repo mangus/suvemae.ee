@@ -1,0 +1,16 @@
+{
+  "name": "suvemae-labor-server",
+  "private": true,
+  "description": "Storage, high scores and realtime rooms for the Suvemäe labor projects",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "STATIC=../labor PORT=8000 node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

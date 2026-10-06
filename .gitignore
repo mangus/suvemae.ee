@@ -1,3 +1,10 @@
 .DS_Store
 Thumbs.db
 node_modules/
+
+# Lab server data and secrets: they live only on the servers.
+server/data/
+server/config.json
+server/projects.json
+*.db
+*.db-*

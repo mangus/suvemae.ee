@@ -1,0 +1,55 @@
+body {
+  margin: 0 auto;
+  max-width: 760px;
+  padding: 16px;
+  font-family: ui-rounded, "Nunito", system-ui, sans-serif;
+  color: #2b2340;
+  background: #f7fbff;
+}
+
+.tagasi {
+  font-weight: 800;
+  color: inherit;
+}
+
+#valjak {
+  position: relative;
+  height: min(60vh, 420px);
+  overflow: hidden;
+  background: #fff;
+  border: 3px solid #2b2340;
+  border-radius: 18px;
+  touch-action: none;
+}
+
+.tapp {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border: 3px solid #2b2340;
+  border-radius: 50%;
+  transition: left 0.08s linear, top 0.08s linear;
+  pointer-events: none;
+}
+
+.tapp.mina {
+  background: #ffc933;
+  transition: none;
+}
+
+button,
+input {
+  font: inherit;
+  padding: 0.4rem 0.9rem;
+  border: 3px solid #2b2340;
+  border-radius: 999px;
+}
+
+button {
+  font-weight: 800;
+  background: #8c6cf2;
+  color: #fff;
+}

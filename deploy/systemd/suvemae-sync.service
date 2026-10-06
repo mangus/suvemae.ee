@@ -1,0 +1,7 @@
+[Unit]
+Description=Publish the latest suvemae.ee main (preview and Opalstack)
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/srv/suvemae/main/deploy/sync.sh

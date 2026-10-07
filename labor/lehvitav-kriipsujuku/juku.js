@@ -59,8 +59,8 @@ const JL_X = -70; // canvas box inside the figure, matches .juuksed
 const JL_Y = -70;
 const JL_LAIUS = 370;
 const JL_KORGUS = 330;
-const KARVU = 200; // fewer, thicker strands keep slow computers smooth
-const TUKK = 26; // short fringe strands over the forehead
+const KARVU = 0; // front hair taken off on request (was 200)
+const TUKK = 0; // fringe taken off too (was 26)
 const OSAD = 20; // segments per strand, enough for very tight frizzy curls
 // Four dark browns, then pink streaks (front) and dark blue streaks (back).
 const juuksevarvid = ['#4a2511', '#3b1d0c', '#57301a', '#633820', '#ff6fb5', '#1c2f7a'];
@@ -564,7 +564,7 @@ function samm(aeg) {
 
   // On a computer that keeps missing frames, thin the hair out by half once.
   aeglased = vahe > 0.034 ? aeglased + 1 : Math.max(0, aeglased - 1);
-  const pooled = TUKK + Math.floor(KARVU / 2);
+  const pooled = TUKK + KARVU + Math.floor(TAGA / 2);
   if (aeglased > 60 && karvad.length > pooled) karvad.length = pooled;
 
   if (olek === 'kaib') {

@@ -236,52 +236,26 @@ p {
   pointer-events: none;
 }
 
-/* Broccoli costume: a bumpy floret hood around the face (under the head)
-   and a green suit over the body (under the arms and legs).
-   Light dots are highlights; the stacked drop-shadows give a cartoon outline. */
+/* Broccoli costume: a hood of floret clusters around the face (under the head)
+   and a suit with a pale stalk and florets over the body (under the arms and legs).
+   Both pictures are SVG files in this folder. */
 .kapuuts {
   position: absolute;
-  top: -22px;
-  left: 47px;
+  top: -25px;
+  left: 31px;
   z-index: 1;
-  width: 160px;
-  height: 132px;
-  filter:
-    drop-shadow(3px 0 0 #263238) drop-shadow(-3px 0 0 #263238)
-    drop-shadow(0 3px 0 #263238) drop-shadow(0 -3px 0 #263238);
-  background:
-    radial-gradient(circle at 44% 8%, #c6f08a 0 4px, transparent 5px),
-    radial-gradient(circle at 21% 17%, #c6f08a 0 4px, transparent 5px),
-    radial-gradient(circle at 69% 17%, #c6f08a 0 4px, transparent 5px),
-    radial-gradient(circle at 7% 43%, #c6f08a 0 3px, transparent 4px),
-    radial-gradient(circle at 85% 43%, #c6f08a 0 3px, transparent 4px),
-    radial-gradient(circle at 50% 13%, #5cc95a 0 19px, transparent 20px),
-    radial-gradient(circle at 26% 22%, #4fbf4c 0 21px, transparent 22px),
-    radial-gradient(circle at 74% 22%, #4fbf4c 0 21px, transparent 22px),
-    radial-gradient(circle at 11% 48%, #5cc95a 0 20px, transparent 21px),
-    radial-gradient(circle at 89% 48%, #5cc95a 0 20px, transparent 21px),
-    radial-gradient(circle at 16% 76%, #43a047 0 18px, transparent 19px),
-    radial-gradient(circle at 84% 76%, #43a047 0 18px, transparent 19px),
-    radial-gradient(ellipse at 50% 50%, #388e3c 0 62%, transparent 63%);
+  width: 176px;
+  height: 150px;
+  background: url(kapuuts.svg) center / 100% 100% no-repeat;
 }
 
 .ylikond {
   position: absolute;
-  top: 98px;
-  left: 75px;
-  width: 78px;
-  height: 128px;
-  border: 4px solid #263238;
-  border-radius: 42px 42px 20px 20px;
-  background:
-    radial-gradient(circle at 26% 14%, #c6f08a 0 4px, transparent 5px),
-    radial-gradient(circle at 70% 24%, #c6f08a 0 3px, transparent 4px),
-    radial-gradient(circle at 45% 40%, #c6f08a 0 3px, transparent 4px),
-    radial-gradient(circle at 22% 18%, #4fbf4c 0 13px, transparent 14px),
-    radial-gradient(circle at 76% 18%, #4fbf4c 0 13px, transparent 14px),
-    radial-gradient(circle at 50% 40%, #43a047 0 12px, transparent 13px),
-    linear-gradient(90deg, transparent 0 46%, #8bc34a 46% 54%, transparent 54%) 0 100% / 100% 40% no-repeat,
-    linear-gradient(#5cc95a 0 58%, #c5e1a5 58%);
+  top: 94px;
+  left: 71px;
+  width: 86px;
+  height: 132px;
+  background: url(ylikond.svg) center / 100% 100% no-repeat;
 }
 
 .silm {

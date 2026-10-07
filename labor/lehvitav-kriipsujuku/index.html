@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="et">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Rõõmus kriipsujuku lehvitab sulle ja hüppab nupuvajutuse peale.">
+  <title>Lehvitav kriipsujuku</title>
+  <link rel="stylesheet" href="stiil.css">
+  <script src="juku.js" defer></script>
+</head>
+<body>
+  <main>
+    <a class="tagasi" href="../">← Tagasi laborisse</a>
+
+    <section class="lava" aria-labelledby="pealkiri">
+      <div class="pilv pilv-uks" aria-hidden="true"></div>
+      <div class="pilv pilv-kaks" aria-hidden="true"></div>
+      <h1 id="pealkiri">Tere! 👋</h1>
+
+      <div class="juku" id="juku" role="img" aria-label="Rõõmus lehvitav kriipsujuku">
+        <div class="pea">
+          <span class="silm vasak"></span>
+          <span class="silm parem"></span>
+          <span class="suu"></span>
+        </div>
+        <div class="keha"></div>
+        <div class="kasi-paigal"></div>
+        <div class="kasi-lehvitab">
+          <span class="kabal"></span>
+        </div>
+        <div class="jalg jalg-vasak"></div>
+        <div class="jalg jalg-parem"></div>
+      </div>
+
+      <p id="sonum" aria-live="polite">Kriipsujuku lehvitab sulle!</p>
+      <button id="tervita" type="button">Tervita kriipsujukut!</button>
+    </section>
+  </main>
+</body>
+</html>

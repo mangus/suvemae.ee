@@ -1,9 +1,9 @@
-// Bot Game Studio: pick ideas for a robot helper, squash bugs, publish, reach 10000 players.
+// Bot Game Studio: pick ideas for a robot helper, squash bugs, publish, reach 5000 players.
 import { lab } from '../lab.js';
 
 const studio = lab();
 
-const GOAL = 10000;
+const GOAL = 5000;
 const BUILD_MS = 3500;
 const PUBLISH_MS = 1500;
 const START_ENERGY = 10;
@@ -11,8 +11,8 @@ const TANK_GROWTH = 3; // more credit space for every published idea
 const ENERGY_EVERY = 1.5; // seconds per credit
 const BUG_CHANCE = 0.4;
 const MAX_BUGS = 6;
-const BEST_KEY = 'bot-game-studio-best-10000';
-const BOARD = 'goal10000'; // own table, so old 500-player times don't mix in
+const BEST_KEY = 'bot-game-studio-best-5000';
+const BOARD = 'goal5000'; // own table, so times for other goals don't mix in
 
 const IDEAS = [
   { id: 'sky', icon: '🎨', name: 'Paint a sky', fun: 5, cost: 1, needs: [], code: 'sky.color = "light blue";' },
@@ -526,6 +526,16 @@ function draw(t, now) {
   if (has('park')) {
     label('🎡', W * 0.3, ground - H * 0.2, H * 0.3, 'center');
     label('🎢', W * 0.12, ground - H * 0.12, H * 0.2, 'center');
+  }
+  if (has('fish')) {
+    // the pond: blue water with a lighter edge
+    ctx.fillStyle = '#5bb8f5';
+    ctx.beginPath();
+    ctx.ellipse(W * 0.52, ground + H * 0.1, Math.max(W * 0.09, H * 0.1), H * 0.055, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#a8dcff';
+    ctx.stroke();
   }
   if (has('fish')) label('🐟', W * 0.52 + Math.sin(t * 2) * 10, ground + H * 0.1, H * 0.06, 'center');
   if (has('treasure')) label('💎', W * 0.7, ground + H * 0.08, H * 0.06, 'center');

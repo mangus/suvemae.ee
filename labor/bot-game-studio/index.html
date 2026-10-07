@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bot Game Studio</title>
-<meta name="description" content="Make a game with your robot helper: pick ideas, squash bugs, publish it and win 10000 happy players.">
+<meta name="description" content="Make a game with your robot helper: pick ideas, squash bugs, publish it and win 5000 happy players.">
 <link rel="stylesheet" href="style.css">
 <script type="module" src="game.js"></script>
 </head>
 <body>
 <a class="back" href="../">← lab</a>
 <h1>🤖 Bot Game Studio</h1>
-<p class="intro">You and your robot helper mintbot are making a game! Pick an idea and mintbot writes the code. Squash the bugs 🐛, press <b>Publish</b>, and get <b>10000 happy players</b> as fast as you can.</p>
+<p class="intro">You and your robot helper mintbot are making a game! Pick an idea and mintbot writes the code. Squash the bugs 🐛, press <b>Publish</b>, and get <b>5000 happy players</b> as fast as you can.</p>
 
 <div class="stats">
   <span>⚡ <b id="energy">10</b> credits</span>
@@ -22,7 +22,7 @@
 </div>
 <div class="players">
   <div class="bar"><div id="bar"></div></div>
-  <span>👥 <b id="players">0</b> / 10000 players</span>
+  <span>👥 <b id="players">0</b> / 5000 players</span>
 </div>
 
 <canvas id="preview" aria-label="Your game"></canvas>
@@ -51,7 +51,7 @@
 
 <div id="win" class="win" hidden>
   <div class="win-box">
-    <h2>🎉 10000 players!</h2>
+    <h2>🎉 5000 players!</h2>
     <p>You made a hit game in <b id="wintime"></b> seconds.</p>
     <p id="best"></p>
     <p><input id="name" maxlength="20" placeholder="Nickname" aria-label="Nickname for the high score table"> <button id="save" type="button">Save</button></p>

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bot Game Studio</title>
+<meta name="description" content="Make a game with your robot helper: pick ideas, squash bugs, publish it and win 500 happy players.">
+<link rel="stylesheet" href="style.css">
+<script type="module" src="game.js"></script>
+</head>
+<body>
+<a class="back" href="../">← lab</a>
+<h1>🤖 Bot Game Studio</h1>
+<p class="intro">You and your robot helper Bitti are making a game! Pick an idea and Bitti writes the code. Squash the bugs 🐛, press <b>Publish</b>, and get <b>500 happy players</b> as fast as you can.</p>
+
+<div class="stats">
+  <span>⚡ <b id="energy">10</b> credits</span>
+  <span>😄 <b id="fun">0</b> fun</span>
+  <span>⏱ <b id="time">0</b> s</span>
+  <button id="mute" type="button" aria-label="Sound on or off">🔊</button>
+</div>
+<div class="players">
+  <div class="bar"><div id="bar"></div></div>
+  <span>👥 <b id="players">0</b> / 500 players</span>
+</div>
+
+<canvas id="preview" aria-label="Your game"></canvas>
+
+<div class="robot">
+  <div id="bot" class="bot" aria-hidden="true">🤖</div>
+  <div class="talk">
+    <p id="say" class="bubble" aria-live="polite">Hi! I'm Bitti, your robot helper. What should we make first? 👇</p>
+    <div id="code" class="code" aria-hidden="true"></div>
+  </div>
+</div>
+
+<button id="publish" type="button" class="publish">🚀 Publish</button>
+
+<h2>💡 Ideas</h2>
+<div id="cards" class="cards"></div>
+
+<section class="scores">
+  <h2>🏆 Fastest game makers</h2>
+  <ol id="table"><li>Loading…</li></ol>
+</section>
+
+<div id="win" class="win" hidden>
+  <div class="win-box">
+    <h2>🎉 500 players!</h2>
+    <p>You made a hit game in <b id="wintime"></b> seconds.</p>
+    <p id="best"></p>
+    <p><input id="name" maxlength="20" placeholder="Nickname" aria-label="Nickname for the high score table"> <button id="save" type="button">Save</button></p>
+    <p id="saved"></p>
+    <button id="again" type="button">🔁 Make another game</button>
+  </div>
+</div>
+</body>
+</html>

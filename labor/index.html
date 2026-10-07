@@ -63,9 +63,11 @@ h2{margin:0;font-size:clamp(1.8rem,4.5vw,2.4rem);line-height:1.2;font-weight:900
 .frame-emoji::after{content:"\25B6";position:absolute;right:12px;bottom:-21px;display:grid;place-items:center;width:40px;height:40px;padding-left:3px;font-size:1rem;color:var(--ink);text-shadow:none;background:var(--yellow);border:3px solid var(--ink);border-radius:50%;box-shadow:2px 3px 0 var(--ink);transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
 .frame:hover .frame-emoji,.frame:focus-within .frame-emoji{animation:cart-dots 1.2s linear infinite}
 .frame:hover .frame-emoji::after,.frame:focus-within .frame-emoji::after{transform:scale(1.2) rotate(-8deg)}
+.frame-tag{position:absolute;top:-15px;left:-10px;z-index:2;padding:.28rem .7rem;font-size:.85rem;font-weight:900;line-height:1.1;white-space:nowrap;color:var(--ink);background:#ffe3ec;border:3px solid var(--ink);border-radius:999px;box-shadow:2px 3px 0 var(--ink);transform:rotate(-8deg);pointer-events:none;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+.frame:hover .frame-tag,.frame:focus-within .frame-tag{transform:rotate(-14deg) scale(1.08)}
 .frame small{max-width:22ch;font-size:.92rem;font-weight:700;line-height:1.3;color:var(--ink-soft)}
 @keyframes cart-dots{to{background-position:16px 16px,0 0}}
-@media (max-width:440px){.frames{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 14px}.frame{font-size:1rem;padding:0 8px 16px}.frame-emoji{height:92px;margin:0 -8px .6rem;font-size:2.8rem}.frame-emoji::after{width:34px;height:34px;bottom:-18px;right:8px;font-size:.85rem}.frame small{font-size:.82rem}}
+@media (max-width:440px){.frames{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 14px}.frame{font-size:1rem;padding:0 8px 16px}.frame-emoji{height:92px;margin:0 -8px .6rem;font-size:2.8rem}.frame-emoji::after{width:34px;height:34px;bottom:-18px;right:8px;font-size:.85rem}.frame small{font-size:.82rem}.frame-tag{top:-13px;left:-6px;padding:.22rem .5rem;font-size:.72rem}}
 footer{padding:26px 20px 34px;text-align:center;color:var(--ink-soft);font-size:.98rem;background:var(--paper);border-top:3px dashed #cfe3f5}
 footer p{margin:.2rem 0}
 footer a{font-weight:800}
@@ -79,7 +81,7 @@ footer a{font-weight:800}
 .peek-t{--r:180deg;--d:27s;left:calc(68% - var(--w)/2);top:calc(var(--h)*-1)}
 @keyframes peek{0%,19%{transform:rotate(var(--r)) translateY(110%) rotate(0deg)}20.5%{transform:rotate(var(--r)) translateY(15%) rotate(-8deg)}22%{transform:rotate(var(--r)) translateY(15%) rotate(5deg)}23.5%{transform:rotate(var(--r)) translateY(15%) rotate(-8deg)}25%,100%{transform:rotate(var(--r)) translateY(110%) rotate(0deg)}}
 @media (max-width:640px){.peek{--w:84px;--h:91px}}
-@media (prefers-reduced-motion:reduce){.bubble,.puff{animation:none}.peeks{display:none}.frame,.frame-emoji::after{transition:none}.frame .frame-emoji{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.bubble,.puff{animation:none}.peeks{display:none}.frame,.frame-emoji::after,.frame-tag{transition:none}.frame .frame-emoji{animation:none!important}}
 </style>
 </head>
 <body>
@@ -113,7 +115,7 @@ footer a{font-weight:800}
 <ul class="frames">
 <li class="frame"><span class="frame-emoji" aria-hidden="true">🐒</span><a href="ahvihotell/">Ahvihotell</a><small>Korja kalliskivid, ahvid jälitavad</small></li>
 <li class="frame"><span class="frame-emoji" aria-hidden="true">🤖</span><a href="ralf-ti/">Ralf TI</a><small>Robot aitab kõiki aineid õppida</small></li>
-<li class="frame"><span class="frame-emoji" aria-hidden="true">💛</span><a href="hea-tahte-mang/">Hea tahte mäng</a><small>Aita teisi ja korja südameid</small></li>
+<li class="frame"><span class="frame-emoji" aria-hidden="true">💛</span><span class="frame-tag">🍎 Õpetaja mäng</span><a href="hea-tahte-mang/">Hea tahte mäng</a><small>Aita teisi ja korja südameid</small></li>
 <li class="frame"><span class="frame-emoji" aria-hidden="true">🥋</span><a href="anime-areen/">Anime Areen</a><small>Anime-võitlus koos sõpradega</small></li>
 <li class="frame"><span class="frame-emoji" aria-hidden="true">🦔</span><a href="siil-metsas/">Siil metsas</a><small>Väike siil jalutab metsas</small></li>
 <li class="frame"><span class="frame-emoji" aria-hidden="true">🥦</span><a href="lehvitav-kriipsujuku/">Brokoli püüdmine</a><small>Püüa brokoleid, ära puuduta tsillit!</small></li>

@@ -1,5 +1,5 @@
 // Ahvihotell: a first-person maze game in a dark hotel, alone or together with 2-4 players.
-// Collect all gems while three monkeys hunt you. A blue ball shows them on the map for 30 s.
+// Collect all gems while three monkeys hunt you. A blue eye ball shows them on everyone's map for 30 s.
 // Every gem you pick up goes to your wallet; the shop sells accessories for your character.
 import { lab } from '../lab.js';
 
@@ -865,7 +865,7 @@ function lampAt(px, py, cell = Math.floor(py) * MW + Math.floor(px)) {
 
 let state = 'menu'; // menu, rooms, wait, shop, play, scare, over, spec, lost, win
 let mode = 'solo';  // solo or team
-let player = { x: 1.5, y: 1.5, a: 0, walk: 0 };
+let player = { x: 1.5, y: 1.5, a: 0, p: 0, walk: 0 };
 let items = [];
 let monkeys = [];
 let lives = LIVES;
@@ -901,7 +901,7 @@ function newGame(seed) {
   placeLamps();
   const sx = (CW >> 1) * 2 + 1;
   const sy = (CH >> 1) * 2 + 1;
-  player = { x: sx + 0.5, y: sy + 0.5, a: 0, walk: 0 };
+  player = { x: sx + 0.5, y: sy + 0.5, a: 0, p: 0, walk: 0 };
   for (const [dx, dy] of DIRS) if (!wall(sx + dx, sy + dy)) { player.a = Math.atan2(dy, dx); break; }
   const free = [];
   for (let y = 0; y < MH; y++) {
@@ -1137,10 +1137,9 @@ function takeItem(i, mine) {
   if (!it || !it.alive) return;
   it.alive = false;
   if (!it.ball) gemsLeft--;
-  if (mine) {
-    if (it.ball) { power = POWER_TIME; sfx.ball(); } else { picked++; me.gems++; saveProfile(); sfx.gem(); }
-    if (mode === 'team' && room) room.send({ t: 'take', i });
-  }
+  // The eye ball shows the monkeys to the whole team, not only to whoever found it.
+  if (it.ball) { power = POWER_TIME; sfx.ball(); } else if (mine) { picked++; me.gems++; saveProfile(); sfx.gem(); }
+  if (mine && mode === 'team' && room) room.send({ t: 'take', i });
   updateHud();
 }
 
@@ -1153,6 +1152,7 @@ function caught(m) {
   scareKind = rand(3);
   scareLoud = false;
   scareA0 = player.a;
+  player.p = 0;
   if (scareKind === 1) sfx.lightsOut();
   if (scareKind === 2) {
     sfx.breath();
@@ -1455,7 +1455,8 @@ function render(cam) {
   const dirY = Math.sin(cam.a);
   const planeX = -dirY * FOV;
   const planeY = dirX * FOV;
-  const horizon = H / 2 + Math.sin(cam.walk) * 2.5;
+  // cam.p looks up (+) or down (-) by moving the horizon.
+  const horizon = H / 2 + (cam.p || 0) * H * 0.4 + Math.sin(cam.walk) * 2.5;
   const light = (d) => clamp(1.2 - d / 5.5, 0, 1) * flick;
   // Some old bulbs keep flickering on their own.
   for (const l of lamps) l.f = flick * (l.bad && Math.sin(time * 17 + l.ph) * Math.sin(time * 5.3 + l.ph) > 0.35 ? 0.15 : 1);
@@ -2135,22 +2136,31 @@ function updateHint() {
 canvas.addEventListener('click', () => { if (state === 'spec') nextSpec(); else lockMouse(); });
 document.addEventListener('pointerlockchange', updateHint);
 document.addEventListener('mousemove', (e) => {
-  if (document.pointerLockElement === canvas && state === 'play') player.a += e.movementX * 0.0025;
+  if (document.pointerLockElement === canvas && state === 'play') {
+    player.a += e.movementX * 0.0025;
+    player.p = clamp(player.p - e.movementY * 0.003, -1, 1);
+  }
 });
 
-// Touch: drag a finger across the picture to look around.
+// Touch: drag a finger across the picture to look around, up and down.
 let touchId = null;
 let touchX = 0;
+let touchY = 0;
 canvas.addEventListener('pointerdown', (e) => {
   if (e.pointerType !== 'touch' || touchId !== null) return;
   touchId = e.pointerId;
   touchX = e.clientX;
+  touchY = e.clientY;
   initAudio();
 });
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerId !== touchId) return;
-  if (state === 'play') player.a += (e.clientX - touchX) * 0.008;
+  if (state === 'play') {
+    player.a += (e.clientX - touchX) * 0.008;
+    player.p = clamp(player.p - (e.clientY - touchY) * 0.006, -1, 1);
+  }
   touchX = e.clientX;
+  touchY = e.clientY;
 });
 for (const ev of ['pointerup', 'pointercancel']) {
   canvas.addEventListener(ev, (e) => { if (e.pointerId === touchId) touchId = null; });

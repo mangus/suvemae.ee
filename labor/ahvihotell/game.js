@@ -159,27 +159,6 @@ function makeWallTex(kind, num) {
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     g.fillText(String(num), 32, 16.5);
-  } else if (kind === 'lamp') {
-    // A brass wall lamp with a round glass bulb, shaded so it looks 3D.
-    const lg = g.createRadialGradient(36, 30, 2, 36, 30, 28);
-    lg.addColorStop(0, 'rgba(255,200,120,0.8)');
-    lg.addColorStop(1, 'rgba(255,200,120,0)');
-    g.fillStyle = lg; g.fillRect(0, 0, TEX, 60);
-    blob(g, 39, 36, 9, 7, 'rgba(0,0,0,0.35)');
-    blob(g, 28, 14, 4, 7, '#6a4a1a');
-    blob(g, 27, 13, 2, 4.5, '#e0bf6a');
-    g.strokeStyle = '#b08a3a';
-    g.lineWidth = 2.5;
-    g.lineCap = 'round';
-    g.beginPath(); g.moveTo(28, 16); g.quadraticCurveTo(43, 17, 36, 23); g.stroke();
-    blob(g, 36, 24, 4, 2, '#b08a3a');
-    const bulb = g.createRadialGradient(33, 28, 1, 36, 31, 9);
-    bulb.addColorStop(0, '#ffffff');
-    bulb.addColorStop(0.5, '#ffd27a');
-    bulb.addColorStop(1, '#c0701a');
-    g.fillStyle = bulb;
-    g.beginPath(); g.arc(36, 31, 9, 0, Math.PI * 2); g.fill();
-    blob(g, 33, 27, 2.5, 1.6, 'rgba(255,255,255,0.85)');
   } else if (kind === 'scratch') {
     g.strokeStyle = '#140705';
     g.lineWidth = 1.5;
@@ -188,14 +167,13 @@ function makeWallTex(kind, num) {
   return c;
 }
 
-const wallTex = { plain: makeWallTex('plain'), lamp: makeWallTex('lamp'), scratch: makeWallTex('scratch'), doors: [] };
+const wallTex = { plain: makeWallTex('plain'), scratch: makeWallTex('scratch'), doors: [] };
 for (const n of [101, 104, 113, 207, 212, 216, 304, 313]) wallTex.doors.push(makeWallTex('door', n));
 
 function texFor(x, y) {
   const h = (Math.imul(x, 73856093) ^ Math.imul(y, 19349663)) >>> 0;
   const r = h % 13;
   if (r < 2) return wallTex.doors[(h >>> 4) % wallTex.doors.length];
-  if (r === 2) return wallTex.lamp;
   if (r === 3) return wallTex.scratch;
   return wallTex.plain;
 }
@@ -227,37 +205,81 @@ function drawBall(g, s) {
   blob(g, 32, 33, 3, 3, '#103070');
 }
 
-function drawMonkey(g) {
+// A round monkey seen from the front (0), the side (1, facing right) or the back (2).
+// swing goes from -1 to 1 and moves its arms, legs and tail while it runs.
+function drawMonkey(g, view, swing) {
   const fur = '#3a2215';
   const dark = '#24140b';
+  const s = swing;
+  const up = (k) => Math.max(0, k) * 6;
   g.lineCap = 'round';
-  g.strokeStyle = fur;
-  g.lineWidth = 11;
-  g.beginPath(); g.moveTo(42, 70); g.quadraticCurveTo(14, 92, 20, 122); g.stroke();
-  g.beginPath(); g.moveTo(86, 70); g.quadraticCurveTo(114, 92, 108, 122); g.stroke();
-  g.strokeStyle = '#d9cfb8';
-  g.lineWidth = 2;
-  for (const hx of [20, 108]) {
-    for (let i = -1; i <= 1; i++) { g.beginPath(); g.moveTo(hx + i * 4, 124); g.lineTo(hx + i * 5, 128); g.stroke(); }
-  }
-  blob(g, 64, 90, 28, 30, fur);
-  blob(g, 64, 96, 16, 18, '#5a3a28');
-  blob(g, 50, 120, 10, 8, dark);
-  blob(g, 78, 120, 10, 8, dark);
-  blob(g, 36, 40, 10, 11, fur); blob(g, 92, 40, 10, 11, fur);
-  blob(g, 36, 40, 5, 6, '#7a4535'); blob(g, 92, 40, 5, 6, '#7a4535');
-  blob(g, 64, 44, 27, 25, fur);
-  poly(g, [44, 28, 50, 12, 56, 24, 62, 6, 68, 24, 76, 12, 84, 28], fur);
-  blob(g, 64, 50, 19, 17, '#8a5a44');
-  blob(g, 56, 44, 7, 6, '#120606'); blob(g, 72, 44, 7, 6, '#120606');
-  poly(g, [46, 34, 62, 41, 61, 37, 48, 31], dark);
-  poly(g, [82, 34, 66, 41, 67, 37, 80, 31], dark);
-  blob(g, 61, 52, 1.5, 2, '#120606'); blob(g, 67, 52, 1.5, 2, '#120606');
-  blob(g, 64, 60, 12, 6, '#2a0000');
-  for (let i = 0; i < 6; i++) {
-    const x = 54 + i * 4 - 2;
-    poly(g, [x, 55, x + 4, 55, x + 2, 59.5], '#f0e8d0');
-    poly(g, [x, 65, x + 4, 65, x + 2, 60.5], '#f0e8d0');
+  if (view === 1) {
+    // The far arm and foot are darker, behind the body.
+    g.strokeStyle = dark;
+    g.lineWidth = 9;
+    g.beginPath(); g.moveTo(58, 72); g.quadraticCurveTo(74 - s * 10, 96, 80 - s * 16, 122 - up(-s)); g.stroke();
+    blob(g, 58 - s * 12, 121 - up(-s), 13, 6, dark);
+    g.strokeStyle = fur;
+    g.lineWidth = 7;
+    g.beginPath(); g.moveTo(42, 100); g.bezierCurveTo(10, 100 + s * 6, 10 + s * 8, 60, 28 + s * 6, 62); g.stroke();
+    blob(g, 60, 88, 24, 30, fur);
+    blob(g, 72, 94, 10, 16, '#5a3a28');
+    blob(g, 58 + s * 12, 121 - up(s), 14, 7, fur);
+    g.lineWidth = 10;
+    g.beginPath(); g.moveTo(62, 72); g.quadraticCurveTo(80 + s * 10, 96, 82 + s * 16, 122 - up(s)); g.stroke();
+    blob(g, 62, 44, 24, 24, fur);
+    poly(g, [44, 30, 50, 12, 58, 26, 66, 10, 72, 28], fur);
+    blob(g, 50, 42, 8, 10, fur);
+    blob(g, 50, 42, 4, 6, '#7a4535');
+    blob(g, 84, 54, 15, 12, '#8a5a44');
+    poly(g, [76, 57, 98, 55, 96, 64, 78, 64], '#2a0000');
+    poly(g, [82, 57, 86, 57, 84, 61], '#f0e8d0');
+    poly(g, [89, 56, 93, 56, 91, 60], '#f0e8d0');
+    poly(g, [66, 36, 84, 40, 84, 36, 68, 32], dark);
+    blob(g, 74, 44, 5, 5, '#120606');
+  } else {
+    const back = view === 2;
+    // Seen from behind, the monkey's left is on the left of the picture.
+    const a = back ? -s : s;
+    g.strokeStyle = fur;
+    g.lineWidth = 11;
+    const ly = 122 - up(a) * 1.3;
+    const ry = 122 - up(-a) * 1.3;
+    g.beginPath(); g.moveTo(42, 70); g.quadraticCurveTo(14, 92, 20, ly); g.stroke();
+    g.beginPath(); g.moveTo(86, 70); g.quadraticCurveTo(114, 92, 108, ry); g.stroke();
+    if (!back) {
+      g.strokeStyle = '#d9cfb8';
+      g.lineWidth = 2;
+      for (const [hx, hy] of [[20, ly], [108, ry]]) {
+        for (let i = -1; i <= 1; i++) { g.beginPath(); g.moveTo(hx + i * 4, hy + 2); g.lineTo(hx + i * 5, hy + 6); g.stroke(); }
+      }
+    }
+    blob(g, 50, 120 - up(-a), 10, 8, dark);
+    blob(g, 78, 120 - up(a), 10, 8, dark);
+    blob(g, 64 + a * 1.5, 90, 28, 30, fur);
+    if (back) {
+      blob(g, 64, 88, 5, 22, dark);
+      g.strokeStyle = dark;
+      g.lineWidth = 7;
+      g.beginPath(); g.moveTo(64, 108); g.bezierCurveTo(100 + a * 10, 112, 106 + a * 14, 64, 88 + a * 16, 60); g.stroke();
+    } else blob(g, 64 + a * 1.5, 96, 16, 18, '#5a3a28');
+    blob(g, 36, 40, 10, 11, fur); blob(g, 92, 40, 10, 11, fur);
+    if (!back) { blob(g, 36, 40, 5, 6, '#7a4535'); blob(g, 92, 40, 5, 6, '#7a4535'); }
+    blob(g, 64, 44, 27, 25, fur);
+    poly(g, [44, 28, 50, 12, 56, 24, 62, 6, 68, 24, 76, 12, 84, 28], fur);
+    if (!back) {
+      blob(g, 64, 50, 19, 17, '#8a5a44');
+      blob(g, 56, 44, 7, 6, '#120606'); blob(g, 72, 44, 7, 6, '#120606');
+      poly(g, [46, 34, 62, 41, 61, 37, 48, 31], dark);
+      poly(g, [82, 34, 66, 41, 67, 37, 80, 31], dark);
+      blob(g, 61, 52, 1.5, 2, '#120606'); blob(g, 67, 52, 1.5, 2, '#120606');
+      blob(g, 64, 60, 12, 6, '#2a0000');
+      for (let i = 0; i < 6; i++) {
+        const x = 54 + i * 4 - 2;
+        poly(g, [x, 55, x + 4, 55, x + 2, 59.5], '#f0e8d0');
+        poly(g, [x, 65, x + 4, 65, x + 2, 60.5], '#f0e8d0');
+      }
+    }
   }
   // Round 3D shading: light from the upper left, shadow on the far side.
   g.globalCompositeOperation = 'source-atop';
@@ -271,14 +293,18 @@ function drawMonkey(g) {
   g.globalCompositeOperation = 'source-over';
 }
 
-function drawMonkeyEyes(g) {
-  for (const x of [56, 72]) {
-    const e = g.createRadialGradient(x, 44, 0, x, 44, 7);
-    e.addColorStop(0, '#ffffff');
-    e.addColorStop(0.25, '#ff2a00');
-    e.addColorStop(1, 'rgba(255,0,0,0)');
-    g.fillStyle = e; g.fillRect(x - 7, 37, 14, 14);
-  }
+// The glowing red eyes, drawn after the darkness so they always shine.
+function monkeyEyes(view) {
+  const eyes = view === 0 ? [56, 72] : view === 1 ? [74] : [];
+  return (g) => {
+    for (const x of eyes) {
+      const e = g.createRadialGradient(x, 44, 0, x, 44, 7);
+      e.addColorStop(0, '#ffffff');
+      e.addColorStop(0.25, '#ff2a00');
+      e.addColorStop(1, 'rgba(255,0,0,0)');
+      g.fillStyle = e; g.fillRect(x - 7, 37, 14, 14);
+    }
+  };
 }
 
 // Pre-render each sprite at several brightness levels for the darkness fog.
@@ -534,7 +560,9 @@ const lampSprite = makeCanvas(64, 64);
 drawHangLamp(lampSprite.getContext('2d'));
 const haloSprite = glowCanvas(false);
 const poolSprite = glowCanvas(true);
-const monkeySprite = shaded(128, drawMonkey, 0, drawMonkeyEyes);
+// Every side of the monkey in five running poses, from one arm forward to the other.
+const MONKEY_POSES = [-1, -0.5, 0, 0.5, 1];
+const monkeySprites = [0, 1, 2].map((v) => MONKEY_POSES.map((p) => shaded(128, (g) => drawMonkey(g, v, p), 0, monkeyEyes(v))));
 const humanCache = new Map();
 function humanSprite(look) {
   const key = `${look.b}-${look.s}-${look.k}-${look.w.join(',')}`;
@@ -725,7 +753,7 @@ function bfs(sx, sy) {
 
 // ---------- Hotel lights ----------
 
-// Lamps hang from the ceiling and sit on the walls; each one lights the corridors around it.
+// Lamps hang from the ceiling; each one lights the corridors around it.
 const LAMP_REACH = 3.2;
 let lamps = [];     // { x, y, hang, p: strength, f: brightness this frame, bad: flickers }
 let lampLinks = []; // per map cell: indexes of the lamps that can shine there
@@ -736,13 +764,7 @@ function placeLamps() {
     for (let x = 1; x < MW - 1; x++) {
       const h = (Math.imul(x, 2654435761) ^ Math.imul(y + 7, 40503)) >>> 0;
       const lamp = { f: 1, ph: h % 100, bad: h % 5 === 0 };
-      if (!map[y * MW + x]) {
-        if (x % 2 && y % 2 && (h >>> 3) % 7 === 0) lamps.push({ ...lamp, x: x + 0.5, y: y + 0.5, hang: true, p: 1 });
-      } else if (texFor(x, y) === wallTex.lamp) {
-        for (const [dx, dy] of DIRS) {
-          if (!wall(x + dx, y + dy)) lamps.push({ ...lamp, x: x + 0.5 + dx * 0.58, y: y + 0.5 + dy * 0.58, hang: false, p: 0.7 });
-        }
-      }
+      if (!map[y * MW + x] && x % 2 && y % 2 && (h >>> 3) % 7 === 0) lamps.push({ ...lamp, x: x + 0.5, y: y + 0.5, hang: true, p: 1 });
     }
   }
   // Light only travels along corridors, never through walls.
@@ -983,7 +1005,15 @@ function world(dt) {
     if (netT <= 0) { netT = NET_STEP; sendState(); }
     if (gemsLeft <= 0) { win(); return; }
   } else simMonkeys(dt);
-  for (const m of monkeys) m.step += dt * 8;
+  for (const m of monkeys) {
+    m.step += dt * 8;
+    // Remember which way each monkey runs, so it can be drawn from the right side.
+    const mx = m.x - (m.lx ?? m.x);
+    const my = m.y - (m.ly ?? m.y);
+    const d2 = mx * mx + my * my;
+    if (d2 > 1e-6 && d2 < 1) m.h = Math.atan2(my, mx);
+    m.lx = m.x; m.ly = m.y;
+  }
   flickT -= dt;
   if (flickT > 0) flick = 0.35 + Math.random() * 0.65;
   else { flick = 1; if (Math.random() < dt * 0.15) flickT = 0.15 + Math.random() * 0.4; }
@@ -1204,7 +1234,8 @@ function drawMini() {
   mctx.stroke();
 }
 
-function drawSprite(lv, size, wx, wy, scale, lift, view) {
+// flip mirrors the picture, so a monkey seen from the side can face left or right.
+function drawSprite(lv, size, wx, wy, scale, lift, view, flip) {
   const sx = wx - view.x;
   const sy = wy - view.y;
   const depth = sx * view.dx + sy * view.dy;
@@ -1220,9 +1251,26 @@ function drawSprite(lv, size, wx, wy, scale, lift, view) {
   const x1 = Math.min(W - 1, Math.floor(left + sz));
   for (let x = x0; x <= x1; x++) {
     if (depth >= zbuf[x]) continue;
-    const tx = clamp(Math.floor(((x - left) / sz) * size), 0, size - 1);
+    let tx = clamp(Math.floor(((x - left) / sz) * size), 0, size - 1);
+    if (flip) tx = size - 1 - tx;
     ctx.drawImage(img, tx, 0, 1, size, x, bottom - sz, 1, sz);
   }
+}
+
+// Picks how the camera sees a monkey: from the front, the side or the back, in its running pose.
+function monkeyLook(m, view) {
+  let side = 0;
+  let flip = false;
+  if (m.h !== undefined) {
+    const hx = Math.cos(m.h);
+    const hy = Math.sin(m.h);
+    const tx = view.x - m.x;
+    const ty = view.y - m.y;
+    const toward = (hx * tx + hy * ty) / (Math.hypot(tx, ty) || 1);
+    if (toward < -0.7) side = 2;
+    else if (toward < 0.7) { side = 1; flip = hy * view.dx - hx * view.dy < 0; }
+  }
+  return [monkeySprites[side][Math.round(Math.sin(m.step) * 2) + 2], flip];
 }
 
 // Lamps, halos and light pools shine by themselves, so they skip the darkness.
@@ -1324,7 +1372,10 @@ function render(cam) {
     if (s.kind === 'lamp') {
       if (e.hang) drawGlow(lampSprite, 64, e.x, e.y, 0.45, 0.55, view, Math.max(0.35, e.f), false);
       drawGlow(haloSprite, 64, e.x, e.y, e.hang ? 0.9 : 0.6, e.hang ? 0.29 : 0.42, view, e.f * e.p, true);
-    } else if (s.kind === 'monkey') drawSprite(monkeySprite, 128, e.x, e.y, 0.95, Math.abs(Math.sin(e.step)) * 0.04, view);
+    } else if (s.kind === 'monkey') {
+      const [lv, flip] = monkeyLook(e, view);
+      drawSprite(lv, 128, e.x, e.y, 0.95, Math.abs(Math.sin(e.step)) * 0.04, view, flip);
+    }
     else if (s.kind === 'human') drawSprite(humanSprite(e.look), 128, e.x, e.y, 0.9, Math.abs(Math.sin(e.walk)) * 0.03, view);
     else if (s.kind === 'ball') drawSprite(ballSprite, 64, e.x, e.y, 0.34, 0.22 + Math.sin(time * 3 + e.phase) * 0.05, view);
     else drawSprite(gemSprites[e.color], 64, e.x, e.y, 0.3, 0.2 + Math.sin(time * 3 + e.phase) * 0.05, view);

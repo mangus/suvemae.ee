@@ -32,6 +32,12 @@ const MAX_PLAYERS = 4;
 const NET_STEP = 1 / 15; // send our position 15 times a second
 const SHIRTS = [['#e53935', '🔴'], ['#fb8c00', '🟠'], ['#fdd835', '🟡'], ['#43a047', '🟢'], ['#1e88e5', '🔵'], ['#8e24aa', '🟣']];
 const SKINS = ['#f6d3b3', '#e2b08a', '#b47b52', '#70472c'];
+const BODIES = [
+  { id: 'inimene', name: 'Inimene', icon: '🧍', price: 0 },
+  { id: 'robot', name: 'Robot', icon: '🤖', price: 60 },
+  { id: 'kummitus', name: 'Kummitus', icon: '👻', price: 60 },
+  { id: 'tulnukas', name: 'Tulnukas', icon: '👽', price: 80 },
+];
 const SHOP = [
   { id: 'lips', slot: 'head', name: 'Juukselips', icon: '🎀', price: 20 },
   { id: 'myts', slot: 'head', name: 'Nokamüts', icon: '🧢', price: 25 },
@@ -246,39 +252,16 @@ function shaded(size, draw, glow, after) {
   }
   return out;
 }
-// A player is a person in a coloured shirt, with the accessories they wear.
+// A player is a person, a robot, a ghost or an alien, with the accessories they wear.
 function drawHuman(g, look) {
   const shirt = SHIRTS[look.s][0];
-  const skin = SKINS[look.k];
-  const hair = '#3a2414';
+  const body = BODIES[look.b].id;
   const has = (id) => look.w.includes(id);
+  const hat = look.w.some((id) => SHOP.find((s) => s.id === id).slot === 'head');
   if (has('keep')) poly(g, [46, 54, 82, 54, 98, 118, 30, 118], '#d32f2f');
-  g.fillStyle = '#2b3a67';
-  g.fillRect(50, 94, 12, 26);
-  g.fillRect(66, 94, 12, 26);
-  blob(g, 55, 121, 9, 4, '#1b1b1b');
-  blob(g, 73, 121, 9, 4, '#1b1b1b');
-  g.lineCap = 'round';
-  g.strokeStyle = shirt;
-  g.lineWidth = 9;
-  g.beginPath(); g.moveTo(47, 62); g.lineTo(38, 92); g.stroke();
-  g.beginPath(); g.moveTo(81, 62); g.lineTo(90, 92); g.stroke();
-  blob(g, 38, 95, 5, 5, skin);
-  blob(g, 90, 95, 5, 5, skin);
-  poly(g, [46, 56, 82, 56, 85, 98, 43, 98], shirt);
-  g.fillStyle = 'rgba(255,255,255,0.25)';
-  g.fillRect(45, 74, 39, 5);
-  g.fillStyle = skin;
-  g.fillRect(59, 46, 10, 12);
-  blob(g, 64, 36, 15, 16, skin);
-  blob(g, 64, 25, 16, 8, hair);
-  blob(g, 50, 31, 4, 8, hair);
-  blob(g, 78, 31, 4, 8, hair);
-  blob(g, 58, 37, 2, 2.5, '#1a1010');
-  blob(g, 70, 37, 2, 2.5, '#1a1010');
-  g.strokeStyle = '#8a3a2a';
-  g.lineWidth = 1.8;
-  g.beginPath(); g.arc(64, 42, 5, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+  if (body === 'robot') drawRobot(g, shirt, hat);
+  else if (body === 'kummitus') drawGhost(g, shirt);
+  else drawPerson(g, shirt, body === 'tulnukas' ? '#7ee06e' : SKINS[look.k], body === 'tulnukas', hat);
   if (has('sall')) {
     g.fillStyle = '#ffeb3b'; g.fillRect(52, 52, 24, 7); g.fillRect(67, 58, 7, 16);
     g.fillStyle = '#e53935';
@@ -303,12 +286,124 @@ function drawHuman(g, look) {
   }
 }
 
+function drawPerson(g, shirt, skin, alien, hat) {
+  g.fillStyle = '#2b3a67';
+  g.fillRect(50, 94, 12, 26);
+  g.fillRect(66, 94, 12, 26);
+  blob(g, 55, 121, 9, 4, '#1b1b1b');
+  blob(g, 73, 121, 9, 4, '#1b1b1b');
+  g.lineCap = 'round';
+  g.strokeStyle = shirt;
+  g.lineWidth = 9;
+  g.beginPath(); g.moveTo(47, 62); g.lineTo(38, 92); g.stroke();
+  g.beginPath(); g.moveTo(81, 62); g.lineTo(90, 92); g.stroke();
+  blob(g, 38, 95, 5, 5, skin);
+  blob(g, 90, 95, 5, 5, skin);
+  poly(g, [46, 56, 82, 56, 85, 98, 43, 98], shirt);
+  g.fillStyle = 'rgba(255,255,255,0.25)';
+  g.fillRect(45, 74, 39, 5);
+  g.fillStyle = skin;
+  g.fillRect(59, 46, 10, 12);
+  if (alien) {
+    // Antennae poke out only when there is no hat on top.
+    if (!hat) {
+      g.strokeStyle = skin;
+      g.lineWidth = 2.5;
+      g.beginPath(); g.moveTo(57, 24); g.lineTo(50, 8); g.moveTo(71, 24); g.lineTo(78, 8); g.stroke();
+      blob(g, 50, 8, 4, 4, '#ffd23b');
+      blob(g, 78, 8, 4, 4, '#ffd23b');
+    }
+    blob(g, 64, 35, 18, 17, skin);
+    blob(g, 57, 36, 5, 3.5, '#101010');
+    blob(g, 71, 36, 5, 3.5, '#101010');
+    blob(g, 56, 35, 1.5, 1, '#ffffff');
+    blob(g, 70, 35, 1.5, 1, '#ffffff');
+    g.strokeStyle = '#2e6b28';
+  } else {
+    const hair = '#3a2414';
+    blob(g, 64, 36, 15, 16, skin);
+    blob(g, 64, 25, 16, 8, hair);
+    blob(g, 50, 31, 4, 8, hair);
+    blob(g, 78, 31, 4, 8, hair);
+    blob(g, 58, 37, 2, 2.5, '#1a1010');
+    blob(g, 70, 37, 2, 2.5, '#1a1010');
+    g.strokeStyle = '#8a3a2a';
+  }
+  g.lineWidth = 1.8;
+  g.beginPath(); g.arc(64, 42, 5, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+}
+
+function drawRobot(g, shirt, hat) {
+  g.fillStyle = '#8f9aa6';
+  g.fillRect(51, 94, 11, 24);
+  g.fillRect(66, 94, 11, 24);
+  g.fillStyle = '#4a525c';
+  g.fillRect(48, 116, 16, 6);
+  g.fillRect(64, 116, 16, 6);
+  g.lineCap = 'round';
+  g.strokeStyle = '#a7b1bc';
+  g.lineWidth = 8;
+  g.beginPath(); g.moveTo(46, 62); g.lineTo(37, 90); g.stroke();
+  g.beginPath(); g.moveTo(82, 62); g.lineTo(91, 90); g.stroke();
+  blob(g, 37, 94, 5, 5, '#6c7680');
+  blob(g, 91, 94, 5, 5, '#6c7680');
+  g.fillStyle = '#c3ccd6';
+  g.fillRect(44, 56, 40, 40);
+  g.fillStyle = shirt;
+  g.fillRect(51, 63, 26, 18);
+  blob(g, 57, 88, 2.5, 2.5, '#ff3b6b');
+  blob(g, 64, 88, 2.5, 2.5, '#ffd23b');
+  blob(g, 71, 88, 2.5, 2.5, '#5dff6e');
+  g.fillStyle = '#7d8792';
+  g.fillRect(59, 48, 10, 9);
+  if (!hat) {
+    g.strokeStyle = '#7d8792';
+    g.lineWidth = 2.5;
+    g.beginPath(); g.moveTo(64, 22); g.lineTo(64, 10); g.stroke();
+    blob(g, 64, 9, 4, 4, '#ff3b6b');
+  }
+  g.fillStyle = '#7d8792';
+  g.fillRect(44, 30, 4, 10);
+  g.fillRect(80, 30, 4, 10);
+  g.fillStyle = '#d6dee7';
+  g.fillRect(48, 20, 32, 30);
+  g.fillStyle = '#1a1a2e';
+  g.fillRect(51, 30, 26, 10);
+  blob(g, 58, 35, 3, 3, '#4fd2ff');
+  blob(g, 70, 35, 3, 3, '#4fd2ff');
+  g.fillStyle = '#7d8792';
+  for (let x = 56; x <= 70; x += 4) g.fillRect(x, 43, 2, 4);
+}
+
+// A sheet ghost with a wavy hem; it is a little see-through.
+function drawGhost(g, shirt) {
+  const sheet = 'rgba(236, 242, 255, 0.88)';
+  g.fillStyle = sheet;
+  g.beginPath();
+  g.moveTo(44, 36);
+  g.arc(64, 36, 20, Math.PI, 0);
+  g.lineTo(90, 116);
+  for (let k = 0; k < 4; k++) {
+    const x = 90 - k * 13;
+    g.quadraticCurveTo(x - 6.5, 104, x - 13, 116);
+  }
+  g.closePath();
+  g.fill();
+  blob(g, 40, 70, 8, 5, sheet);
+  blob(g, 88, 70, 8, 5, sheet);
+  blob(g, 58, 36, 3.5, 5.5, '#111111');
+  blob(g, 70, 36, 3.5, 5.5, '#111111');
+  blob(g, 64, 47, 3, 4, '#111111');
+  blob(g, 52, 44, 3, 2, shirt);
+  blob(g, 76, 44, 3, 2, shirt);
+}
+
 const gemSprites = GEM_COLORS.map((c) => shaded(64, (g, s) => drawGem(g, s, c), 0.45));
 const ballSprite = shaded(64, drawBall, 0.6);
 const monkeySprite = shaded(128, drawMonkey, 0, drawMonkeyEyes);
 const humanCache = new Map();
 function humanSprite(look) {
-  const key = `${look.s}-${look.k}-${look.w.join(',')}`;
+  const key = `${look.b}-${look.s}-${look.k}-${look.w.join(',')}`;
   if (!humanCache.has(key)) humanCache.set(key, shaded(128, (g) => drawHuman(g, look), 0.2));
   return humanCache.get(key);
 }
@@ -319,7 +414,7 @@ function cleanLook(l) {
   const o = l && typeof l === 'object' ? l : {};
   const idx = (v, n) => (Number.isInteger(v) && v >= 0 && v < n ? v : 0);
   const w = Array.isArray(o.w) ? o.w.filter((id) => SHOP.some((s) => s.id === id)).slice(0, 4) : [];
-  return { s: idx(o.s, SHIRTS.length), k: idx(o.k, SKINS.length), w };
+  return { s: idx(o.s, SHIRTS.length), k: idx(o.k, SKINS.length), b: idx(o.b, BODIES.length), w };
 }
 const STORE = 'ahvihotell-mina';
 function loadProfile() {
@@ -328,13 +423,16 @@ function loadProfile() {
   if (!o || typeof o !== 'object') o = {};
   const owned = Array.isArray(o.owned) ? o.owned.filter((id) => SHOP.some((s) => s.id === id)) : [];
   const look = cleanLook({ s: Number.isInteger(o.shirt) ? o.shirt : Math.floor(Math.random() * SHIRTS.length), k: o.skin, w: o.wear });
-  return { gems: Math.max(0, Math.floor(Number(o.gems) || 0)), owned, wear: look.w.filter((id) => owned.includes(id)), shirt: look.s, skin: look.k };
+  const bodies = Array.isArray(o.bodies) ? o.bodies.filter((id) => BODIES.some((b) => b.id === id && b.price)) : [];
+  const b = BODIES[o.body];
+  const body = Number.isInteger(o.body) && b && (!b.price || bodies.includes(b.id)) ? o.body : 0;
+  return { gems: Math.max(0, Math.floor(Number(o.gems) || 0)), owned, wear: look.w.filter((id) => owned.includes(id)), shirt: look.s, skin: look.k, bodies, body };
 }
 const me = loadProfile();
 function saveProfile() {
   try { localStorage.setItem(STORE, JSON.stringify(me)); } catch (e) { /* private mode */ }
 }
-const myLook = () => ({ s: me.shirt, k: me.skin, w: me.wear.slice() });
+const myLook = () => ({ s: me.shirt, k: me.skin, b: me.body, w: me.wear.slice() });
 
 // ---------- Sound (Web Audio, starts after the first tap) ----------
 
@@ -1393,6 +1491,27 @@ function drawShop() {
   drawHuman(g, myLook());
   pickRow($('shirtPick'), SHIRTS.map(([, icon]) => icon), me.shirt, (i) => { me.shirt = i; });
   pickRow($('skinPick'), SKINS.map(() => ''), me.skin, (i) => { me.skin = i; }, SKINS);
+  // Skin colour is only for people.
+  for (const id of ['skinLabel', 'skinPick']) $(id).style.display = me.body === 0 ? '' : 'none';
+  const bodyBox = $('bodyItems');
+  bodyBox.textContent = '';
+  BODIES.forEach((body, i) => {
+    const div = el('div', 'item');
+    const b = el('button');
+    if (body.price && !me.bodies.includes(body.id)) {
+      b.textContent = `Osta ${body.price} 💎`;
+      b.disabled = me.gems < body.price;
+      b.addEventListener('click', () => buyBody(i));
+    } else if (me.body === i) {
+      b.textContent = 'Valitud';
+      b.className = 'wearing';
+    } else {
+      b.textContent = 'Vali';
+      b.addEventListener('click', () => { me.body = i; saveProfile(); drawShop(); });
+    }
+    div.append(el('span', 'icon', body.icon), el('span', '', body.name), b);
+    bodyBox.append(div);
+  });
   const box = $('shopItems');
   box.textContent = '';
   for (const item of SHOP) {
@@ -1430,6 +1549,18 @@ function pickRow(box, labels, current, set, colors) {
 function wear(item, on) {
   me.wear = me.wear.filter((id) => SHOP.find((s) => s.id === id).slot !== item.slot);
   if (on) me.wear.push(item.id);
+  saveProfile();
+  drawShop();
+}
+
+function buyBody(i) {
+  const body = BODIES[i];
+  if (me.gems < body.price || me.bodies.includes(body.id)) return;
+  initAudio();
+  me.gems -= body.price;
+  me.bodies.push(body.id);
+  me.body = i;
+  sfx.ball();
   saveProfile();
   drawShop();
 }

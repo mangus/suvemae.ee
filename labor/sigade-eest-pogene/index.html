@@ -4,31 +4,32 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Põgene sigade eest!</title>
-  <meta name="description" content="3D põgenemismäng, kus pead metsarajal näljaste sigade eest ära jooksma.">
+  <meta name="description" content="3D-mäng, kus oled siil, korjad metsalagendikul õunu ja põgened näljaste sigade eest.">
   <link rel="stylesheet" href="stiil.css">
 </head>
 <body>
   <header>
     <a class="tagasi" href="../">← labor</a>
-    <h1>Põgene sigade eest! 🐷</h1>
+    <h1>Põgene sigade eest! 🦔🐷</h1>
   </header>
   <main>
     <div id="mang">
-      <canvas id="vaade" width="800" height="450" aria-label="3D põgenemismäng"></canvas>
-      <div id="info"><span id="aeg">Aeg: 0</span><span id="kaugus">Lähim siga: --</span></div>
+      <canvas id="vaade" width="800" height="450" aria-label="3D-mäng: siil põgeneb sigade eest"></canvas>
+      <div id="info"><span id="ounad">🍎 0/10</span><span id="aeg">⏱ 0 s</span><span id="kerra">🦔 valmis</span></div>
       <div id="teade" class="nahtav">
-        <h2 id="pealkiri">Ära lase sigadel end kätte saada!</h2>
-        <p id="juhis">Liigu noolte või WASD-klahvidega. Telefonis kasuta nuppe. Pea vastu 45 sekundit!</p>
+        <h2 id="pealkiri">Sina oled siil! 🦔</h2>
+        <p id="juhis">Korja 10 õuna ja ära lase sigadel end kätte saada. Kui siga tuleb liiga lähedale, keera end kerra: okkad lükkavad ta eemale!</p>
         <button id="alusta" type="button">Alusta mängu</button>
       </div>
-      <div id="nupud" aria-label="Liikumisnupud">
-        <button data-key="left" aria-label="Pööra vasakule">↶</button>
-        <button data-key="forward" aria-label="Liigu edasi">▲</button>
-        <button data-key="right" aria-label="Pööra paremale">↷</button>
-        <button data-key="back" aria-label="Liigu tagasi">▼</button>
+      <div id="nupud" aria-label="Juhtnupud">
+        <button type="button" data-key="left" aria-label="Pööra vasakule">↶</button>
+        <button type="button" data-key="forward" aria-label="Jookse edasi">▲</button>
+        <button type="button" data-key="right" aria-label="Pööra paremale">↷</button>
+        <button type="button" data-key="back" aria-label="Astu tagasi">▼</button>
+        <button type="button" data-key="curl" aria-label="Keera kerra">🦔</button>
       </div>
     </div>
-    <p class="abi">Arvutis: <b>WASD</b> või nooleklahvid. Telefonis hoia ekraaninuppu all.</p>
+    <p class="abi">Arvutis: <b>WASD</b> või nooleklahvid, <b>tühik</b> keerab siili kerra. Telefonis hoia nuppe all.</p>
   </main>
   <script type="module" src="mang.mjs"></script>
 </body>

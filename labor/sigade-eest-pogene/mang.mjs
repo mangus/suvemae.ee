@@ -1,4 +1,8 @@
-import { chasePlayer, isCaught, isWall, movePlayer } from './game-core.mjs';
+// Põgene sigade eest! A third-person 3D chase: the player is a hedgehog
+// collecting apples on a fenced forest meadow while pigs chase it.
+import { SIZE, chase, freeSpot, isCaught, knockBack, makeTrees, random, separate, step } from './game-core.mjs';
+import { render } from './mootor.mjs';
+import * as models from './mudelid.mjs';
 
 const canvas = document.getElementById('vaade');
 const ctx = canvas.getContext('2d');
@@ -6,189 +10,271 @@ const overlay = document.getElementById('teade');
 const title = document.getElementById('pealkiri');
 const guide = document.getElementById('juhis');
 const startButton = document.getElementById('alusta');
+const appleLabel = document.getElementById('ounad');
 const timeLabel = document.getElementById('aeg');
-const distanceLabel = document.getElementById('kaugus');
+const curlLabel = document.getElementById('kerra');
 
-const map = [
-  '################',
-  '#......#.......#',
-  '#.##...#..##...#',
-  '#..............#',
-  '#...###........#',
-  '#.........###..#',
-  '#..#...........#',
-  '#..#..####.....#',
-  '#..............#',
-  '#.....#....##..#',
-  '#.###.#........#',
-  '#.....#..###...#',
-  '#..............#',
-  '#...####.......#',
-  '#..............#',
-  '################',
+const GOAL = 10; // apples needed to win
+const HOG_RADIUS = 0.45;
+const PIG_RADIUS = 0.5;
+const RUN_SPEED = 4.2;
+const BACK_SPEED = 2.4;
+const TURN_SPEED = 2.6;
+const CURL_TIME = 1.3;
+const CURL_COOLDOWN = 4;
+const NEW_PIG_EVERY = 15;
+const MAX_PIGS = 6;
+const BEST_KEY = 'sigade-eest-pogene:parim-aeg';
+
+const mesh = {
+  hedgehog: models.hedgehog(),
+  ball: models.hedgehogBall(),
+  pig: models.pig(),
+  apple: models.apple(),
+  shadow: models.shadow(),
+};
+
+// The meadow is the same every time, so it can be learned.
+const trees = makeTrees(24, random(2026));
+const fir = models.fir();
+const leafy = models.leafyTree();
+const outside = random(99);
+const scenery = [
+  { mesh: models.fence(SIZE) },
+  ...trees.map((tree, i) => ({ mesh: i % 3 ? fir : leafy, x: tree.x, z: tree.z, scale: tree.size, rotY: i })),
+  ...Array.from({ length: 36 }, (_, i) => {
+    const angle = outside() * Math.PI * 2;
+    const distance = SIZE + 4 + outside() * 18;
+    return { mesh: i % 2 ? fir : leafy, x: Math.sin(angle) * distance, z: Math.cos(angle) * distance, scale: 0.9 + outside() * 0.7, rotY: i };
+  }),
 ];
+const groundLayer = [{ mesh: models.ground(SIZE) }];
+const treeShadows = trees.map((tree) => ({ mesh: mesh.shadow, x: tree.x, z: tree.z, scale: 2.2 * tree.size }));
 
-const FOV = Math.PI / 3;
-const RAYS = 240;
-const WIN_TIME = 45;
-const controls = { forward: false, back: false, left: false, right: false };
-let player;
+const controls = { forward: false, back: false, left: false, right: false, curl: false };
+let hog;
 let pigs;
+let apple;
+let apples;
+let elapsed;
+let nextPig;
 let playing = false;
-let startedAt = 0;
-let lastFrame = performance.now();
-let depth = [];
+let clock = 0;
+const cam = { yaw: 0 };
 
-function resetGame() {
-  player = { x: 2.5, y: 2.5, angle: 0.15 };
-  pigs = [
-    { x: 13.5, y: 2.5, bob: 0 },
-    { x: 3.5, y: 12.5, bob: 2 },
-    { x: 12.5, y: 13.5, bob: 4 },
-  ];
-  startedAt = performance.now();
+// Short beeps made with Web Audio; sound starts only after the first tap.
+let audio = null;
+function tone(freq, length, type = 'square', delay = 0) {
+  if (!audio) return;
+  const start = audio.currentTime + delay;
+  const osc = audio.createOscillator();
+  const gain = audio.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, start);
+  gain.gain.setValueAtTime(0.06, start);
+  gain.gain.exponentialRampToValueAtTime(0.001, start + length);
+  osc.connect(gain).connect(audio.destination);
+  osc.start(start);
+  osc.stop(start + length);
+}
+const sound = {
+  apple() { tone(660, 0.1); tone(990, 0.16, 'square', 0.08); },
+  curl() { tone(320, 0.18, 'triangle'); },
+  bump() { tone(200, 0.25, 'triangle'); tone(150, 0.2, 'triangle', 0.1); },
+  oink() { tone(170, 0.12, 'sawtooth'); tone(140, 0.16, 'sawtooth', 0.14); },
+  win() { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.22, 'square', i * 0.12)); },
+  lose() { tone(140, 0.5, 'sawtooth'); },
+};
+
+function readBest() {
+  try {
+    const value = Number(localStorage.getItem(BEST_KEY));
+    return value > 0 ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveBest(value) {
+  try {
+    localStorage.setItem(BEST_KEY, String(value));
+  } catch {
+    // no storage (private mode): the best time is simply not kept
+  }
+}
+
+function newPig() {
+  const spot = freeSpot(Math.random, trees, [hog, ...pigs], 10);
+  return { ...spot, heading: 0, stun: 0, knock: 0, bob: Math.random() * 6 };
+}
+
+function setupRound() {
+  hog = { x: 0, z: 0, heading: 0, curl: 0, cooldown: 0, moving: false };
+  pigs = [];
+  pigs.push(newPig());
+  pigs.push(newPig());
+  apple = freeSpot(Math.random, trees, [hog, ...pigs], 5);
+  apples = 0;
+  elapsed = 0;
+  nextPig = NEW_PIG_EVERY;
+  cam.yaw = 0;
+}
+
+function start() {
+  if (!audio && window.AudioContext) {
+    try { audio = new AudioContext(); } catch { audio = null; }
+  }
+  audio?.resume();
+  setupRound();
   playing = true;
   overlay.classList.remove('nahtav');
 }
 
 function endGame(won) {
   playing = false;
-  title.textContent = won ? 'Sa pääsesid! 🎉' : 'Siga sai su kätte! 🐷';
-  guide.textContent = won ? 'Pidasid 45 sekundit vastu. Väga osav põgenemine!' : 'Proovi uuesti ja kasuta seinu, et sigade eest ära pöörata.';
+  if (won) {
+    const time = Math.round(elapsed);
+    const best = Math.min(time, readBest() ?? Infinity);
+    saveBest(best);
+    title.textContent = 'Said kõik õunad! 🎉';
+    guide.textContent = `Aega kulus ${time} sekundit. Sinu parim aeg: ${best} sekundit.`;
+    sound.win();
+  } else {
+    title.textContent = 'Siga sai su kätte! 🐷';
+    guide.textContent = `Korjasid ${apples} õuna. Proovi uuesti ja keera end õigel hetkel kerra!`;
+    sound.lose();
+  }
   startButton.textContent = 'Mängi uuesti';
   overlay.classList.add('nahtav');
 }
 
-function normalizeAngle(angle) {
-  while (angle < -Math.PI) angle += Math.PI * 2;
-  while (angle > Math.PI) angle -= Math.PI * 2;
-  return angle;
-}
-
-function castRay(angle) {
-  const step = 0.025;
-  let distance = 0;
-  let x = player.x;
-  let y = player.y;
-  while (distance < 22) {
-    distance += step;
-    x = player.x + Math.cos(angle) * distance;
-    y = player.y + Math.sin(angle) * distance;
-    if (isWall(map, x, y)) return { distance, x, y };
-  }
-  return { distance: 22, x, y };
-}
-
-function drawWorld() {
-  const w = canvas.width;
-  const h = canvas.height;
-  const sky = ctx.createLinearGradient(0, 0, 0, h / 2);
-  sky.addColorStop(0, '#79c9ff');
-  sky.addColorStop(1, '#d8f4ff');
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, w, h / 2);
-  const ground = ctx.createLinearGradient(0, h / 2, 0, h);
-  ground.addColorStop(0, '#80bd50');
-  ground.addColorStop(1, '#244d2f');
-  ctx.fillStyle = ground;
-  ctx.fillRect(0, h / 2, w, h / 2);
-
-  const strip = w / RAYS;
-  depth = new Array(RAYS);
-  for (let ray = 0; ray < RAYS; ray += 1) {
-    const rayAngle = player.angle - FOV / 2 + ray / RAYS * FOV;
-    const hit = castRay(rayAngle);
-    const corrected = hit.distance * Math.cos(rayAngle - player.angle);
-    depth[ray] = corrected;
-    const wallHeight = Math.min(h * 1.8, h / Math.max(corrected, 0.01));
-    const texture = Math.abs((hit.x + hit.y) % 1 - 0.5);
-    const light = Math.max(28, 72 - corrected * 3 + texture * 18);
-    ctx.fillStyle = `hsl(${105 + texture * 30} 38% ${light}%)`;
-    ctx.fillRect(ray * strip, (h - wallHeight) / 2, strip + 1, wallHeight);
-  }
-}
-
-function drawPig(pig, elapsed) {
-  const dx = pig.x - player.x;
-  const dy = pig.y - player.y;
-  const distance = Math.hypot(dx, dy);
-  const angle = normalizeAngle(Math.atan2(dy, dx) - player.angle);
-  if (Math.abs(angle) > FOV * 0.7) return;
-  const screenX = (angle / FOV + 0.5) * canvas.width;
-  const rayIndex = Math.max(0, Math.min(RAYS - 1, Math.floor(screenX / canvas.width * RAYS)));
-  if (distance > depth[rayIndex] + 0.3) return;
-  const size = Math.min(canvas.height * 1.3, canvas.height / distance * 0.95);
-  const bob = Math.sin(elapsed * 9 + pig.bob) * size * 0.025;
-  const x = screenX;
-  const y = canvas.height / 2 + size * 0.14 + bob;
-
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.lineWidth = Math.max(2, size * 0.025);
-  ctx.strokeStyle = '#6b274b';
-  ctx.fillStyle = '#ff9eb5';
-  ctx.beginPath();
-  ctx.ellipse(0, 0, size * 0.34, size * 0.29, 0, 0, Math.PI * 2);
-  ctx.fill(); ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(-size*.25, -size*.2); ctx.lineTo(-size*.34, -size*.38); ctx.lineTo(-size*.08, -size*.29);
-  ctx.moveTo(size*.25, -size*.2); ctx.lineTo(size*.34, -size*.38); ctx.lineTo(size*.08, -size*.29);
-  ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#ffbfd0';
-  ctx.beginPath(); ctx.ellipse(0, size*.06, size*.16, size*.11, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#6b274b';
-  ctx.beginPath(); ctx.arc(-size*.055, size*.06, size*.025, 0, Math.PI*2); ctx.arc(size*.055, size*.06, size*.025, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#202033';
-  ctx.beginPath(); ctx.arc(-size*.12, -size*.08, size*.025, 0, Math.PI*2); ctx.arc(size*.12, -size*.08, size*.025, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#ffd54f';
-  ctx.beginPath(); ctx.arc(-size*.11, -size*.09, size*.008, 0, Math.PI*2); ctx.arc(size*.13, -size*.09, size*.008, 0, Math.PI*2); ctx.fill();
-  ctx.restore();
-}
-
-function drawPigs(elapsed) {
-  [...pigs]
-    .sort((a, b) => Math.hypot(b.x-player.x, b.y-player.y) - Math.hypot(a.x-player.x, a.y-player.y))
-    .forEach((pig) => drawPig(pig, elapsed));
-}
-
-function drawHands(elapsed) {
-  const sway = playing ? Math.sin(elapsed * 10) * 8 : 0;
-  ctx.fillStyle = '#ffe1bb';
-  ctx.strokeStyle = '#5b3b2b';
-  ctx.lineWidth = 5;
-  ctx.beginPath(); ctx.roundRect(canvas.width*.12+sway, canvas.height*.82, canvas.width*.12, canvas.height*.28, 28); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.roundRect(canvas.width*.76-sway, canvas.height*.82, canvas.width*.12, canvas.height*.28, 28); ctx.fill(); ctx.stroke();
-}
-
-function update(dt, elapsed) {
+function update(dt) {
   if (!playing) return;
-  const turn = 2.25 * dt;
-  if (controls.left) player.angle -= turn;
-  if (controls.right) player.angle += turn;
-  let motion = 0;
-  if (controls.forward) motion += 2.8 * dt;
-  if (controls.back) motion -= 2.1 * dt;
-  if (motion) {
-    const moved = movePlayer(player, Math.cos(player.angle) * motion, Math.sin(player.angle) * motion, map);
-    player.x = moved.x; player.y = moved.y;
+  elapsed += dt;
+  hog.curl = Math.max(0, hog.curl - dt);
+  hog.cooldown = Math.max(0, hog.cooldown - dt);
+  if (controls.curl && hog.cooldown === 0) {
+    hog.curl = CURL_TIME;
+    hog.cooldown = CURL_COOLDOWN;
+    sound.curl();
   }
-  const pigSpeed = (0.72 + Math.min(elapsed / 75, 0.32)) * dt;
-  pigs = pigs.map((pig) => ({ ...pig, ...chasePlayer(pig, player, pigSpeed, map) }));
-  const nearest = Math.min(...pigs.map((pig) => Math.hypot(player.x-pig.x, player.y-pig.y)));
-  distanceLabel.textContent = `Lähim siga: ${nearest.toFixed(1)} m`;
-  timeLabel.textContent = `Aeg: ${Math.min(WIN_TIME, Math.floor(elapsed))}`;
-  if (pigs.some((pig) => isCaught(player, pig))) endGame(false);
-  else if (elapsed >= WIN_TIME) endGame(true);
+
+  hog.moving = false;
+  if (hog.curl === 0) {
+    if (controls.left) hog.heading -= TURN_SPEED * dt;
+    if (controls.right) hog.heading += TURN_SPEED * dt;
+    const speed = (controls.forward ? RUN_SPEED : 0) - (controls.back ? BACK_SPEED : 0);
+    if (speed) {
+      Object.assign(hog, step(hog, Math.sin(hog.heading) * speed * dt, Math.cos(hog.heading) * speed * dt, HOG_RADIUS, trees));
+      hog.moving = true;
+    }
+  }
+
+  // Pigs get a little faster all the time, and a new one comes every few seconds.
+  const pigStep = Math.min(2.2 + elapsed * 0.03, 3.7) * dt;
+  for (const pig of pigs) {
+    pig.bob += dt * 12;
+    if (pig.stun > 0) {
+      pig.stun -= dt;
+      pig.heading += dt * 9; // dizzy
+      if (pig.knock > 0) {
+        pig.knock -= dt;
+        Object.assign(pig, knockBack(pig, hog, 11 * dt, trees, PIG_RADIUS));
+      }
+    } else {
+      Object.assign(pig, chase(pig, hog, pigStep, trees, PIG_RADIUS));
+    }
+  }
+  separate(pigs, 1.1, trees, PIG_RADIUS);
+  if (elapsed >= nextPig && pigs.length < MAX_PIGS) {
+    pigs.push(newPig());
+    nextPig += NEW_PIG_EVERY;
+    sound.oink();
+  }
+
+  // A curled-up hedgehog cannot be caught: its quills push the pig away.
+  for (const pig of pigs) {
+    if (!isCaught(hog, pig, hog.curl > 0 ? 1.15 : 0.85)) continue;
+    if (hog.curl > 0) {
+      if (pig.knock <= 0) sound.bump();
+      pig.stun = 1.8;
+      pig.knock = 0.3;
+    } else if (pig.stun <= 0) {
+      endGame(false);
+      return;
+    }
+  }
+
+  if (Math.hypot(hog.x - apple.x, hog.z - apple.z) < 0.85) {
+    apples += 1;
+    sound.apple();
+    if (apples >= GOAL) {
+      endGame(true);
+      return;
+    }
+    apple = freeSpot(Math.random, trees, [hog, ...pigs], 6);
+  }
 }
 
+function hud() {
+  appleLabel.textContent = `🍎 ${apples}/${GOAL}`;
+  timeLabel.textContent = `⏱ ${Math.floor(elapsed)} s`;
+  curlLabel.textContent = hog.cooldown > 0 ? `🦔 ${Math.ceil(hog.cooldown)}` : '🦔 valmis';
+}
+
+function draw(dt) {
+  if (playing) {
+    const turn = Math.atan2(Math.sin(hog.heading - cam.yaw), Math.cos(hog.heading - cam.yaw));
+    cam.yaw += turn * Math.min(1, dt * 5);
+  } else {
+    cam.yaw += dt * 0.25; // slowly circle the hedgehog between rounds
+  }
+  const camera = {
+    x: hog.x - Math.sin(cam.yaw) * 4.6,
+    y: 2.4,
+    z: hog.z - Math.cos(cam.yaw) * 4.6,
+    yaw: cam.yaw,
+    pitch: 0.36,
+  };
+
+  const curled = hog.curl > 0;
+  const hogObject = {
+    mesh: curled ? mesh.ball : mesh.hedgehog,
+    x: hog.x,
+    z: hog.z,
+    y: hog.moving ? Math.abs(Math.sin(clock * 14)) * 0.06 : 0,
+    rotY: curled ? clock * 14 : hog.heading,
+  };
+  const pigObjects = pigs.map((pig) => ({ mesh: mesh.pig, x: pig.x, z: pig.z, y: Math.abs(Math.sin(pig.bob)) * 0.08, rotY: pig.heading }));
+  const appleObject = { mesh: mesh.apple, x: apple.x, z: apple.z, y: 0.15 + Math.sin(clock * 3) * 0.1, rotY: clock * 2 };
+  const shadows = [
+    ...treeShadows,
+    { mesh: mesh.shadow, x: hog.x, z: hog.z, scale: 1.1 },
+    { mesh: mesh.shadow, x: apple.x, z: apple.z, scale: 0.6 },
+    ...pigs.map((pig) => ({ mesh: mesh.shadow, x: pig.x, z: pig.z, scale: 1.5 })),
+  ];
+  render(ctx, camera, [groundLayer, shadows, [...scenery, hogObject, appleObject, ...pigObjects]]);
+}
+
+// Keep the canvas sharp on any screen without making it too heavy to draw.
+function fitCanvas() {
+  const ratio = Math.min(window.devicePixelRatio || 1, 2);
+  const width = Math.round(Math.min(canvas.clientWidth * ratio, 1280)) || 800;
+  if (canvas.width !== width) {
+    canvas.width = width;
+    canvas.height = Math.round(width * 9 / 16);
+  }
+}
+
+let last = performance.now();
 function frame(now) {
-  const dt = Math.min((now - lastFrame) / 1000, 0.05);
-  lastFrame = now;
-  const elapsed = playing ? (now - startedAt) / 1000 : 0;
-  update(dt, elapsed);
-  drawWorld();
-  drawPigs(elapsed);
-  drawHands(elapsed);
+  const dt = Math.min((now - last) / 1000, 0.05);
+  last = now;
+  clock += dt;
+  fitCanvas();
+  update(dt);
+  hud();
+  draw(dt);
   requestAnimationFrame(frame);
 }
 
@@ -197,14 +283,29 @@ const keyMap = {
   ArrowDown: 'back', s: 'back', S: 'back',
   ArrowLeft: 'left', a: 'left', A: 'left',
   ArrowRight: 'right', d: 'right', D: 'right',
+  ' ': 'curl',
 };
 window.addEventListener('keydown', (event) => {
+  if (!playing && (event.key === 'Enter' || event.key === ' ') && event.target !== startButton) {
+    event.preventDefault();
+    start();
+    return;
+  }
   const action = keyMap[event.key];
-  if (action) { controls[action] = true; event.preventDefault(); }
+  if (action) {
+    controls[action] = true;
+    event.preventDefault();
+  }
 });
 window.addEventListener('keyup', (event) => {
   const action = keyMap[event.key];
-  if (action) { controls[action] = false; event.preventDefault(); }
+  if (action) {
+    controls[action] = false;
+    event.preventDefault();
+  }
+});
+window.addEventListener('blur', () => {
+  for (const action of Object.keys(controls)) controls[action] = false;
 });
 
 document.querySelectorAll('#nupud button').forEach((button) => {
@@ -217,8 +318,9 @@ document.querySelectorAll('#nupud button').forEach((button) => {
   button.addEventListener('pointerleave', up);
 });
 
-startButton.addEventListener('click', resetGame);
-resetGame();
-playing = false;
-overlay.classList.add('nahtav');
+startButton.addEventListener('click', () => {
+  if (!playing) start();
+});
+
+setupRound();
 requestAnimationFrame(frame);

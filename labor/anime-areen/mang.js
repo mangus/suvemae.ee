@@ -20,7 +20,7 @@ const SUPER_MS = 2200;
 const SUPER_SHOT_MS = 600;
 const SUPER_DAMAGE = 25;
 const SUPER_REACH = [260, 60];
-// Its ultra power: a red fire ring for 19 seconds that burns everyone who comes close.
+// The scythe character's ultra power: a red fire ring for 19 seconds that burns everyone who comes close.
 const ULTRA_COOLDOWN = 60000;
 const ULTRA_MS = 19000;
 const ULTRA_TICK = 1000;
@@ -215,6 +215,11 @@ function canUseSuper() {
   return CHARACTERS[me.c.p]?.power === 'fire';
 }
 
+// The second character (the scythe fighter) owns the ultra power.
+function canUseUltra() {
+  return CHARACTERS[me.c.p]?.power === 'scythe';
+}
+
 // Flies up at once and fires a moment later, from wherever it is by then.
 function superPower() {
   if (me.down || !canUseSuper()) return;
@@ -236,7 +241,7 @@ function superPower() {
 
 // Starts the red fire ring; it burns once a second (see update).
 function ultraPower() {
-  if (me.down || !canUseSuper()) return;
+  if (me.down || !canUseUltra()) return;
   const now = performance.now();
   if (now - lastUltra < ULTRA_COOLDOWN) return;
   lastUltra = now;
@@ -316,7 +321,7 @@ const choices = document.querySelectorAll('.tegelane');
 function showChoice() {
   for (const button of choices) button.setAttribute('aria-pressed', String(Number(button.dataset.p) === me.c.p));
   superNupp.hidden = !canUseSuper();
-  ultraNupp.hidden = !canUseSuper();
+  ultraNupp.hidden = !canUseUltra();
 }
 for (const button of choices) {
   button.addEventListener('click', () => {
@@ -380,7 +385,7 @@ function showSuper(now) {
 
 // The ULTRA button shows the seconds the ring still burns, then the wait.
 function showUltra(now) {
-  if (!canUseSuper()) return;
+  if (!canUseUltra()) return;
   const left = Math.ceil((ULTRA_COOLDOWN - (now - lastUltra)) / 1000);
   if (left <= 0 && !ultraWasReady) {
     ultraWasReady = true;

@@ -504,7 +504,7 @@ export function drawFighter(ctx, character, x, y, options = {}) {
   }
 }
 
-// The fire character's ultra power: a red ring of fire around its feet with
+// The scythe character's ultra power: a red ring of fire around its feet with
 // sparks swirling round it and rising up.
 export function drawUltraRing(ctx, x, y, scale, time) {
   ctx.save();

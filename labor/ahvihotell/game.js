@@ -483,6 +483,33 @@ function drawGhost(g, shirt) {
 
 const gemSprites = GEM_COLORS.map((c) => shaded(64, (g, s) => drawGem(g, s, c), 0.45));
 const ballSprite = shaded(64, drawBall, 0.6);
+
+// A hanging hotel lamp, the soft halo around a bulb and the warm pool of light it throws on the floor.
+function drawHangLamp(g) {
+  g.fillStyle = '#2a1a10';
+  g.fillRect(31, 0, 2, 22);
+  poly(g, [18, 36, 46, 36, 39, 20, 25, 20], '#c9a24a');
+  poly(g, [22, 34, 42, 34, 37, 22, 27, 22], '#ffd27a');
+  blob(g, 32, 38, 6, 4, '#fff6c8');
+}
+
+function glowCanvas(flat) {
+  const c = makeCanvas(64, 64);
+  const g = c.getContext('2d');
+  g.translate(32, 32);
+  if (flat) g.scale(1, 0.22);
+  const r = g.createRadialGradient(0, 0, 0, 0, 0, 32);
+  r.addColorStop(0, flat ? 'rgba(255,190,100,0.9)' : 'rgba(255,215,140,0.85)');
+  r.addColorStop(1, 'rgba(255,140,60,0)');
+  g.fillStyle = r;
+  g.beginPath(); g.arc(0, 0, 32, 0, Math.PI * 2); g.fill();
+  return c;
+}
+
+const lampSprite = makeCanvas(64, 64);
+drawHangLamp(lampSprite.getContext('2d'));
+const haloSprite = glowCanvas(false);
+const poolSprite = glowCanvas(true);
 const monkeySprite = shaded(128, drawMonkey, 0, drawMonkeyEyes);
 const humanCache = new Map();
 function humanSprite(look) {
@@ -672,6 +699,60 @@ function bfs(sx, sy) {
   return dist;
 }
 
+// ---------- Hotel lights ----------
+
+// Lamps hang from the ceiling and sit on the walls; each one lights the corridors around it.
+const LAMP_REACH = 3.2;
+let lamps = [];     // { x, y, hang, p: strength, f: brightness this frame, bad: flickers }
+let lampLinks = []; // per map cell: indexes of the lamps that can shine there
+
+function placeLamps() {
+  lamps = [];
+  for (let y = 1; y < MH - 1; y++) {
+    for (let x = 1; x < MW - 1; x++) {
+      const h = (Math.imul(x, 2654435761) ^ Math.imul(y + 7, 40503)) >>> 0;
+      const lamp = { f: 1, ph: h % 100, bad: h % 5 === 0 };
+      if (!map[y * MW + x]) {
+        if (x % 2 && y % 2 && (h >>> 3) % 7 === 0) lamps.push({ ...lamp, x: x + 0.5, y: y + 0.5, hang: true, p: 1 });
+      } else if (texFor(x, y) === wallTex.lamp) {
+        for (const [dx, dy] of DIRS) {
+          if (!wall(x + dx, y + dy)) lamps.push({ ...lamp, x: x + 0.5 + dx * 0.58, y: y + 0.5 + dy * 0.58, hang: false, p: 0.7 });
+        }
+      }
+    }
+  }
+  // Light only travels along corridors, never through walls.
+  lampLinks = new Array(MW * MH);
+  lamps.forEach((l, i) => {
+    const start = Math.floor(l.y) * MW + Math.floor(l.x);
+    const steps = new Map([[start, 0]]);
+    const q = [start];
+    while (q.length) {
+      const c = q.shift();
+      (lampLinks[c] ||= []).push(i);
+      if (steps.get(c) >= 3) continue;
+      const cx = c % MW;
+      const cy = (c / MW) | 0;
+      for (const [dx, dy] of DIRS) {
+        const n = c + dy * MW + dx;
+        if (!wall(cx + dx, cy + dy) && !steps.has(n)) { steps.set(n, steps.get(c) + 1); q.push(n); }
+      }
+    }
+  });
+}
+
+function lampAt(px, py, cell = Math.floor(py) * MW + Math.floor(px)) {
+  const list = lampLinks[cell];
+  if (!list) return 0;
+  let s = 0;
+  for (const i of list) {
+    const l = lamps[i];
+    const dist = Math.hypot(l.x - px, l.y - py);
+    if (dist < LAMP_REACH) { const v = 1 - dist / LAMP_REACH; s += l.p * l.f * v * v; }
+  }
+  return Math.min(1, s);
+}
+
 // ---------- Game state ----------
 
 let state = 'menu'; // menu, rooms, wait, shop, play, scare, over, spec, lost, win
@@ -706,6 +787,7 @@ const inGame = () => IN_GAME.includes(state);
 function newGame(seed) {
   rng = seeded(seed);
   makeMaze();
+  placeLamps();
   const sx = (CW >> 1) * 2 + 1;
   const sy = (CH >> 1) * 2 + 1;
   player = { x: sx + 0.5, y: sy + 0.5, a: 0, walk: 0 };
@@ -1109,7 +1191,7 @@ function drawSprite(lv, size, wx, wy, scale, lift, view) {
   const sz = unit * scale;
   const bottom = view.horizon + unit / 2 - lift * unit;
   const left = screenX - sz / 2;
-  const img = lv[Math.round(view.light(depth) * (LEVELS - 1))];
+  const img = lv[Math.round(clamp(view.light(depth) + lampAt(wx, wy), 0, 1) * (LEVELS - 1))];
   const x0 = Math.max(0, Math.floor(left));
   const x1 = Math.min(W - 1, Math.floor(left + sz));
   for (let x = x0; x <= x1; x++) {
@@ -1117,6 +1199,31 @@ function drawSprite(lv, size, wx, wy, scale, lift, view) {
     const tx = clamp(Math.floor(((x - left) / sz) * size), 0, size - 1);
     ctx.drawImage(img, tx, 0, 1, size, x, bottom - sz, 1, sz);
   }
+}
+
+// Lamps, halos and light pools shine by themselves, so they skip the darkness.
+function drawGlow(img, size, wx, wy, scale, lift, view, alpha, add) {
+  const sx = wx - view.x;
+  const sy = wy - view.y;
+  const depth = sx * view.dx + sy * view.dy;
+  if (depth < 0.15 || alpha <= 0.01) return;
+  const lat = (view.dx * sy - view.dy * sx) / FOV;
+  const screenX = (W / 2) * (1 + lat / depth);
+  const unit = K / depth;
+  const sz = unit * scale;
+  const bottom = view.horizon + unit / 2 - lift * unit;
+  const left = screenX - sz / 2;
+  const x0 = Math.max(0, Math.floor(left));
+  const x1 = Math.min(W - 1, Math.floor(left + sz));
+  ctx.globalAlpha = Math.min(1, alpha);
+  if (add) ctx.globalCompositeOperation = 'lighter';
+  for (let x = x0; x <= x1; x++) {
+    if (depth >= zbuf[x]) continue;
+    const tx = clamp(Math.floor(((x - left) / sz) * size), 0, size - 1);
+    ctx.drawImage(img, tx, 0, 1, size, x, bottom - sz, 1, sz);
+  }
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
 }
 
 // Draws the hotel through the eyes of cam: me, or the friend I am watching.
@@ -1127,6 +1234,8 @@ function render(cam) {
   const planeY = dirX * FOV;
   const horizon = H / 2 + Math.sin(cam.walk) * 2.5;
   const light = (d) => clamp(1.2 - d / 5.5, 0, 1) * flick;
+  // Some old bulbs keep flickering on their own.
+  for (const l of lamps) l.f = flick * (l.bad && Math.sin(time * 17 + l.ph) * Math.sin(time * 5.3 + l.ph) > 0.35 ? 0.15 : 1);
 
   let g = ctx.createLinearGradient(0, 0, 0, horizon);
   g.addColorStop(0, '#120c0a');
@@ -1166,13 +1275,20 @@ function render(cam) {
     const lineH = K / perp;
     const top = horizon - lineH / 2;
     ctx.drawImage(texFor(mx, my), tx, 0, 1, TEX, x, top, 1, lineH);
-    const shade = 1 - light(perp) * (side ? 0.72 : 1);
+    // The open cell in front of the wall decides which lamps light it.
+    const front = side === 0 ? my * MW + mx - stepX : (my - stepY) * MW + mx;
+    const lit = lampAt(cam.x + perp * rdx, cam.y + perp * rdy, front);
+    const shade = 1 - clamp(light(perp) + lit, 0, 1) * (side ? 0.72 : 1);
     if (shade > 0.02) { ctx.fillStyle = `rgba(0,0,0,${shade.toFixed(2)})`; ctx.fillRect(x, top, 1, lineH); }
+    if (lit > 0.03) { ctx.fillStyle = `rgba(255,160,70,${(lit * 0.2).toFixed(2)})`; ctx.fillRect(x, top, 1, lineH); }
     zbuf[x] = perp;
   }
 
   const view = { x: cam.x, y: cam.y, dx: dirX, dy: dirY, horizon, light };
+  const near = lamps.filter((l) => (l.x - cam.x) ** 2 + (l.y - cam.y) ** 2 < 120);
+  for (const l of near) drawGlow(poolSprite, 64, l.x, l.y, l.hang ? 1.8 : 1.2, l.hang ? -0.9 : -0.6, view, l.f * l.p * 0.55, true);
   const list = [];
+  for (const l of near) list.push({ e: l, kind: 'lamp' });
   for (const it of items) if (it.alive) list.push({ e: it, kind: it.ball ? 'ball' : 'gem' });
   for (const m of monkeys) list.push({ e: m, kind: 'monkey' });
   for (const p of peers.values()) if (!p.dead && p !== cam) list.push({ e: p, kind: 'human' });
@@ -1181,7 +1297,10 @@ function render(cam) {
   for (const s of list) {
     if (s.d < 0.15) continue;
     const e = s.e;
-    if (s.kind === 'monkey') drawSprite(monkeySprite, 128, e.x, e.y, 0.95, Math.abs(Math.sin(e.step)) * 0.04, view);
+    if (s.kind === 'lamp') {
+      if (e.hang) drawGlow(lampSprite, 64, e.x, e.y, 0.45, 0.55, view, Math.max(0.35, e.f), false);
+      drawGlow(haloSprite, 64, e.x, e.y, e.hang ? 0.9 : 0.6, e.hang ? 0.29 : 0.42, view, e.f * e.p, true);
+    } else if (s.kind === 'monkey') drawSprite(monkeySprite, 128, e.x, e.y, 0.95, Math.abs(Math.sin(e.step)) * 0.04, view);
     else if (s.kind === 'human') drawSprite(humanSprite(e.look), 128, e.x, e.y, 0.9, Math.abs(Math.sin(e.walk)) * 0.03, view);
     else if (s.kind === 'ball') drawSprite(ballSprite, 64, e.x, e.y, 0.34, 0.22 + Math.sin(time * 3 + e.phase) * 0.05, view);
     else drawSprite(gemSprites[e.color], 64, e.x, e.y, 0.3, 0.2 + Math.sin(time * 3 + e.phase) * 0.05, view);

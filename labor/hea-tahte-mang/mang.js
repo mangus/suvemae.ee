@@ -1,8 +1,7 @@
 'use strict';
 // Hea tahte mäng: walk around the Suvemäe house, help students and teachers
 // by choosing what the Good Will Agreement says, and pick up litter.
-// Drawn in the manner of Latvian illustrator Arta Ozola-Jaunaraja: hair-fine ink lines,
-// soft watercolour washes, airy cross-hatched grids and a crochet-lace border.
+// Original picture-book people: fine ink, watercolour, ornamental curls and stitching.
 (() => {
   const W = 720;
   const EESMARK = 12;
@@ -579,12 +578,12 @@
   })();
 
   // ---------- Characters ----------
-  // Round, pear-shaped people with big eyes and long noses, drawn in scratchy ink
+  // Asymmetric storybook people with tiny eyes, long noses and wiry limbs.
   function drawPattern(c, kind, color) {
     c.save();
     c.strokeStyle = color;
     c.fillStyle = color;
-    c.lineWidth = 2.2;
+    c.lineWidth = 1.1;
     if (kind === 'triibud') {
       for (let y = -64; y < -8; y += 7) {
         c.beginPath();
@@ -593,7 +592,7 @@
         c.stroke();
       }
     } else if (kind === 'tapid') {
-      for (let y = -60; y < -10; y += 8) for (let x = -24; x < 26; x += 8) dot(c, x + (y % 16 ? 4 : 0), y, 2, color);
+      for (let y = -60; y < -10; y += 10) for (let x = -24; x < 26; x += 11) dot(c, x + (y % 20 ? 4 : 0), y, 1.1, color);
     } else if (kind === 'ruudud') {
       c.lineWidth = 1.4;
       for (let x = -26; x < 26; x += 8) { c.beginPath(); c.moveTo(x, -66); c.lineTo(x, -8); c.stroke(); }
@@ -607,6 +606,8 @@
   }
 
   function drawHair(c, o, r) {
+    c.save();
+    c.translate(-3, -13);
     const h = o.hair;
     const col = o.hairColor;
     let pts;
@@ -636,13 +637,25 @@
         spiral(c, cx, cy, 3.5, 1.5, r, 0.6);
       }
     }
-    // one curl sticking up
-    if (h !== 'bun') ink(c, [[2, -94], [0, -100], [5, -103], [8, -100], [5, -98]], false, r, 1.2, 0.3);
+    // Unequal scrolls keep the silhouette lively without changing the chosen hair colour.
+    const curls = h === 'curly' ? [[-15, -88, 7], [-10, -99, 6], [2, -102, 8], [15, -94, 6]]
+      : h === 'bun' ? [[-3, -100, 10], [8, -105, 5]]
+        : h === 'pats' ? [[-20, -73, 7], [19, -69, 8]]
+          : h === 'pikk' ? [[-17, -64, 6], [17, -67, 5], [2, -97, 5]]
+            : h === 'spiky' ? [[-7, -98, 4], [10, -96, 4]]
+              : [[-9, -93, 6], [7, -96, 4]];
+    curls.forEach(([cx, cy, radius]) => {
+      const q = flat(c, ellipsePts(cx, cy, radius, radius * 0.9, 11), col, r, 0.3);
+      ink(c, q, true, r, 0.9, 0.4);
+      spiral(c, cx, cy, radius * 0.73, 2, r, 0.7);
+    });
+    c.restore();
   }
 
   function makeSprite(o) {
-    const w = 76;
-    const h = 130;
+    // Padding includes tall hats, teacher scale and outstretched hands.
+    const w = 104;
+    const h = 164;
     const c = document.createElement('canvas');
     c.width = w * S;
     c.height = h * S;
@@ -651,21 +664,24 @@
     const r = rng(o.seed);
     x.translate(w / 2, h - 6);
     if (o.teacher) x.scale(1.18, 1.18);
+    const lean = ((o.seed % 5) - 2) * 0.022;
+    x.transform(1, 0, lean, 1, 0, 0);
 
     // thin legs and small black shoes
-    ink(x, [[-7, -14], [-7, -3]], false, r, 1.8, 0.4);
-    ink(x, [[7, -14], [7, -3]], false, r, 1.8, 0.4);
+    ink(x, [[-8, -22], [-10, -12], [-7, -3]], false, r, 1.2, 0.4);
+    ink(x, [[9, -23], [7, -12], [12, -3]], false, r, 1.2, 0.4);
     x.fillStyle = o.shoes || INK;
-    x.beginPath(); x.ellipse(-9, -2, 6, 3, 0, 0, Math.PI * 2); x.fill();
-    x.beginPath(); x.ellipse(10, -2, 6, 3, 0, 0, Math.PI * 2); x.fill();
+    x.beginPath(); x.ellipse(-10, -2, 6, 1.8, -0.1, 0, Math.PI * 2); x.fill();
+    x.beginPath(); x.ellipse(15, -2, 6, 1.8, 0.12, 0, Math.PI * 2); x.fill();
 
-    // round, pear-shaped body with a pattern and hatched shade
-    const body = [[0, -63], [11, -60], [19, -48], [23, -32], [21, -18], [12, -11], [0, -10], [-12, -11], [-21, -18], [-23, -32], [-19, -48], [-11, -60]];
+    // A drooping shoulder and off-centre belly keep silhouettes less mechanical.
+    const fullness = (o.seed % 3) * 2;
+    const body = [[-5, -64], [7, -62], [13, -53], [24 + fullness, -40], [25, -28], [17, -20], [3, -19], [-13, -21], [-23, -29], [-20, -45], [-15, -59]];
     const k = { umar: 1.15 }[o.bodyShape] || 1;
     // triangle body: narrow shoulders, wide hem
     const kolmnurk = o.bodyShape === 'kolmnurk';
     const kuju = kolmnurk
-      ? [[0, -63], [6, -62], [9, -54], [13, -42], [18, -28], [23, -14], [12, -10], [0, -10], [-12, -10], [-23, -14], [-18, -28], [-13, -42], [-9, -54], [-6, -62]]
+      ? [[-4, -65], [3, -64], [8, -54], [15, -40], [25, -22], [25, -22], [7, -19], [-9, -21], [-24, -24], [-24, -24], [-16, -42], [-10, -58]]
       : body.map(([px, py]) => [px * k, py]);
     const olg = kolmnurk ? 11 : 20 * k;
     if (o.bag) {
@@ -678,19 +694,26 @@
     x.save();
     smoothPath(x, bp, true);
     x.clip();
-    x.globalAlpha = 0.85;
+    x.globalAlpha = 0.7;
     drawPattern(x, o.pattern, o.patColor);
     x.restore();
-    hatch(x, bp, r, 3, 0.55, 0.55);
-    ink(x, bp, true, r, 1.8, 0.4);
+    hatch(x, bp, r, 2.7, 0.55, 0.3);
+    stipple(x, bp, r, 45, 0.35);
+    ink(x, bp, true, r, 1.25, 0.65);
+    // Scalloped collar and a few sewn buttons, not a heavy cartoon outline.
+    for (let i = 0; i < 5; i++) {
+      ink(x, [[-12 + i * 4, -58], [-10 + i * 4, -54], [-8 + i * 4, -58]], false, r, 0.7, 0.15);
+    }
+    for (let i = 0; i < 3; i++) dot(x, -3 + i, -49 + i * 8, 0.85, PUNANE);
     if (o.bag) [-1, 1].forEach((sd) => ink(x, [[sd * 9 * k, -60], [sd * 12 * k, -34]], false, r, 2.2, 0.3));
 
-    // short arms with round hands
-    ink(x, [[-olg, -44], [-olg - 7, -33], [-olg - 7, -26]], false, r, 1.8, 0.4);
-    ink(x, [[olg, -44], [olg + 7, -33], [olg + 7, -26]], false, r, 1.8, 0.4);
-    [-olg - 7, olg + 7].forEach((hx) => {
-      const p = flat(x, ellipsePts(hx, -24, 3.6, 3.6, 8), o.skin, r, 0.3);
+    // Bent elbows and little finger marks keep these unmistakably human.
+    ink(x, [[-olg + 3, -51], [-olg - 8, -39], [-olg - 5, -28]], false, r, 1.2, 0.4);
+    ink(x, [[olg - 5, -50], [olg + 10, -42], [olg + 5, -35]], false, r, 1.2, 0.4);
+    [[-olg - 5, -27], [olg + 5, -34]].forEach(([hx, hy]) => {
+      const p = flat(x, ellipsePts(hx, hy, 3, 3.5, 8), o.skin, r, 0.3);
       ink(x, p, true, r, 1, 0.2);
+      ink(x, [[hx - 1, hy], [hx, hy + 2], [hx + 1, hy]], false, r, 0.6, 0.1);
     });
 
     if (o.scarf) {
@@ -706,11 +729,16 @@
       ink(x, k, true, r, 1.2, 0.3);
     }
 
-    // head
-    const [hw, hh] = { oval: [12.5, 17], wide: [17, 13.5] }[o.headShape] || [14, 15];
-    const head = flat(x, ellipsePts(0, -78, hw, hh, 14), o.skin, r, 0.5);
-    hatch(x, head, r, 2.8, 0.7, 0.35);
-    ink(x, head, true, r, 1.5, 0.35);
+    // Long neck; the builder's round, long and wide faces remain distinct.
+    const neck = flat(x, [[-8, -84], [5, -83], [8, -62], [-9, -62]], o.skin, r, 0.35);
+    ink(x, neck, true, r, 1, 0.3);
+    const [hw, hh] = { oval: [10, 21], wide: [17, 14] }[o.headShape] || [13, 17];
+    const head = flat(x, ellipsePts(-3, -88, hw, hh, 15), o.skin, r, 0.5);
+    hatch(x, head, r, 2.8, 0.7, 0.22);
+    ink(x, head, true, r, 1.15, 0.5);
+    const ear = flat(x, ellipsePts(-hw - 2, -85, 3, 4, 9), o.skin, r, 0.2);
+    ink(x, ear, true, r, 0.85, 0.2);
+    spiral(x, -hw - 2, -85, 1.5, 1, r, 0.6);
     drawHair(x, o, r);
     if (o.beard) {
       const bd = flat(x, [[-13, -76], [-11, -66], [-4, -61], [2, -60], [8, -62], [13, -68], [13, -76], [7, -70], [-6, -70]], o.hairColor, r, 0.5);
@@ -721,30 +749,31 @@
       x.strokeStyle = INK;
       x.lineWidth = 1.2;
       x.beginPath();
-      x.arc(-3, -70, 3.2, 0.3, Math.PI - 0.3);
+      x.arc(-1, -79, 3.2, 0.2, Math.PI - 0.3);
       x.stroke();
       x.restore();
-      dot(x, -9, -72, 3, 'rgba(216,49,43,.35)');
+      dot(x, -8, -82, 2.5, 'rgba(216,49,43,.18)');
     }
-    // big round eyes looking forward
-    [[-4, -81], [5, -81]].forEach(([ex, ey]) => {
-      const e = flat(x, ellipsePts(ex, ey, 3.8, 4.6, 10), VALGE, r, 0.2);
-      ink(x, e, true, r, 1, 0.15);
-      dot(x, ex + 1.3, ey + 0.8, 1.6, INK);
+    // Tiny uneven eyes leave room for paper texture and the long nose.
+    [[-5, -92], [4, -93]].forEach(([ex, ey]) => {
+      dot(x, ex, ey, 0.9, INK);
+      ink(x, [[ex - 1.5, ey - 3], [ex + 1, ey - 3.5]], false, r, 0.65, 0.15);
     });
     // long nose
-    const nose = flat(x, [[2, -78], [7, -77], [15, -71], [13, -68], [5, -71]], o.skin, r, 0.3);
-    ink(x, nose, true, r, 1.2, 0.2);
-    dot(x, 13, -69.5, 1.6, 'rgba(216,49,43,.5)');
+    const nose = flat(x, [[5, -93], [11, -89], [21, -84], [22, -81], [17, -80], [7, -84]], o.skin, r, 0.2);
+    ink(x, nose, true, r, 0.95, 0.2);
+    dot(x, 19, -82, 0.65, PUNANE);
     if (o.glasses) {
       x.save();
       x.strokeStyle = INK;
       x.lineWidth = 1.2;
-      x.beginPath(); x.arc(-4, -81, 5.5, 0, Math.PI * 2); x.stroke();
-      x.beginPath(); x.arc(5, -81, 5.5, 0, Math.PI * 2); x.stroke();
+      x.beginPath(); x.arc(-5, -92, 4, 0, Math.PI * 2); x.stroke();
+      x.beginPath(); x.arc(4, -93, 4, 0, Math.PI * 2); x.stroke();
       x.restore();
     }
     if (o.hat) {
+      x.save();
+      x.translate(-3, -8);
       // tall wavy hat with a pompom
       const p = flat(x, [[-14, -86], [14, -86], [9, -92], [11, -100], [5, -106], [8, -112], [1, -118], [-2, -111], [-6, -104], [-5, -96], [-10, -92]], o.hat, r, 0.5);
       hatch(x, p, r, 2.6, 0.5, 0.55);
@@ -753,6 +782,7 @@
       ink(x, brim, true, r, 1.2, 0.2);
       const pom = flat(x, ellipsePts(1, -118, 3.5, 3.5, 8), SINEP, r, 0.2);
       ink(x, pom, true, r, 1, 0.2);
+      x.restore();
     }
     return c;
   }
@@ -1317,7 +1347,7 @@
     ctx.translate(o.x, o.y + bob);
     ctx.rotate(tilt);
     if (o.dir === -1) ctx.scale(-1, 1);
-    ctx.drawImage(o.sprite, -38, -124, 76, 130);
+    ctx.drawImage(o.sprite, -52, -158, 104, 164);
     ctx.restore();
 
     ctx.save();

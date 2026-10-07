@@ -16,4 +16,8 @@ The Ruta group at Suvemäe. Made with the help of the Suvemäe labor [AI agent o
 
 ## Material
 
-All drawings are drawn in code on a canvas (no outside images). The look, with ink lines, watercolour washes, paper cut-outs and stitched edges, is inspired by the collage style of illustrator Daniela Iride Murgia; the characters are new and invented for this game. The rules come from the school's own Good Will Agreement. Sounds are generated with Web Audio.
+All drawings are original code-drawn canvas illustrations (no outside image assets). The human characters translate the supplied picture-book reference's fine uneven ink, translucent watercolour, paper grain, ornamental curls and scalloped seams into asymmetric human silhouettes, long noses, tiny eyes and wiry limbs. Warm mustard and red details sit alongside the player's chosen colours; all head, body (including triangle), hair, skin and accessory choices remain available. The reference is not copied or distributed. The rules come from the school's own Good Will Agreement. Sounds are generated with Web Audio.
+
+## Rendering checks
+
+Run `node --check mang.js` and, with Python, uv and Chromium installed, `uv run --with playwright tests/rendering.py`. The browser test checks sprite-edge clipping for every head/body/hair combination at teacher scale with all accessories, exercises every builder button, and checks touch movement and horizontal overflow at 390px. Screenshots are written alongside the test for visual inspection; they are not game assets.

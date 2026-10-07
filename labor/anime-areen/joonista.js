@@ -236,6 +236,7 @@ function features(ctx, x, y, eyeColor, mood) {
 export const CHARACTERS = [
   { file: 'tuletegelane.webp', height: 135, power: 'fire', glow: '#ff7a2e' },
   { file: 'vikatitegelane.webp', height: 150, power: 'scythe', glow: '#b48cff' },
+  { file: 'nugategelane.webp', height: 145, power: 'knives', glow: '#7fd3ff' },
 ];
 for (const hero of CHARACTERS) {
   hero.picture = new Image();
@@ -298,6 +299,32 @@ function slash(ctx, swing) {
   ctx.fill();
 }
 
+// Two quick silver cuts that cross like an X in front of the fighter, one
+// from each hand-held blade, the second a moment after the first.
+// swing goes from 0 to 1.
+function knives(ctx, swing) {
+  const cx = 34;
+  const cy = -86;
+  const r = 26;
+  for (const [dir, delay] of [[1, 0], [-1, 0.25]]) {
+    const t = Math.min(1, (swing - delay) / 0.75);
+    if (t <= 0) continue;
+    const from = [cx - r, cy - r * dir];
+    const to = [from[0] + 2 * r * t, from[1] + 2 * r * dir * t];
+    ctx.strokeStyle = 'rgba(170, 220, 255, 0.75)';
+    ctx.lineWidth = 7;
+    path(ctx, [from, to]);
+    ctx.stroke();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2.5;
+    path(ctx, [from, to]);
+    ctx.stroke();
+    star(ctx, to[0], to[1], 8, 3, 4);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+  }
+}
+
 function drawPicture(ctx, hero, { punch, attack, hurt, breath, step, time }) {
   const { picture } = hero;
   const h = hero.height;
@@ -317,7 +344,8 @@ function drawPicture(ctx, hero, { punch, attack, hurt, breath, step, time }) {
     ctx.save();
     ctx.globalAlpha *= Math.min(1, attack * 2);
     if (hero.power === 'fire') flame(ctx, 14, -72 + breath, 70 * punch, 13, time);
-    else slash(ctx, 1 - attack);
+    else if (hero.power === 'scythe') slash(ctx, 1 - attack);
+    else knives(ctx, 1 - attack);
     ctx.restore();
   }
 }

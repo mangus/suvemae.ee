@@ -753,14 +753,20 @@
 
     // round, pear-shaped body with a pattern and hatched shade
     const body = [[0, -63], [11, -60], [19, -48], [23, -32], [21, -18], [12, -11], [0, -10], [-12, -11], [-21, -18], [-23, -32], [-19, -48], [-11, -60]];
-    const k = { sale: 0.8, umar: 1.15 }[o.bodyShape] || 1;
+    const k = { umar: 1.15 }[o.bodyShape] || 1;
+    // 'sale' is drawn as a triangle: narrow shoulders, wide hem
+    const kolmnurk = o.bodyShape === 'sale';
+    const kuju = kolmnurk
+      ? [[0, -63], [6, -62], [9, -54], [13, -42], [18, -28], [23, -14], [12, -10], [0, -10], [-12, -10], [-23, -14], [-18, -28], [-13, -42], [-9, -54], [-6, -62]]
+      : body.map(([px, py]) => [px * k, py]);
+    const olg = kolmnurk ? 11 : 20 * k;
     if (o.bag) {
       // backpack peeking out behind the body
       const g = flat(x, rectPts(12 * k, -58, 18, 32, 4), o.bag, r, 0.5);
       hatch(x, g, r, 2.6, 0.5, 0.5);
       ink(x, g, true, r, 1.2, 0.3);
     }
-    const bp = flat(x, body.map(([px, py]) => [px * k, py]), o.coat, r, 0.6);
+    const bp = flat(x, kuju, o.coat, r, 0.6);
     x.save();
     smoothPath(x, bp, true);
     x.clip();
@@ -772,9 +778,9 @@
     if (o.bag) [-1, 1].forEach((sd) => ink(x, [[sd * 9 * k, -60], [sd * 12 * k, -34]], false, r, 2.2, 0.3));
 
     // short arms with round hands
-    ink(x, [[-20 * k, -42], [-27 * k, -33], [-27 * k, -26]], false, r, 1.8, 0.4);
-    ink(x, [[20 * k, -42], [27 * k, -33], [27 * k, -26]], false, r, 1.8, 0.4);
-    [-27 * k, 27 * k].forEach((hx) => {
+    ink(x, [[-olg, -44], [-olg - 7, -33], [-olg - 7, -26]], false, r, 1.8, 0.4);
+    ink(x, [[olg, -44], [olg + 7, -33], [olg + 7, -26]], false, r, 1.8, 0.4);
+    [-olg - 7, olg + 7].forEach((hx) => {
       const p = flat(x, ellipsePts(hx, -24, 3.6, 3.6, 8), o.skin, r, 0.3);
       ink(x, p, true, r, 1, 0.2);
     });
@@ -896,7 +902,7 @@
   const LOOK_KEY = 'hea-tahte-tegelane';
   const OSAD = [
     { key: 'headShape', silt: 'Pea', v: [['round', 'ümar'], ['oval', 'pikk'], ['wide', 'lai']] },
-    { key: 'bodyShape', silt: 'Keha', v: [['pirn', 'pirn'], ['sale', 'sale'], ['umar', 'ümar']] },
+    { key: 'bodyShape', silt: 'Keha', v: [['pirn', 'pirn'], ['sale', 'kolmnurk'], ['umar', 'ümar']] },
     { key: 'skin', silt: 'Nahk', toon: true, v: [['#f5dcc6', 'hele'], ['#efcfb0', 'roosakas'], ['#e8c4a0', 'kreem'], ['#c99a72', 'pruunikas'], ['#a8714a', 'pruun'], ['#7a4f33', 'tumepruun']] },
     { key: 'hair', silt: 'Soeng', v: [['short', 'lühike'], ['bob', 'pottsoeng'], ['pikk', 'pikk'], ['curly', 'lokid'], ['spiky', 'turris'], ['pats', 'patsid'], ['bun', 'krunn']] },
     { key: 'hairColor', silt: 'Juuste värv', toon: true, v: [['#e8cc85', 'hele'], ['#d99a2b', 'kuldne'], ['#b5562f', 'punane'], ['#5a3a22', 'pruun'], ['#2b2622', 'must'], ['#d98fb5', 'roosa'], ['#7ea6b8', 'sinine']] },

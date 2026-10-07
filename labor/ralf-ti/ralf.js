@@ -1,6 +1,8 @@
 // Ralf TI: a friendly study helper. All lessons live in the ained/ folder, no outside requests.
 // Navigation: subject -> grade -> topic -> learning mode (video, flashcards, easy text).
 
+import { vasta } from './jutt.js';
+
 // Subject files in ained/, in the order their buttons are shown.
 const AINE_FAILID = [
   'eesti-keel', 'kirjandus', 'matemaatika', 'inglise-keel', 'loodusopetus',
@@ -173,9 +175,14 @@ $('kusi').addEventListener('submit', (e) => {
     utle('Kirjuta enne midagi! Näiteks "murrud" või "planeedid".');
     return;
   }
+  const kodutoo = KODUTOO.test(lihtne(paring));
+  const jutt = !kodutoo && vasta(paring);
+  if (jutt) {
+    utle(jutt);
+    return;
+  }
   naitaEdasi(paring);
   const leiud = otsi(paring);
-  const kodutoo = KODUTOO.test(lihtne(paring));
   if (leiud.length === 1 && !kodutoo) {
     avaTeema(leiud[0]);
     return;

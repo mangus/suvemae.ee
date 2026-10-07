@@ -237,6 +237,7 @@ export const CHARACTERS = [
   { file: 'tuletegelane.webp', height: 135, power: 'fire', glow: '#ff7a2e' },
   { file: 'vikatitegelane.webp', height: 150, power: 'scythe', glow: '#b48cff' },
   { file: 'nugategelane.webp', height: 145, power: 'knives', glow: '#7fd3ff' },
+  { file: 'rusikategelane.webp', height: 150, power: 'punch', glow: '#ff4a3d' },
 ];
 for (const hero of CHARACTERS) {
   hero.picture = new Image();
@@ -325,6 +326,27 @@ function knives(ctx, swing) {
   }
 }
 
+// A red boxing fist that shoots forward and hits with a yellow POW star.
+// swing goes from 0 to 1.
+function fist(ctx, swing) {
+  const out = Math.sin(Math.min(1, swing) * Math.PI);
+  const x = 16 + 46 * out;
+  const y = -78;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+  ctx.lineWidth = 3;
+  for (const dy of [-8, 0, 8]) {
+    path(ctx, [[x - 30 * out, y + dy], [x - 12, y + dy]]);
+    ctx.stroke();
+  }
+  if (swing > 0.35 && swing < 0.85) {
+    star(ctx, x + 14, y, 26, 12, 8);
+    ctx.fillStyle = '#ffe45c';
+    ctx.fill();
+  }
+  shape(ctx, [[x - 12, y - 11], [x + 8, y - 13], [x + 15, y - 4], [x + 13, y + 9], [x - 2, y + 12], [x - 12, y + 9]], '#d8342c');
+  shape(ctx, [[x - 16, y - 9], [x - 10, y - 9], [x - 10, y + 9], [x - 16, y + 9]], '#a51f1f');
+}
+
 // The fire character's super power: a chunky fire pistol held out in front
 // while it flies, and a long blast of fire shot from it a moment later.
 const SUPER_SHOT = 0.27;
@@ -358,6 +380,7 @@ function drawPicture(ctx, hero, { punch, attack, hurt, breath, step, time, fligh
     ctx.globalAlpha *= Math.min(1, attack * 2);
     if (hero.power === 'fire') flame(ctx, 14, -72 + breath, 70 * punch, 13, time);
     else if (hero.power === 'scythe') slash(ctx, 1 - attack);
+    else if (hero.power === 'punch') fist(ctx, 1 - attack);
     else knives(ctx, 1 - attack);
     ctx.restore();
   }

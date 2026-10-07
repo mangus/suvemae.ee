@@ -90,9 +90,9 @@ main{max-width:1000px;margin:0 auto;padding:0 20px}
 .frame small{font-size:.92rem;font-weight:700;color:var(--ink-soft)}
 footer{padding:26px 20px 34px;text-align:center;color:var(--ink-soft);font-size:.98rem}
 footer p{margin:.2rem 0}
-/* The credit line sits apart from the school line: a dashed divider and a small sticker */
-footer .made-by{display:inline-block;margin:1.1rem 0 0;padding:.45rem 1.1rem;font-size:.88rem;font-weight:700;color:var(--ink);background:#f1ecff;border:2px dashed var(--violet);border-radius:999px;transform:rotate(-1deg)}
-footer hr{width:min(220px,60%);margin:1rem auto 0;border:0;border-top:3px dotted #d8cfee}
+/* The credit line sits apart from the school line as one soft sticker, no divider */
+footer .made-by{display:inline-block;margin:1.4rem auto 0;padding:.55rem 1.2rem;font-size:.88rem;font-weight:700;line-height:1.4;color:var(--ink);background:linear-gradient(135deg,#f4efff,#e9f7ff);border-radius:999px;box-shadow:0 3px 0 #d8cfee}
+footer .made-by a{color:var(--violet)}
 .d-bee{position:absolute;z-index:3;top:24%;left:0;width:clamp(56px,7vw,84px);pointer-events:none;animation:bee-x 26s linear infinite,bee-y 4.3s ease-in-out infinite alternate}
 .d-bee svg{display:block;width:100%;height:auto;animation:bee-bob 1.6s ease-in-out infinite alternate}
 /* Wings beat from their roots: a wide, quick swing that stays visible instead of a flicker */
@@ -268,7 +268,6 @@ footer hr{width:min(220px,60%);margin:1rem auto 0;border:0;border-top:3px dotted
 </main>
 <footer>
 <p><strong>Suvemäe</strong> · Tallinna Kunstigümnaasiumi demokraatlik kooliosa</p>
-<hr>
 <p class="made-by">🤖 Selle kodulehe on teinud Suvemäe õpilased <a href="https://mintbot.ai/">mintbot.ai</a> AI-agentide abil.</p>
 </footer>
 </body>

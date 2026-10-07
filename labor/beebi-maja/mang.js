@@ -429,7 +429,7 @@ function valjaHupe() {
   vanaisa.aeg = 0;
   alustaHupe(0.6, 55);
   huua('MA-MA-MA-MA!! 👶', 1.1);
-  heli.laulab = true;
+  
   heli.kone('Ma-ma-ma-ma!', true);
 }
 
@@ -864,7 +864,7 @@ function nagu(lobiseb) {
 // The baby: a big head, a mint onesie, a nappy and a rattle in its hand.
 function joonistaVanaisa() {
   const g = vanaisa;
-  const tantsib = g.olek === 'demo';
+  const tantsib = false; // the baby never dances
   const konnib = g.olek === 'jaht';
   const peidus = g.olek === 'peidus';
   const f = kell * 6;
@@ -952,42 +952,42 @@ function joonista() {
     joonistaSees();
     return;
   }
-  ctx.fillStyle = '#dff5c8';
+  // The title screen: the baby's house at night with the baby at the door.
+  const taevas = ctx.createLinearGradient(0, 0, 0, H);
+  taevas.addColorStop(0, '#2b2350');
+  taevas.addColorStop(1, '#7a5ca8');
+  ctx.fillStyle = taevas;
   ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = '#f6e7c1';
-  ctx.fillRect(165, 0, 70, H);
-  ctx.fillRect(0, 178, W, 40);
-  ctx.fillRect(0, 352, W, 40);
-  for (const l of lilled) {
-    ctx.fillStyle = l.v;
-    ovaal(l.x, l.y, 3, 3);
+  ctx.fillStyle = '#fff6c8';
+  for (let i = 0; i < 24; i++) {
+    ovaal((i * 97) % W, (i * 53) % 170, 1.5, 1.5);
     ctx.fill();
   }
-
-  // The garden gate at the top: after escaping from the house, run there.
-  ctx.fillStyle = '#6b4423';
-  ctx.fillRect(166, 0, 7, 32);
-  ctx.fillRect(227, 0, 7, 32);
-  ctx.fillStyle = mang.valjas ? '#2fa84f' : '#b98a5a';
-  for (let x = 177; x < 226; x += 10) ctx.fillRect(x, 4, 6, 24);
-  ctx.fillRect(173, 9, 54, 5);
-  ctx.fillRect(173, 19, 54, 5);
-  if (mang.kaib && mang.valjas) mull('🏁 Värav! Jookse siia!', 200, 66);
-
-  const asjad = [
-    ...majad.map((m) => ({ y: m.y + m.h, joonista: () => joonistaMaja(m) })),
-    { y: mangija.y, joonista: joonistaMangija },
-    { y: vanaisa.y + (vanaisa.z > 15 ? 1000 : 0), joonista: joonistaVanaisa }, // high in the air he is in front of everything
-  ];
-  asjad.sort((a, b) => a.y - b.y).forEach((a) => a.joonista());
-
-  const my = vanaisa.y - vanaisa.z - 112;
-  if (huue && kell < huue.kuni) {
-    mull(huue.tekst, vanaisa.x, my);
-  } else if (vanaisa.olek === 'jaht' || vanaisa.olek === 'demo') {
-    const r = lauluRida();
-    if (r >= 0) mull('♪ ' + LAUL[r].tekst, vanaisa.x, my);
-  }
+  ovaal(330, 60, 22, 22); // the moon
+  ctx.fill();
+  ctx.fillStyle = '#5fae5a';
+  ctx.fillRect(0, 470, W, H - 470);
+  ctx.fillStyle = '#f4d6a0';
+  ctx.fillRect(70, 230, 260, 240);
+  ctx.fillStyle = '#c0504d';
+  ctx.beginPath();
+  ctx.moveTo(50, 235);
+  ctx.lineTo(200, 130);
+  ctx.lineTo(350, 235);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#ffd95a';
+  for (const [x, y] of [[95, 260], [245, 260], [95, 360], [245, 360]]) ctx.fillRect(x, y, 60, 50);
+  ctx.fillStyle = '#2fa84f';
+  ctx.fillRect(170, 380, 60, 90);
+  ctx.fillStyle = '#ffd166';
+  ovaal(220, 428, 3, 3);
+  ctx.fill();
+  const vana = { x: vanaisa.x, y: vanaisa.y, z: vanaisa.z, olek: vanaisa.olek };
+  Object.assign(vanaisa, { x: 200, y: 520, z: 0, olek: 'demo' });
+  joonistaVanaisa();
+  Object.assign(vanaisa, vana);
+  if (huue && kell < huue.kuni) mull(huue.tekst, 200, 395);
 }
 
 // ---------- inside a house: a real 3D view drawn with raycasting ----------
@@ -1452,7 +1452,7 @@ function sisene(m) {
   s.sammuAeg = 0;
   s.jutuAeg = 5;
   s.vz = 0;
-  s.vOlek = 'peidus';
+  s.vOlek = 'otsib';
   s.vHupe = 0;
   s.ootab = 9 - 3 * k;
   s.hoiatatud = false;
@@ -1537,7 +1537,7 @@ function hyppaValjaSees() {
   tuba.viimati = { x: Math.floor(tuba.x), y: Math.floor(tuba.y) };
   tuba.raputus = 0.45;
   huua('MA-MA-MA-MA!! 👶', 1.4);
-  heli.laulab = true;
+  
   heli.boing();
   heli.kone('Ma-ma-ma-ma!', true);
 }
@@ -1602,7 +1602,7 @@ function uuendaSees(dt) {
   const uksel = Math.abs(s.x - s.uks.x) < 0.5 && s.y > s.uks.y - 0.3;
   if (uksel || ruut(s.x + dx + Math.sign(dx) * r, s.y + dy + Math.sign(dy) * r) === '9') {
     if (mang.tooriistad.size >= TOORIISTAD.length) {
-      lahku();
+      voit();
       return;
     }
     if (!huue || kell > huue.kuni) huua(`🔒 Uks on lukus! Leia veel: ${puuduvad()}`, 1.8);
@@ -1673,7 +1673,7 @@ function uuendaSees(dt) {
   if (s.vOlek === 'otsib' && naebSind) {
     s.vOlek = 'jaht';
     s.kadunud = 0;
-    heli.laulab = true;
+    
     huua('Ma-ma! Näen sind! 👀', 1.4);
     heli.kone('Ma-ma! Näen sind!', true);
   }
@@ -1756,8 +1756,7 @@ function uuendaSees(dt) {
   if (s.vHupe > 0) {
     s.vz = Math.sin(Math.PI * (1 - s.vHupe / HUPE_AEG)) * 0.45;
   } else if (jaht) {
-    const f = kell % 1.8;
-    s.vz = f < 0.45 ? Math.sin((Math.PI * f) / 0.45) * 0.25 : 0; // he hops while he sings
+    s.vz = 0;
   } else {
     s.vz = 0;
   }
@@ -2053,9 +2052,6 @@ function joonistaSees() {
 
   if (huue && kell < huue.kuni) {
     mull(huue.tekst, W / 2, 110);
-  } else if (s.vOlek === 'jaht') {
-    const rr = lauluRida();
-    if (rr >= 0) mull('♪ ' + LAUL[rr].tekst, W / 2, 110);
   }
 }
 
@@ -2072,8 +2068,7 @@ function kaader(nyyd) {
       aegEl.textContent = Math.floor(mang.aeg);
     }
   } else if (vanaisa.olek === 'demo') {
-    const f = kell % 2.5;
-    vanaisa.z = f < 0.5 ? Math.sin((Math.PI * f) / 0.5) * 35 : 0;
+    vanaisa.z = 0;
   }
   joonista();
   requestAnimationFrame(kaader);

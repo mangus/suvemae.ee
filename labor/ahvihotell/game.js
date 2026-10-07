@@ -149,11 +149,28 @@ function poly(g, pts, color) {
   g.fill();
 }
 
+// The picture never gets narrower than 4:5, so a tall phone shows a box in the middle instead of a stretched tunnel.
+// Each game pixel covers a whole number of screen pixels, so walls do not shimmer or warp when you turn.
+let viewCssW = 1;
 function resize() {
-  const aspect = window.innerWidth / Math.max(1, window.innerHeight);
-  H = 240;
-  W = clamp(Math.round(H * aspect), 120, 600);
-  FOV = clamp(W / (2 * H * 0.9), 0.45, 1.05);
+  const sw = Math.max(1, window.innerWidth);
+  const sh = Math.max(1, window.innerHeight);
+  const aspect = clamp(sw / sh, 0.8, 2.4);
+  const dw = Math.min(sw, sh * aspect);
+  const dh = dw / aspect;
+  const s = Math.max(1, Math.round(dh / 260));
+  const w = Math.min(640, Math.max(80, Math.round(dw / s)));
+  const h = Math.max(80, Math.round(dh / s));
+  viewCssW = w * s;
+  canvas.style.width = `${w * s}px`;
+  canvas.style.height = `${h * s}px`;
+  canvas.style.left = `${Math.floor((sw - w * s) / 2)}px`;
+  canvas.style.top = `${Math.floor((sh - h * s) / 2)}px`;
+  // Phones fire resize when their toolbars move; only rebuild the canvas when its size really changes.
+  if (canvas.width === w && canvas.height === h) return;
+  W = w;
+  H = h;
+  FOV = clamp(W / (2 * H * 0.9), 0.6, 1.05);
   K = W / (2 * FOV);
   canvas.width = W;
   canvas.height = H;
@@ -1235,6 +1252,7 @@ let invuln = 0;
 let time = 0;
 let flick = 1;
 let flickT = 0;
+let flickStep = 0;
 let beatT = 0;
 let chatterT = 3;
 let danger = 0;
@@ -1472,7 +1490,9 @@ function world(dt) {
     m.lx = m.x; m.ly = m.y;
   }
   flickT -= dt;
-  if (flickT > 0) flick = 0.35 + Math.random() * 0.65;
+  flickStep -= dt;
+  // A dying bulb changes about 14 times a second, not on every screen refresh (that strobes on 120 Hz phones).
+  if (flickT > 0) { if (flickStep <= 0) { flick = 0.35 + Math.random() * 0.65; flickStep = 0.07; } }
   else { flick = 1; if (Math.random() < dt * 0.15) flickT = 0.15 + Math.random() * 0.4; }
 }
 
@@ -2596,8 +2616,9 @@ canvas.addEventListener('pointerdown', (e) => {
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerId !== touchId) return;
   if (state === 'play') {
-    player.a += (e.clientX - touchX) * 0.008;
-    player.p = clamp(player.p - (e.clientY - touchY) * 0.006, -1, 1);
+    // A finger dragged across the whole picture turns about one and a half views.
+    player.a += (e.clientX - touchX) * ((2 * FOV * 1.4) / viewCssW);
+    player.p = clamp(player.p - (e.clientY - touchY) * 0.004, -1, 1);
   }
   touchX = e.clientX;
   touchY = e.clientY;

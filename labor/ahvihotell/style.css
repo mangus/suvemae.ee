@@ -59,3 +59,4 @@ html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-
 .top li { display: flex; justify-content: space-between; gap: 10px; padding: 4px 12px; border-radius: 10px; font-size: 18px; }
 .top li:nth-child(odd) { background: rgba(255, 255, 255, .1); }
 .top li.mine { background: rgba(255, 210, 59, .35); }
+.nick input { width: 10em; font: inherit; font-size: 17px; padding: 5px 10px; border: 2px solid #ffd23b; border-radius: 10px; background: rgba(0, 0, 0, .35); color: #fff; }

@@ -580,12 +580,14 @@ function cleanLook(l) {
   const w = Array.isArray(o.w) ? o.w.filter((id) => SHOP.some((s) => s.id === id)).slice(0, 8) : [];
   return { s: idx(o.s, SHIRTS.length), k: idx(o.k, SKINS.length), b: idx(o.b, BODIES.length), w };
 }
-// Nicknames are made of preset words, so nobody types their real name.
+// A random nickname is made of preset words; players can also type their own.
 const NICK_A = ['Kiire', 'Julge', 'Vapper', 'Kaval', 'Särav', 'Väle', 'Lustakas', 'Uljas', 'Salajane', 'Vilgas'];
 const NICK_B = ['Rebane', 'Ilves', 'Kakk', 'Saarmas', 'Siil', 'Jänes', 'Karu', 'Orav', 'Konn', 'Hunt'];
 const pickOf = (a) => a[Math.floor(Math.random() * a.length)];
 const newNick = () => `${pickOf(NICK_A)} ${pickOf(NICK_B)} ${10 + Math.floor(Math.random() * 90)}`;
-const NICK_RE = new RegExp(`^(${NICK_A.join('|')}) (${NICK_B.join('|')}) [1-9][0-9]$`);
+// A nickname has 2-14 letters, numbers and spaces, with at most 3 numbers so it is never a phone number.
+const NICK_RE = /^[A-Za-zÕÄÖÜŠŽõäöüšž0-9 ]{2,14}$/;
+const okNick = (n) => typeof n === 'string' && n.trim() === n && NICK_RE.test(n) && (n.match(/[0-9]/g) || []).length <= 3;
 const STORE = 'ahvihotell-mina';
 function loadProfile() {
   let o = null;
@@ -597,7 +599,7 @@ function loadProfile() {
   const b = BODIES[o.body];
   const body = Number.isInteger(o.body) && b && (!b.price || bodies.includes(b.id)) ? o.body : 0;
   return { gems: Math.max(0, Math.floor(Number(o.gems) || 0)), owned, wear: look.w.filter((id) => owned.includes(id)), shirt: look.s, skin: look.k, bodies, body,
-    nick: typeof o.nick === 'string' && NICK_RE.test(o.nick) ? o.nick : newNick(),
+    nick: okNick(o.nick) ? o.nick : newNick(),
     best: Math.max(0, Math.floor(Number(o.best) || 0)) };
 }
 const me = loadProfile();
@@ -1804,7 +1806,7 @@ function showScreen(id) {
 
 const BOARD = 'kivid';
 function drawNick() {
-  $('nickName').textContent = me.nick;
+  $('nickIn').value = me.nick;
   $('myBest').textContent = me.best;
 }
 
@@ -1816,7 +1818,7 @@ async function showTop() {
     const seen = new Set();
     list.textContent = '';
     for (const r of rows) {
-      if (seen.has(r.name) || !NICK_RE.test(r.name)) continue;
+      if (seen.has(r.name) || !okNick(r.name)) continue;
       seen.add(r.name);
       const li = el('li', r.name === me.nick ? 'mine' : '');
       li.append(el('span', '', `${seen.size}. ${r.name}`), el('b', '', `${r.score} 💎`));
@@ -2007,6 +2009,7 @@ function buy(item) {
 
 const KEYMAP = { KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down', KeyA: 'sleft', ArrowLeft: 'left', KeyD: 'sright', ArrowRight: 'right' };
 window.addEventListener('keydown', (e) => {
+  if (e.target instanceof HTMLInputElement) return; // typing a nickname
   const k = KEYMAP[e.code];
   if (!k) return;
   keys[k] = true;
@@ -2101,13 +2104,26 @@ $('goBtn').addEventListener('click', () => {
 });
 $('shopBtn').addEventListener('click', () => { state = 'shop'; showScreen('shop'); drawShop(); });
 $('shopBack').addEventListener('click', goMenu);
-$('nickBtn').addEventListener('click', () => {
-  me.nick = newNick();
-  me.best = 0;
+function setNick(name) {
+  me.nick = name;
+  me.best = 0; // a new name starts its own score
   saveProfile();
   drawNick();
   showTop();
+}
+$('nickBtn').addEventListener('click', () => setNick(newNick()));
+// A typed nickname is kept when I press Enter or leave the box.
+$('nickIn').addEventListener('change', () => {
+  const v = $('nickIn').value.replace(/\s+/g, ' ').trim();
+  if (v === me.nick) { drawNick(); return; }
+  if (!okNick(v)) {
+    $('topMsg').textContent = 'Nimes võivad olla tähed, tühikud ja kuni 3 numbrit (2–14 märki).';
+    drawNick();
+    return;
+  }
+  setNick(v);
 });
+$('nickIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') e.target.blur(); });
 
 let last = performance.now();
 function frame(now) {

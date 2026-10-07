@@ -27,7 +27,7 @@ a{color:inherit}
 .d-plane{top:46%;left:7%;width:clamp(72px,8vw,104px)}
 .d-squiggle{top:56%;right:7%;width:clamp(92px,10vw,132px)}
 /* Ladybug strolls calmly across the hero from the left edge and out the right edge; legs step in a tripod gait */
-.d-ladybug{bottom:clamp(34px,6vw,96px);left:18%;width:clamp(58px,7vw,90px);animation:lb-stroll 45s linear -16s infinite}
+.d-ladybug{bottom:clamp(34px,6vw,96px);left:18%;width:clamp(46px,5.5vw,70px);animation:lb-stroll 45s linear -16s infinite}
 .d-ladybug svg{display:block;width:100%;height:auto;overflow:visible}
 @keyframes lb-stroll{from{transform:translateX(calc(-18vw - 90px))}to{transform:translateX(calc(82vw + 20px))}}
 .lb-l{--s:1}.lb-r{--s:-1}
@@ -97,8 +97,7 @@ footer .made-by{position:relative;isolation:isolate;display:inline-block;box-siz
 footer .made-by::before,.mb-gears{content:"";position:absolute;inset:0;z-index:-1;overflow:hidden;border-radius:0 6px 10px 10px;clip-path:polygon(52px 0,100% 0,100% 100%,0 100%,0 52px)}
 footer .made-by::before{z-index:-2;background:radial-gradient(circle at 70% 30%,#30285a,#1c1630);box-shadow:inset 0 0 14px rgba(0,0,0,.7)}
 .mb-gears svg{position:absolute;height:auto}
-.mb-gears .g-r{right:-8px;bottom:-16px;width:120px}
-.mb-gears .g-l{left:40px;bottom:-20px;width:56px}
+.mb-gears .g-r{right:-10px;bottom:-30px;width:150px}
 .mb-gear{transform-box:fill-box;transform-origin:center;animation:mb-spin 12s linear infinite}
 .mb-gear.s{animation-duration:7.5s;animation-direction:reverse}
 .mb-gear.l{animation-duration:9s;animation-direction:reverse}
@@ -107,7 +106,7 @@ footer .made-by::before{z-index:-2;background:radial-gradient(circle at 70% 30%,
 footer .made-by::after{content:"";position:absolute;left:-22px;top:13px;width:92px;height:20px;border-radius:10px;background:linear-gradient(#fffaf0,#fff 30%,#ebe3d1 65%,#c4b594);box-shadow:0 5px 7px rgba(43,35,64,.4);transform:rotate(-45deg);transition:transform .25s ease}
 footer .made-by:hover::after{transform:rotate(-45deg) translateY(-3px)}
 footer .made-by a{color:#ffe27a}
-.d-bee{position:absolute;z-index:3;top:24%;left:0;width:clamp(56px,7vw,84px);pointer-events:none;animation:bee-x 26s linear infinite,bee-y 4.3s ease-in-out infinite alternate}
+.d-bee{position:absolute;z-index:3;top:24%;left:0;width:clamp(44px,5.5vw,66px);pointer-events:none;animation:bee-x 26s linear infinite,bee-y 4.3s ease-in-out infinite alternate}
 .d-bee svg{display:block;width:100%;height:auto;animation:bee-bob 1.6s ease-in-out infinite alternate}
 /* Wings beat from their roots: a wide, quick swing that stays visible instead of a flicker */
 .bee-wing{transform-box:fill-box;transform-origin:50% 100%;animation:bee-flutter .12s ease-in-out infinite alternate}
@@ -289,7 +288,7 @@ footer .made-by a{color:#ffe27a}
 </main>
 <footer>
 <p><strong>Suvemäe</strong> · Tallinna Kunstigümnaasiumi demokraatlik kooliosa</p>
-<p class="made-by"><span class="mb-gears" aria-hidden="true"><svg class="g-r" viewBox="0 0 120 70"><g class="mb-gear" fill="#55479a" stroke="#55479a"><circle cx="78" cy="46" r="22" fill="none" stroke-width="7" stroke-dasharray="4.32"/><circle cx="78" cy="46" r="19" stroke="none"/><circle cx="78" cy="46" r="11" fill="none" stroke="#1c1630" stroke-width="2.5"/><circle cx="78" cy="46" r="4" fill="#1c1630" stroke="none"/></g><g class="mb-gear s" fill="#2f7385" stroke="#2f7385"><circle cx="48" cy="27" r="13.75" fill="none" stroke-width="7" stroke-dasharray="4.32"/><circle cx="48" cy="27" r="11" stroke="none"/><circle cx="48" cy="27" r="7" fill="none" stroke="#1c1630" stroke-width="2.5"/><circle cx="48" cy="27" r="4" fill="#1c1630" stroke="none"/></g></svg><svg class="g-l" viewBox="0 0 56 56"><g class="mb-gear l" fill="#6a4f8f" stroke="#6a4f8f"><circle cx="28" cy="28" r="16.5" fill="none" stroke-width="7" stroke-dasharray="4.32"/><circle cx="28" cy="28" r="14" stroke="none"/><circle cx="28" cy="28" r="8.5" fill="none" stroke="#1c1630" stroke-width="2.5"/><circle cx="28" cy="28" r="4" fill="#1c1630" stroke="none"/></g></svg></span>🤖 Selle kodulehe on teinud Suvemäe õpilased <a href="https://mintbot.ai/">mintbot.ai</a> AI-agentide abil.</p>
+<p class="made-by"><span class="mb-gears" aria-hidden="true"><svg class="g-r" viewBox="0 0 150 90"><g class="mb-gear" fill="#55479a" stroke="#55479a"><circle cx="95.00" cy="60.00" r="21.50" fill="none" stroke-width="6" pathLength="16" stroke-dasharray="0.44 0.56"/><circle cx="95.00" cy="60.00" r="18.50" stroke="none"/><circle cx="95.00" cy="60.00" r="11.00" fill="none" stroke="#1c1630" stroke-width="2.5"/><circle cx="95.00" cy="60.00" r="3.5" fill="#1c1630" stroke="none"/></g><g class="mb-gear s" fill="#2f7385" stroke="#2f7385"><g transform="rotate(2.960 63.43 43.22)"><circle cx="63.43" cy="43.22" r="13.25" fill="none" stroke-width="6" pathLength="10" stroke-dasharray="0.44 0.56"/><circle cx="63.43" cy="43.22" r="10.25" stroke="none"/><circle cx="63.43" cy="43.22" r="6.88" fill="none" stroke="#1c1630" stroke-width="2.5"/><circle cx="63.43" cy="43.22" r="3.5" fill="#1c1630" stroke="none"/></g></g><g class="mb-gear l" fill="#6a4f8f" stroke="#6a4f8f"><g transform="rotate(7.133 113.08 26.00)"><circle cx="113.08" cy="26.00" r="16.00" fill="none" stroke-width="6" pathLength="12" stroke-dasharray="0.44 0.56"/><circle cx="113.08" cy="26.00" r="13.00" stroke="none"/><circle cx="113.08" cy="26.00" r="8.25" fill="none" stroke="#1c1630" stroke-width="2.5"/><circle cx="113.08" cy="26.00" r="3.5" fill="#1c1630" stroke="none"/></g></g></svg></span>🤖 Selle kodulehe on teinud Suvemäe õpilased <a href="https://mintbot.ai/">mintbot.ai</a> AI-agentide abil.</p>
 </footer>
 </body>
 </html>

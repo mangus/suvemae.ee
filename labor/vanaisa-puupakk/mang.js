@@ -284,6 +284,7 @@ const heli = {
 // ---------- controls ----------
 
 const klahvid = new Set();
+let uksePaus = 0; // right after leaving a house you can't walk straight back in
 let siht = null;
 let vajutab = false;
 const SUUNAD = {
@@ -436,7 +437,7 @@ function uuenda(dt) {
   if (dy < 0) {
     for (const m of majad) {
       const ux = m.x + m.w / 2;
-      if (Math.abs(mangija.x - ux) < 13 && mangija.y > m.y + m.h && mangija.y < m.y + m.h + 12) {
+      if (kell > uksePaus && Math.abs(mangija.x - ux) < 13 && mangija.y > m.y + m.h && mangija.y < m.y + m.h + 12) {
         sisene(m);
         return;
       }
@@ -459,7 +460,8 @@ function uuenda(dt) {
     } else {
       const ennex = g.x;
       const enney = g.y;
-      liiguta(g, ux * kiirus * dt, uy * kiirus * dt, 16);
+      const l = lonk();
+      liiguta(g, ux * kiirus * l * dt, uy * kiirus * l * dt, 16);
       const liikus = Math.hypot(g.x - ennex, g.y - enney);
       g.kinni = liikus < kiirus * dt * 0.4 ? g.kinni + dt : 0;
       g.hupeAeg += dt;
@@ -677,40 +679,90 @@ function joonistaMangija() {
   ctx.restore();
 }
 
-// One arm in a red shirt sleeve; pool is -1 (left) or 1 (right).
-function joonistaKasi(pool, nurk, kurikas) {
-  ctx.save();
-  ctx.translate(pool * 21, -46);
-  ctx.rotate(-pool * (1.2 + nurk * 0.9));
+// Grandpa's right knee is stiff, so he limps: every other step he dips, leans and slows down.
+const lonkeFaas = () => Math.max(0, Math.sin(kell * 6));
+const lonk = () => 1.05 - 0.4 * lonkeFaas();
+
+// One leg from the hip to the shoe; pool is -1 (left) or 1 (right), tostab is how high the foot is lifted.
+function jalg(pool, puusY, tostab, kange) {
+  const hx = pool * 6;
+  const fx = hx + pool * (kange ? 2.5 : 1);
+  const fy = -3 - tostab;
+  const kx = (hx + fx) / 2 + (kange ? 0 : pool * tostab * 0.6);
+  const ky = (puusY + fy) / 2 - tostab * 0.3;
   ctx.lineCap = 'round';
-  ctx.strokeStyle = '#c0392b';
-  ctx.lineWidth = 7;
-  joon(0, 0, 0, 16);
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#4a4e5a';
+  ctx.lineWidth = 9;
+  ctx.beginPath();
+  ctx.moveTo(hx, puusY);
+  ctx.lineTo(kx, ky);
+  ctx.lineTo(fx, fy);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(hx + pool * 3, puusY + 3);
+  ctx.lineTo(kx + pool * 3, ky);
+  ctx.lineTo(fx + pool * 3, fy - 2);
+  ctx.stroke();
+  const king = ctx.createLinearGradient(0, fy - 3, 0, fy + 4);
+  king.addColorStop(0, '#6b4a30');
+  king.addColorStop(1, '#22160c');
+  ctx.fillStyle = king;
+  ctx.beginPath();
+  ctx.ellipse(fx + pool * 1.5, fy + 1, 6.5, 3.6, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// One arm in a checked flannel sleeve; nurk swings it, kurikas puts the wooden club in his hand.
+function kasi(pool, nurk, kurikas) {
+  ctx.save();
+  ctx.translate(pool * 15, -77);
+  ctx.rotate(-pool * 0.15 + nurk);
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#9c3b32';
+  ctx.lineWidth = 6.5;
+  joon(0, 0, 0, 15);
+  joon(0, 15, pool * 1.5, 27);
+  ctx.strokeStyle = 'rgba(40, 15, 15, 0.4)';
+  ctx.lineWidth = 1;
+  for (const y of [5, 11, 19, 24]) joon(-3, y, 3, y + 0.5);
+  ctx.strokeStyle = 'rgba(255, 230, 200, 0.35)';
+  joon(-1, 1, -1, 25);
   if (kurikas) {
-    // the wooden club he knocks the beat with
     ctx.save();
-    ctx.translate(0, 19);
-    ctx.rotate(pool * 0.8);
-    ctx.fillStyle = '#d9a86c';
-    ctx.strokeStyle = '#7a5230';
-    ctx.lineWidth = 1.5;
+    ctx.translate(pool * 1.5, 30);
+    ctx.rotate(-pool * 0.2);
+    const puu = ctx.createLinearGradient(-4, 0, 4, 0);
+    puu.addColorStop(0, '#a87a48');
+    puu.addColorStop(0.5, '#e0b47c');
+    puu.addColorStop(1, '#8a5e33');
+    ctx.fillStyle = puu;
+    ctx.strokeStyle = '#5a3a1e';
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(-2, -2);
-    ctx.lineTo(-4, 24);
-    ctx.quadraticCurveTo(0, 28, 4, 24);
-    ctx.lineTo(2, -2);
+    ctx.moveTo(-1.8, -4);
+    ctx.lineTo(-4.5, 26);
+    ctx.quadraticCurveTo(0, 30, 4.5, 26);
+    ctx.lineTo(1.8, -4);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
     ctx.restore();
   }
-  ctx.fillStyle = '#e7b893';
-  ovaal(0, 19, 4, 4);
+  const nahk = ctx.createRadialGradient(pool * 0.5, 28.5, 0.5, pool * 1.5, 29.5, 4.5);
+  nahk.addColorStop(0, '#f1cdaa');
+  nahk.addColorStop(1, '#c98f6a');
+  ctx.fillStyle = nahk;
+  ovaal(pool * 1.5, 29.5, 3.3, 4);
+  ctx.fill();
+  ovaal(-pool, 28, 1.3, 2.2); // thumb
   ctx.fill();
   ctx.restore();
 }
 
-// The old man's face inside the log, drawn as real-looking as we can.
+// The old man's face, drawn as real-looking as we can.
 function nagu(laulab) {
   const nahk = ctx.createRadialGradient(-4, -54, 2, 0, -47, 17);
   nahk.addColorStop(0, '#f6d9bd');
@@ -826,79 +878,106 @@ function nagu(laulab) {
   }
 }
 
+// Grandpa is a real-looking old man with human proportions, wearing his log costume like a vest.
 function joonistaVanaisa() {
   const g = vanaisa;
-  const tantsib = g.olek === 'jaht' || g.olek === 'demo';
+  const tantsib = g.olek === 'demo';
+  const konnib = g.olek === 'jaht';
   const peidus = g.olek === 'peidus';
-  const lainetus = tantsib ? Math.sin(kell * 13) : Math.sin(kell * 3) * 0.3;
+  const f = kell * 6;
+  const vajub = konnib ? lonkeFaas() : 0; // weight on the stiff leg
+  const tants = Math.sin(kell * 13);
 
   ctx.fillStyle = 'rgba(43, 35, 64, 0.2)';
-  ovaal(g.x, g.y, Math.max(8, 22 - g.z * 0.12), 6);
+  ovaal(g.x, g.y, Math.max(8, 18 - g.z * 0.1), 5);
   ctx.fill();
 
   ctx.save();
   ctx.translate(g.x, g.y - g.z + (peidus ? 14 : 0));
-  ctx.scale(1.2, 1.2);
-  ctx.rotate(lainetus * 0.09);
+  if (tantsib) ctx.rotate(tants * 0.06);
 
-  // legs and shoes
-  const samm = tantsib ? Math.sin(kell * 13) : 0;
-  ctx.lineCap = 'round';
-  for (const [lx, s] of [[-8, samm], [8, -samm]]) {
-    const jx = lx + s * 5;
-    const jy = -4 - Math.max(0, s) * 4;
-    ctx.strokeStyle = '#4a3b6b';
-    ctx.lineWidth = 6;
-    joon(lx, -18, jx, jy);
-    ctx.fillStyle = '#3a2a1a';
-    ovaal(jx + (lx < 0 ? -2 : 2), jy + 2, 6, 3.5);
-    ctx.fill();
+  const puusY = -46 + vajub * 3.5;
+  let tostab = 0;
+  let kangeTostab = 0;
+  if (konnib) tostab = Math.max(0, -Math.sin(f)) * 7;
+  if (tantsib) {
+    tostab = Math.max(0, tants) * 6;
+    kangeTostab = Math.max(0, -tants) * 2;
   }
+  jalg(-1, puusY, tostab, false);
+  jalg(1, puusY, kangeTostab, true);
 
-  const kasi = tantsib ? Math.sin(kell * 13 + 1) : -0.8;
-  joonistaKasi(-1, kasi, false);
+  // the upper body dips and leans over the stiff leg
+  ctx.translate(0, puusY);
+  ctx.rotate(vajub * 0.08);
+  ctx.translate(0, 46);
 
-  // the log costume
-  const puu = ctx.createLinearGradient(-24, 0, 24, 0);
+  ctx.fillStyle = '#d9a37f';
+  ctx.fillRect(-3.5, -85, 7, 8);
+
+  const puu = ctx.createLinearGradient(-17, 0, 17, 0);
   puu.addColorStop(0, '#5a381c');
-  puu.addColorStop(0.3, '#9a6a3c');
-  puu.addColorStop(0.65, '#8a5a30');
+  puu.addColorStop(0.35, '#9a6a3c');
+  puu.addColorStop(0.7, '#8a5a30');
   puu.addColorStop(1, '#4e3018');
   ctx.fillStyle = puu;
   ctx.strokeStyle = '#3b2412';
-  ctx.lineWidth = 2.5;
-  kast(-24, -74, 48, 58, 10);
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(-15, -79);
+  ctx.quadraticCurveTo(0, -82, 15, -79);
+  ctx.quadraticCurveTo(18, -62, 13.5, -44);
+  ctx.lineTo(-13.5, -44);
+  ctx.quadraticCurveTo(-18, -62, -15, -79);
+  ctx.closePath();
   ctx.fill();
   ctx.stroke();
   ctx.strokeStyle = 'rgba(50, 28, 12, 0.55)';
-  ctx.lineWidth = 1.4;
-  for (const bx of [-18, -10, 10, 18]) {
+  ctx.lineWidth = 1;
+  for (const bx of [-10, -4, 5, 11]) {
     ctx.beginPath();
-    ctx.moveTo(bx, -70);
-    ctx.quadraticCurveTo(bx + 3, -45, bx - 1, -20);
+    ctx.moveTo(bx, -77);
+    ctx.quadraticCurveTo(bx + 2, -62, bx - 1, -47);
     ctx.stroke();
   }
   ctx.beginPath();
-  ctx.ellipse(13, -24, 4, 3, 0.3, 0, Math.PI * 2);
+  ctx.ellipse(8, -56, 2.5, 2, 0.3, 0, Math.PI * 2);
   ctx.stroke();
-  ctx.fillStyle = '#e9c79b';
-  ovaal(0, -74, 24, 7);
+  ctx.fillStyle = '#9c3b32'; // shirt collar
+  ctx.beginPath();
+  ctx.moveTo(-5, -80);
+  ctx.lineTo(0, -73);
+  ctx.lineTo(5, -80);
+  ctx.lineTo(3, -81.5);
+  ctx.lineTo(0, -77);
+  ctx.lineTo(-3, -81.5);
+  ctx.closePath();
   ctx.fill();
-  ctx.strokeStyle = '#3b2412';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  ctx.strokeStyle = 'rgba(140, 90, 45, 0.7)';
-  ctx.lineWidth = 1;
-  for (const r of [16, 10, 4]) {
-    ovaal(0, -74, r, r * 0.29);
-    ctx.stroke();
-  }
-  ctx.fillStyle = '#2b1a0c';
-  ovaal(0, -48, 16, 19);
-  ctx.fill();
-  nagu(tantsib);
+  ctx.fillStyle = '#3a2a1a'; // belt
+  ctx.fillRect(-13.5, -48, 27, 4);
+  ctx.strokeStyle = '#c9a227';
+  ctx.lineWidth = 1.2;
+  ctx.strokeRect(-2.5, -48.5, 5, 5);
 
-  joonistaKasi(1, tantsib ? Math.sin(kell * 13 + 2.5) : -0.8, true);
+  const kaed = konnib ? Math.sin(f) * 0.25 : 0;
+  kasi(-1, tantsib ? 0.9 + tants * 0.5 : kaed, false);
+  kasi(1, tantsib ? -0.9 + tants * 0.5 : -kaed * 0.5, true);
+
+  // head: grey hair, ears and the wrinkled face
+  ctx.save();
+  ctx.translate(0, -91);
+  ctx.fillStyle = '#d8d8d8';
+  ovaal(0, 0.5, 8.6, 10);
+  ctx.fill();
+  ctx.fillStyle = '#d9a37f';
+  ovaal(-7.7, 1, 1.9, 3.1);
+  ctx.fill();
+  ovaal(7.7, 1, 1.9, 3.1);
+  ctx.fill();
+  ctx.scale(0.56, 0.56);
+  ctx.translate(0, 48);
+  nagu(konnib || tantsib);
+  ctx.restore();
   ctx.restore();
 }
 
@@ -961,7 +1040,7 @@ function joonista() {
   ];
   asjad.sort((a, b) => a.y - b.y).forEach((a) => a.joonista());
 
-  const my = vanaisa.y - vanaisa.z - 96;
+  const my = vanaisa.y - vanaisa.z - 112;
   if (huue && kell < huue.kuni) {
     mull(huue.tekst, vanaisa.x, my);
   } else if (vanaisa.olek === 'jaht' || vanaisa.olek === 'demo') {
@@ -1004,17 +1083,17 @@ window.addEventListener('resize', () => {
 });
 // One map per house. Walls: 1 wallpaper, 2 bricks, 3 wood, 4 wallpaper with a painting,
 // 5 bookshelf, 6 window, 9 the way out. Floor: . empty, * star, P plant, L lamp,
-// V where grandpa hides around a corner.
+// V where grandpa hides around a corner, B a bed you can hide under.
 const KAARDID = [
   [
     '111146111111',
     '1*...1....*1',
-    '1....5..3..1',
+    '1....5..3B.1',
     '1..P.......1',
     '1....1...L.1',
     '111.1141.111',
     '1V....1....1',
-    '1.....1..*.1',
+    '1.....1B.*.1',
     '1..2.......1',
     '1.P...1....1',
     '1.....1...L1',
@@ -1023,12 +1102,12 @@ const KAARDID = [
   [
     '111611161111',
     '1...1......1',
-    '1.*.5..33..1',
+    '1.*.5..33.B1',
     '1...5..33.*1',
     '1..........1',
     '11.1111.1111',
     '1V....1....1',
-    '1.....1..P.1',
+    '1..B..1..P.1',
     '1.22.......1',
     '1.....1....1',
     '1L....1...*1',
@@ -1037,13 +1116,13 @@ const KAARDID = [
   [
     '111111461111',
     '1..*1.....*1',
-    '1...1.....L1',
+    '1...1...B.L1',
     '1...11.11111',
     '1..........1',
     '1.P..2.....1',
     '1....2..V..1',
     '11.111111.11',
-    '1......5...1',
+    '1....B.5...1',
     '1.*....5...1',
     '1......5..P1',
     '119111111111',
@@ -1051,12 +1130,12 @@ const KAARDID = [
   [
     '111111111111',
     '1*.......*.1',
-    '1.11.55.11.1',
+    '1.11.55.11B1',
     '1.1......1.1',
     '1.1..P...1.1',
     '1....33....1',
     '1.1..33..1.1',
-    '1.1......1V1',
+    '1.1.....B1V1',
     '1.11....11.1',
     '1..........1',
     '1L...*....L1',
@@ -1065,12 +1144,12 @@ const KAARDID = [
   [
     '111161161111',
     '1....1....*1',
-    '1.*..5.....1',
+    '1.*..5....B1',
     '1....5..P..1',
     '1L...1.....1',
     '11.111111.11',
     '1......1V..1',
-    '1..3...1...1',
+    '1..3..B1...1',
     '1..3.......1',
     '1......1.*.1',
     '1P.....1...1',
@@ -1254,6 +1333,24 @@ const LAMP = tekstuur((t) => {
   t.fill();
   t.stroke();
 }, 64, 128);
+const VOODI = tekstuur((t) => {
+  t.fillStyle = '#2b1a0c'; // the dark space under the bed
+  t.fillRect(6, 24, 52, 16);
+  t.fillStyle = '#6b4423';
+  t.fillRect(2, 18, 6, 22);
+  t.fillRect(56, 18, 6, 22);
+  t.fillStyle = '#8a5a30';
+  t.fillRect(2, 20, 60, 6);
+  t.fillRect(2, 0, 6, 24);
+  t.fillStyle = '#fff';
+  t.fillRect(8, 11, 52, 10);
+  t.fillStyle = '#5aa0e8';
+  t.fillRect(18, 13, 42, 9);
+  t.fillStyle = 'rgba(255, 255, 255, 0.45)';
+  for (let x = 22; x < 60; x += 10) t.fillRect(x, 13, 4, 9);
+  t.fillStyle = '#fff8e8';
+  t.fillRect(9, 7, 12, 7);
+}, 64, 40);
 const TAHT = tekstuur((t) => {
   t.fillStyle = '#ffd23f';
   t.strokeStyle = '#c98a00';
@@ -1325,9 +1422,14 @@ function sisene(m) {
       if (c === '9') {
         s.x = x + 0.5;
         s.y = y - 0.5;
+        s.uks = { x: x + 0.5, y };
       } else if (c === 'V') {
         s.vx = x + 0.5;
         s.vy = y + 0.5;
+        s.koduX = x;
+        s.koduY = y;
+      } else if (c === 'B') {
+        s.asjad.push({ x: x + 0.5, y: y + 0.5, pilt: VOODI, laius: 1, korgus: 0.62, z: 0, voodi: true });
       } else if (c === 'P') {
         s.asjad.push({ x: x + 0.5, y: y + 0.5, pilt: TAIM, laius: 0.7, korgus: 0.7, z: 0, blokk: true });
       } else if (c === 'L') {
@@ -1340,6 +1442,8 @@ function sisene(m) {
   });
   s.nurk = -Math.PI / 2;
   s.kondib = false;
+  s.voodis = false;
+  s.silm = 0.5;
   s.vz = 0;
   s.vOlek = 'peidus';
   s.vHupe = 0;
@@ -1352,7 +1456,7 @@ function sisene(m) {
   vajutab = false;
   vajutused.clear();
   heli.laulab = false;
-  huua('Korja tähti ⭐ ja leia roheline VÄLJA-uks!', 2.8);
+  huua('Korja tähti ⭐, peitu voodi alla 🛏️ ja leia roheline VÄLJA-uks!', 3.2);
 }
 
 function lahku() {
@@ -1362,7 +1466,9 @@ function lahku() {
   vajutused.clear();
   siht = null;
   mangija.x = m.x + m.w / 2;
-  mangija.y = m.y + m.h + 22;
+  mangija.y = m.y + m.h + 26;
+  klahvid.clear();
+  uksePaus = kell + 1;
   const valik = peidukohad.filter((p) => Math.hypot(p.x - mangija.x, p.y - mangija.y) > 200);
   const koht = valik[Math.floor(Math.random() * valik.length)] || peidukohad[0];
   Object.assign(vanaisa, { x: koht.x, y: koht.y, z: 0, olek: 'peidus', aeg: 0, hupe: null, hupeAeg: 0, kinni: 0 });
@@ -1425,9 +1531,9 @@ function hyppaValjaSees() {
 }
 
 function uuendaSees(dt) {
-  mang.aeg += dt;
-  const k = Math.min(1, mang.aeg / 90);
   const s = tuba;
+  if (!s.voodis) mang.aeg += dt; // under a bed you are safe, but your time stops
+  const k = Math.min(1, mang.aeg / 90);
   s.raputus = Math.max(0, s.raputus - dt);
   const nupud = new Set(vajutused.values());
   let edasi = 0;
@@ -1441,6 +1547,11 @@ function uuendaSees(dt) {
   const dx = Math.cos(s.nurk) * edasi * 2.6 * dt;
   const dy = Math.sin(s.nurk) * edasi * 2.6 * dt;
   const r = 0.22;
+  // Walking up to the green door takes you outside.
+  if (Math.abs(s.x - s.uks.x) < 0.5 && s.y > s.uks.y - 0.3) {
+    lahku();
+    return;
+  }
   if (ruut(s.x + dx + Math.sign(dx) * r, s.y + dy + Math.sign(dy) * r) === '9') {
     lahku();
     return;
@@ -1460,6 +1571,11 @@ function uuendaSees(dt) {
     else huua('Kõik selle maja tähed käes! 🎉', 1.8);
   }
 
+  const oliVoodis = s.voodis;
+  s.voodis = ruut(s.x, s.y) === 'B';
+  s.silm += ((s.voodis ? 0.12 : 0.5) - s.silm) * Math.min(1, dt * 8); // crawl down low
+  if (s.voodis && !oliVoodis) huua(s.vOlek === 'jaht' ? 'Hmm… kuhu sa kadusid? 🤔' : '🛏️ Voodi all on turvaline!', 1.8);
+
   const kaugus = Math.hypot(s.x - s.vx, s.y - s.vy);
   if (s.vOlek === 'peidus') {
     // Grandpa waits around a corner and jumps out when you come close.
@@ -1469,16 +1585,19 @@ function uuendaSees(dt) {
       huua('Tung… tung… keegi on siin!', 1.5);
       if (heli.ac) heli.koputus(heli.ac.currentTime, 0.7);
     }
-    if (s.ootab <= 0 || kaugus < 1.4 || (kaugus < 3 && naeb(s.x, s.y, s.vx, s.vy))) hyppaValjaSees();
+    if (s.ootab <= 0 || (!s.voodis && (kaugus < 1.4 || (kaugus < 3 && naeb(s.x, s.y, s.vx, s.vy))))) hyppaValjaSees();
     return;
   }
 
-  const kaugused = kaugusKaart(Math.floor(s.x), Math.floor(s.y));
+  // When you hide under a bed he can't find you and limps back to his corner.
+  const sihtX = s.voodis ? s.koduX : Math.floor(s.x);
+  const sihtY = s.voodis ? s.koduY : Math.floor(s.y);
+  const kaugused = kaugusKaart(sihtX, sihtY);
   let siheX = s.x;
   let siheY = s.y;
   const gx = Math.floor(s.vx);
   const gy = Math.floor(s.vy);
-  if (gx !== Math.floor(s.x) || gy !== Math.floor(s.y)) {
+  if (gx !== sihtX || gy !== sihtY) {
     let lahim = Infinity;
     for (const [nx, ny] of [[gx + 1, gy], [gx - 1, gy], [gx, gy + 1], [gx, gy - 1]]) {
       const d = kaugused.get(ny * 100 + nx);
@@ -1490,7 +1609,7 @@ function uuendaSees(dt) {
     }
   }
   s.vHupe = Math.max(0, s.vHupe - dt);
-  const kiirus = (1.5 + 0.9 * k) * (s.vHupe > 0 ? 1.9 : 1);
+  const kiirus = (1.5 + 0.9 * k) * (s.vHupe > 0 ? 1.9 : lonk());
   const ex = siheX - s.vx;
   const ey = siheY - s.vy;
   const e = Math.hypot(ex, ey);
@@ -1505,7 +1624,7 @@ function uuendaSees(dt) {
     const f = kell % 1.8;
     s.vz = f < 0.45 ? Math.sin((Math.PI * f) / 0.45) * 0.25 : 0; // he hops while he sings
   }
-  if (kaugus < 0.45 && s.vz < 0.2) lopp();
+  if (!s.voodis && kaugus < 0.45 && s.vz < 0.2) lopp();
 }
 
 // Grandpa is drawn once per frame onto a small canvas and shown as a picture in 3D.
@@ -1542,7 +1661,7 @@ function joonistaSprait(kaamera, a) {
   const ekraanX = (W / 2) * (1 + tx / ty);
   const h = a.korgus * yks;
   const w = a.laius * yks;
-  const yla = pool + yks / 2 - a.z * yks - h;
+  const yla = pool + yks * kaamera.silm - a.z * yks - h;
   const x0 = ekraanX - w / 2;
   const pw = a.pilt.width;
   const allikaLai = Math.min(pw, (pw * lai) / w);
@@ -1578,6 +1697,27 @@ function joonistaKaed(s) {
     for (const kx of [-12, -4, 4, 12]) joon(kx, -66, kx, -58);
     ctx.restore();
   }
+}
+
+// Looking out from under a bed: wooden slats above you and the edge of the blanket.
+function joonistaVoodiAlune() {
+  const k = VAATE_K * 0.4;
+  ctx.fillStyle = '#5aa0e8';
+  ctx.beginPath();
+  ctx.moveTo(-10, k - 14);
+  for (let x = -10; x <= W + 20; x += 30) ctx.quadraticCurveTo(x + 15, k + 14, x + 30, k - 2);
+  ctx.lineTo(W + 20, -10);
+  ctx.lineTo(-10, -10);
+  ctx.closePath();
+  ctx.fill();
+  const gr = ctx.createLinearGradient(0, 0, 0, k - 20);
+  gr.addColorStop(0, '#1e120a');
+  gr.addColorStop(1, '#3a2414');
+  ctx.fillStyle = gr;
+  ctx.fillRect(-10, -10, W + 20, k - 10);
+  ctx.fillStyle = '#6b4423';
+  for (let x = 10; x < W; x += 80) ctx.fillRect(x, -10, 34, k - 14);
+  if (!huue || kell > huue.kuni) mull('🛏️ Oled voodi all. Siin vanaisa sind kätte ei saa!', W / 2, VAATE_K - 40);
 }
 
 function joonistaSees() {
@@ -1644,7 +1784,7 @@ function joonistaSees() {
     let texX = Math.min(63, Math.floor(seinX * 64));
     if ((kylg === 0 && rx < 0) || (kylg === 1 && ry > 0)) texX = 63 - texX;
     const korgus = SKAALA / kaugus;
-    const y0 = pool - korgus / 2;
+    const y0 = pool - korgus * (1 - s.silm);
     ctx.drawImage(seinaTekstuur(tyyp), texX, 0, 1, 64, i * lai, y0, lai + 0.5, korgus);
     const tume = Math.min(0.75, kaugus / 10 + (kylg ? 0.15 : 0));
     ctx.fillStyle = `rgba(30, 15, 40, ${tume.toFixed(2)})`;
@@ -1652,8 +1792,9 @@ function joonistaSees() {
   }
 
   // Everything standing in the room, the farthest first.
-  const kaamera = { x: s.x, y: s.y, dirX, dirY, plX, plY, pool, lai };
-  const spraidid = s.asjad.map((a) => (a.taht
+  const kaamera = { x: s.x, y: s.y, dirX, dirY, plX, plY, pool, lai, silm: s.silm };
+  const minuVoodi = (a) => a.voodi && s.voodis && Math.floor(a.x) === Math.floor(s.x) && Math.floor(a.y) === Math.floor(s.y);
+  const spraidid = s.asjad.filter((a) => !minuVoodi(a)).map((a) => (a.taht
     ? { ...a, z: a.z + Math.sin(kell * 3 + a.x) * 0.06, laius: a.laius * Math.max(0.15, Math.abs(Math.cos(kell * 2 + a.y))) }
     : a));
   renderVanaisaPilt(s.vOlek === 'peidus' ? 'puhkab' : 'jaht');
@@ -1662,7 +1803,8 @@ function joonistaSees() {
   spraidid.sort((a, b) => kaugusRuut(b) - kaugusRuut(a));
   for (const a of spraidid) joonistaSprait(kaamera, a);
   ctx.imageSmoothingEnabled = true;
-  joonistaKaed(s);
+  if (s.silm > 0.3) joonistaKaed(s);
+  else joonistaVoodiAlune();
   ctx.restore();
 
   // stars and time
@@ -1687,6 +1829,10 @@ function joonistaSees() {
   ctx.fillRect(mx0 - 2, my0 - 2, 12 * r + 4, 12 * r + 4);
   s.kaart.forEach((rida, y) => {
     [...rida].forEach((c, x) => {
+      if (c === 'B') {
+        ctx.fillStyle = '#5aa0e8';
+        ctx.fillRect(mx0 + x * r, my0 + y * r, r, r);
+      }
       if (!onSein(c)) return;
       ctx.fillStyle = c === '9' ? '#2fa84f' : '#2b2340';
       ctx.fillRect(mx0 + x * r, my0 + y * r, r, r);

@@ -665,9 +665,9 @@ const newNick = () => `${pickOf(NICK_A)} ${pickOf(NICK_B)} ${10 + Math.floor(Mat
 const NICK_RE = /^[A-Za-zÕÄÖÜŠŽõäöüšž0-9 ]{2,14}$/;
 const okNick = (n) => typeof n === 'string' && n.trim() === n && NICK_RE.test(n) && (n.match(/[0-9]/g) || []).length <= 3;
 const STORE = 'ahvihotell-mina';
-function loadProfile() {
-  let o = null;
-  try { o = JSON.parse(localStorage.getItem(STORE) || 'null'); } catch (e) { o = null; }
+function loadProfile(from) {
+  let o = from || null;
+  if (!from) try { o = JSON.parse(localStorage.getItem(STORE) || 'null'); } catch (e) { o = null; }
   if (!o || typeof o !== 'object') o = {};
   const owned = Array.isArray(o.owned) ? o.owned.filter((id) => SHOP.some((s) => s.id === id)) : [];
   const look = cleanLook({ s: Number.isInteger(o.shirt) ? o.shirt : Math.floor(Math.random() * SHIRTS.length), k: o.skin, c: o.paint, w: o.wear });
@@ -684,6 +684,35 @@ function saveProfile() {
 }
 saveProfile(); // keeps a newly made nickname
 const myLook = () => ({ s: me.shirt, k: me.skin, b: me.body, c: me.paint, w: me.wear.slice() });
+
+// ---------- Secret code: carries my gems, things and look to another device ----------
+// Nothing is sent to the server: the code itself holds the numbers, with a check at the end against typos.
+
+const CODE_ABC = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // no I and O, they look like 1 and 0
+const toCode = (n) => { let t = ''; do { t = CODE_ABC[n % 34] + t; n = Math.floor(n / 34); } while (n > 0); return t; };
+const fromCode = (t) => [...t].reduce((n, ch) => (n < 0 || !CODE_ABC.includes(ch) ? -1 : n * 34 + CODE_ABC.indexOf(ch)), 0);
+const mask = (list, ids) => list.reduce((m, it, i) => (ids.includes(it.id) ? m + 2 ** i : m), 0);
+const unmask = (list, m) => list.filter((it, i) => Math.floor(m / 2 ** i) % 2 === 1).map((it) => it.id);
+function codeCheck(text) {
+  let h = 7;
+  for (const ch of text) h = (h * 31 + ch.charCodeAt(0)) % 1000003;
+  return CODE_ABC[h % 34] + CODE_ABC[Math.floor(h / 34) % 34];
+}
+function profileCode() {
+  const nums = [me.gems, mask(SHOP, me.owned), mask(BODIES, me.bodies), me.body, me.shirt, me.skin, me.paint, mask(SHOP, me.wear), me.best];
+  const text = nums.map(toCode).join('-');
+  return `${text}-${codeCheck(text)}`;
+}
+// Gives a profile like the saved one, or null when the code is wrong.
+function readCode(raw) {
+  const parts = raw.toUpperCase().replace(/O/g, '0').replace(/I/g, '1').replace(/\s+/g, '').split('-');
+  if (parts.length !== 10) return null;
+  const check = parts.pop();
+  if (codeCheck(parts.join('-')) !== check) return null;
+  const n = parts.map(fromCode);
+  if (n.some((v) => v < 0 || v > 1e12)) return null;
+  return { gems: n[0], owned: unmask(SHOP, n[1]), bodies: unmask(BODIES, n[2]), body: n[3], shirt: n[4], skin: n[5], paint: n[6], wear: unmask(SHOP, n[7]), best: n[8], nick: me.nick };
+}
 
 // ---------- Sound (Web Audio, starts after the first tap) ----------
 
@@ -1946,7 +1975,7 @@ setInterval(() => {
 
 // ---------- Menus ----------
 
-const SCREENS = ['start', 'rooms', 'wait', 'shop', 'win', 'over'];
+const SCREENS = ['start', 'rooms', 'wait', 'shop', 'card', 'win', 'over'];
 function showScreen(id) {
   for (const s of SCREENS) $(s).hidden = s !== id;
   for (const e of document.querySelectorAll('.walletNum')) e.textContent = me.gems;
@@ -2267,6 +2296,60 @@ $('goBtn').addEventListener('click', () => {
 });
 $('shopBtn').addEventListener('click', () => { state = 'shop'; showScreen('shop'); drawShop(); });
 $('shopBack').addEventListener('click', goMenu);
+
+// ---------- My profile card and secret code ----------
+
+function drawCard() {
+  const cv = $('cardCanvas');
+  const g = cv.getContext('2d');
+  const w = cv.width, hgt = cv.height;
+  const bg = g.createLinearGradient(0, 0, w, hgt);
+  bg.addColorStop(0, '#ff3b6b'); bg.addColorStop(0.5, '#6b2fa3'); bg.addColorStop(1, '#3bd1ff');
+  g.fillStyle = bg; g.fillRect(0, 0, w, hgt);
+  g.fillStyle = 'rgba(255,255,255,0.18)';
+  g.beginPath(); g.roundRect(14, 14, w - 28, hgt - 28, 22); g.fill();
+  g.fillStyle = 'rgba(255,255,255,0.25)';
+  g.beginPath(); g.arc(110, 150, 82, 0, Math.PI * 2); g.fill();
+  g.imageSmoothingEnabled = false;
+  g.drawImage(avatar(myLook()), 20, 50, 180, 180);
+  g.textAlign = 'left';
+  g.fillStyle = '#ffd23b'; g.font = '900 30px system-ui, sans-serif';
+  g.fillText('🐒 Ahvihotell', 220, 62);
+  g.fillStyle = '#fff'; g.font = '800 28px system-ui, sans-serif';
+  g.fillText(me.nick, 220, 112);
+  g.font = '700 21px system-ui, sans-serif';
+  g.fillText(`🏆 Rekord: ${me.best} 💎`, 220, 152);
+  g.fillText(`💎 Kalliskive: ${me.gems}`, 220, 186);
+  g.fillText(`🛍️ Asju: ${me.owned.length + me.bodies.length}`, 220, 220);
+  g.font = '700 15px system-ui, sans-serif'; g.fillStyle = 'rgba(255,255,255,0.8)';
+  g.fillText(`${BODIES[me.body].icon} ${BODIES[me.body].name}`, 220, 250);
+}
+function openCard() {
+  state = 'card';
+  showScreen('card');
+  drawCard();
+  $('myCode').textContent = profileCode();
+  $('codeMsg').textContent = '';
+  $('codeIn').value = '';
+}
+$('cardBtn').addEventListener('click', openCard);
+$('cardBack').addEventListener('click', goMenu);
+$('cardSave').addEventListener('click', () => { $('cardSave').href = $('cardCanvas').toDataURL('image/png'); });
+$('copyCode').addEventListener('click', () => {
+  const done = (t) => { $('codeMsg').textContent = t; };
+  if (navigator.clipboard) navigator.clipboard.writeText(profileCode()).then(() => done('📋 Kopeeritud!'), () => done('Vali kood sõrme või hiirega ja kopeeri ise.'));
+  else done('Vali kood sõrme või hiirega ja kopeeri ise.');
+});
+$('useCode').addEventListener('click', () => {
+  const p = readCode($('codeIn').value);
+  if (!p) { $('codeMsg').textContent = '❌ See kood ei sobi. Vaata, kas kõik tähed ja numbrid on õiged.'; return; }
+  if ((me.gems || me.owned.length) && !confirm('See kood asendab sinu praegused kalliskivid ja asjad. Kas oled kindel?')) return;
+  Object.assign(me, loadProfile(p));
+  saveProfile();
+  openCard();
+  $('codeMsg').textContent = '✅ Valmis! Sinu kalliskivid ja asjad on nüüd siin.';
+});
+$('codeIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('useCode').click(); });
 function setNick(name) {
   me.nick = name;
   me.best = 0; // a new name starts its own score

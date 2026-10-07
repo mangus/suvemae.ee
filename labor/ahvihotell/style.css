@@ -60,3 +60,10 @@ html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-
 .top li:nth-child(odd) { background: rgba(255, 255, 255, .1); }
 .top li.mine { background: rgba(255, 210, 59, .35); }
 .nick input { width: 10em; font: inherit; font-size: 17px; padding: 5px 10px; border: 2px solid #ffd23b; border-radius: 10px; background: rgba(0, 0, 0, .35); color: #fff; }
+
+/* Profile card and secret code */
+#cardCanvas { width: min(100%, 480px); height: auto; border-radius: 22px; box-shadow: 0 6px 24px rgba(0, 0, 0, .5); }
+.screen a.btn { margin-top: 12px; font-size: 18px; font-weight: 800; padding: 10px 22px; border-radius: 999px; background: #5dff6e; color: #12301a; text-decoration: none; box-shadow: 0 4px 0 #2a9a3a; }
+.code { font-family: ui-monospace, monospace; font-size: 22px !important; font-weight: 800; letter-spacing: 1px; background: rgba(0, 0, 0, .35); border: 2px dashed #ffd23b; border-radius: 12px; padding: 8px 14px; word-break: break-all; user-select: text; -webkit-user-select: text; }
+#codeIn { width: 14em; text-transform: uppercase; user-select: text; -webkit-user-select: text; }
+#useCode { font-size: 16px; padding: 6px 14px; margin: 0 0 0 6px; box-shadow: 0 3px 0 #2a9a3a; }

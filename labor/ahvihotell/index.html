@@ -29,6 +29,7 @@
       <button id="startBtn">🧍 Mängi üksi</button>
       <button id="teamBtn">👥 Mängi koos</button>
       <button id="shopBtn" class="alt">🛍️ Pood</button>
+      <button id="cardBtn" class="alt">🪪 Profiil</button>
     </div>
     <p class="nick"><label for="nickIn">Sinu hüüdnimi:</label> <input id="nickIn" maxlength="14" autocomplete="off" spellcheck="false"> <button id="nickBtn" class="alt" title="Suvaline nimi">🎲</button> · parim <b id="myBest">0</b> 💎</p>
     <p class="hint">Mõtle välja hüüdnimi. Ära kirjuta oma päris nime.</p>
@@ -68,6 +69,20 @@
     <p class="hint">Püksid, särgid ja tossud paistavad inimesel ja tulnukal.</p>
     <div id="shopItems" class="items"></div>
     <button id="shopBack" class="alt">← Tagasi</button>
+  </section>
+  <section id="card" class="screen menu" hidden>
+    <h1>🪪 Minu profiil</h1>
+    <canvas id="cardCanvas" width="480" height="270"></canvas>
+    <a id="cardSave" class="btn" href="#" download="ahvihotell-kaart.png">💾 Salvesta kaart pildina</a>
+    <h2>🔑 Salakood</h2>
+    <p>Selle koodiga saad oma kalliskivid, riided ja tegelased teise arvutisse või telefoni kaasa.</p>
+    <p id="myCode" class="code"></p>
+    <button id="copyCode" class="alt">📋 Kopeeri kood</button>
+    <p class="hint">Ära jaga koodi teistega, muidu saavad nad sinu asjad endale ka.</p>
+    <p><label for="codeIn">Sul on juba kood? Kirjuta see siia:</label></p>
+    <p class="nick"><input id="codeIn" autocomplete="off" spellcheck="false" autocapitalize="characters"> <button id="useCode">✅ Võta kasutusse</button></p>
+    <p id="codeMsg" class="notice"></p>
+    <button id="cardBack" class="alt">← Tagasi</button>
   </section>
   <section id="win" class="screen" hidden>
     <h1 id="winTitle">🏆 Sa võitsid!</h1>

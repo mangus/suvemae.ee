@@ -39,6 +39,15 @@ const IDEAS = [
   { id: 'friends', icon: '🤝', name: 'Play with friends', fun: 30, cost: 5, needs: ['scores', 'castle'], code: 'room.join("friends");' },
 ];
 
+// Shop upgrades: every level costs twice as much as the one before
+const UPGRADES = [
+  { id: 'tank', icon: '🔋', name: 'Bigger credit tank', price: 20, max: 5, info: '+5 ⚡ space' },
+  { id: 'charge', icon: '⚡', name: 'Faster credits', price: 30, max: 5, info: 'credits come faster' },
+  { id: 'arms', icon: '🦾', name: 'More robot arms', price: 60, max: 3, info: 'build more at once' },
+  { id: 'turbo', icon: '🏎️', name: 'Faster building', price: 40, max: 5, info: 'build ideas faster' },
+];
+const levels = { tank: 0, charge: 0, arms: 0, turbo: 0 };
+
 const $ = (id) => document.getElementById(id);
 const canvas = $('preview');
 const ctx = canvas.getContext('2d');
@@ -49,7 +58,8 @@ let dpr = 1;
 const state = {
   built: new Set(), // in your game, but players only see it after publishing
   live: new Set(), // published
-  building: null,
+  building: [], // ideas being built right now
+  cash: 0,
   publishing: 0, // time publishing started, 0 when not publishing
   energy: START_ENERGY,
   bugs: [],
@@ -64,7 +74,11 @@ const has = (id) => state.built.has(id);
 const funOf = (ids) => IDEAS.filter((i) => ids.has(i.id)).reduce((sum, i) => sum + i.fun, 0);
 const pickOne = (list) => list[Math.floor(Math.random() * list.length)];
 const costOf = (idea) => idea.cost + state.built.size; // every build makes the next one cost 1 more
-const maxEnergy = () => START_ENERGY + state.live.size * TANK_GROWTH;
+const priceOf = (u) => u.price * 2 ** levels[u.id];
+const maxEnergy = () => START_ENERGY + state.live.size * TANK_GROWTH + levels.tank * 5;
+const energyEvery = () => ENERGY_EVERY * 0.75 ** levels.charge; // seconds per credit
+const slots = () => 1 + levels.arms; // ideas built at the same time
+const buildMs = () => BUILD_MS * 0.75 ** levels.turbo;
 
 function say(text) {
   $('say').textContent = text;
@@ -73,6 +87,7 @@ function say(text) {
 // ---- Idea cards ----
 
 function cardState(idea) {
+  if (state.building.includes(idea)) return 'building';
   if (state.live.has(idea.id)) return 'done live';
   if (state.built.has(idea.id)) return 'done';
   return idea.needs.every(has) ? 'open' : 'locked';
@@ -81,6 +96,7 @@ function cardState(idea) {
 function cardInfo(kind, idea) {
   if (kind === 'open') return `⚡${costOf(idea)} · +${idea.fun} fun`;
   if (kind === 'locked') return 'Build more first';
+  if (kind === 'building') return '🔧 building…';
   if (kind === 'done') return '✅ built, not published';
   return '🌍 live!';
 }
@@ -105,7 +121,7 @@ function renderCards() {
   }));
   const fresh = [...state.built].filter((id) => !state.live.has(id)).length;
   $('publish').textContent = fresh ? `🚀 Publish (${fresh} new)` : '🚀 Publish';
-  $('publish').disabled = Boolean(state.building || state.publishing || state.finishedAt);
+  $('publish').disabled = Boolean(state.building.length || state.publishing || state.finishedAt);
   $('fun').textContent = funOf(state.live);
 }
 
@@ -120,32 +136,32 @@ function typeCode(line) {
     n += 1;
     row.textContent = text.slice(0, n);
     if (n >= text.length) clearInterval(timer);
-  }, (BUILD_MS * 0.85) / text.length);
+  }, (buildMs() * 0.85) / text.length);
 }
 
 function pick(id) {
   const idea = IDEAS.find((i) => i.id === id);
   if (!idea || state.finishedAt) return;
-  if (state.building) return say('Wait, I am still building! 🔧');
+  if (state.building.length >= slots()) return say(slots() > 1 ? 'All my robot arms are busy! 🔧' : 'Wait, I am still building! 🔧 Buy robot arms in the shop to build more at once.');
   if (state.publishing) return say('Wait, I am publishing! 🚀');
   const kind = cardState(idea);
   if (kind !== 'open') return say(kind === 'locked' ? 'Build other things first!' : 'Already built! Try another idea.');
   if (state.energy < costOf(idea)) return say(`I need ${costOf(idea)} ⚡ for that. Wait a moment!`);
   if (!state.startedAt) state.startedAt = performance.now();
   state.energy -= costOf(idea);
-  state.building = idea;
+  state.building.push(idea);
   $('bot').classList.add('busy');
   say(`${pickOne(['On it!', 'Writing code…', 'Great idea!', 'Beep boop, building!'])} ${idea.icon}`);
   typeCode(idea.code);
   beep(440, 0.08);
-  setTimeout(() => finishBuild(idea), BUILD_MS);
+  setTimeout(() => finishBuild(idea), buildMs());
   renderCards();
 }
 
 function finishBuild(idea) {
   state.built.add(idea.id);
-  state.building = null;
-  $('bot').classList.remove('busy');
+  state.building = state.building.filter((b) => b !== idea);
+  if (!state.building.length) $('bot').classList.remove('busy');
   beep(660, 0.12);
   if (idea.id === 'music') startMusic();
   if (Math.random() < BUG_CHANCE && state.bugs.length < MAX_BUGS) {
@@ -158,7 +174,7 @@ function finishBuild(idea) {
 }
 
 function publish() {
-  if (state.building || state.publishing || state.finishedAt) return;
+  if (state.building.length || state.publishing || state.finishedAt) return;
   const fresh = [...state.built].filter((id) => !state.live.has(id));
   if (!fresh.length) return say('Build something new first, then publish!');
   state.publishing = performance.now();
@@ -182,6 +198,57 @@ $('cards').addEventListener('click', (e) => {
   if (card) pick(card.dataset.id);
 });
 $('publish').addEventListener('click', publish);
+
+// ---- Shop: spend cash on upgrades ----
+
+const shopButtons = {};
+
+function makeShop() {
+  $('shop').replaceChildren(...UPGRADES.map((u) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'card';
+    button.dataset.id = u.id;
+    const icon = document.createElement('span');
+    icon.className = 'icon';
+    icon.textContent = u.icon;
+    const name = document.createElement('span');
+    name.textContent = u.name;
+    const level = document.createElement('small');
+    const price = document.createElement('small');
+    button.append(icon, name, level, price);
+    shopButtons[u.id] = { button, level, price };
+    return button;
+  }));
+  updateShop();
+}
+
+function updateShop() {
+  for (const u of UPGRADES) {
+    const { button, level, price } = shopButtons[u.id];
+    const maxed = levels[u.id] >= u.max;
+    const levelText = `Level ${levels[u.id]}/${u.max} · ${u.info}`;
+    const priceText = maxed ? '⭐ max!' : `💰 ${priceOf(u)}`;
+    if (level.textContent !== levelText) level.textContent = levelText;
+    if (price.textContent !== priceText) price.textContent = priceText;
+    button.disabled = maxed || state.cash < priceOf(u) || Boolean(state.finishedAt);
+  }
+}
+
+function buy(id) {
+  const u = UPGRADES.find((x) => x.id === id);
+  if (!u || state.finishedAt || levels[id] >= u.max || state.cash < priceOf(u)) return;
+  state.cash -= priceOf(u);
+  levels[id] += 1;
+  beep(784, 0.12);
+  say(`${u.icon} ${u.name}: level ${levels[id]}! 🛒`);
+  updateShop();
+}
+
+$('shop').addEventListener('click', (e) => {
+  const button = e.target.closest('.card');
+  if (button) buy(button.dataset.id);
+});
 
 // ---- Sound (starts only after the first tap) ----
 
@@ -492,12 +559,12 @@ function draw(t, now) {
 
   if (has('scores')) label(`🏆 ${Math.floor(t * 10) % 10000}`, W - 10, H * 0.08, H * 0.06, 'right');
 
-  if (!state.built.size && !state.building) {
+  if (!state.built.size && !state.building.length) {
     label('Your game is empty…', W / 2, H * 0.42, Math.min(W * 0.05, 26), 'center', '#8a84a0');
     label('pick an idea below! 👇', W / 2, H * 0.56, Math.min(W * 0.05, 26), 'center', '#8a84a0');
   }
 
-  if (state.building) label(`🔧 Building ${state.building.icon}…`, 10, H * 0.08, Math.min(W * 0.045, 22));
+  if (state.building.length) label(`🔧 Building ${state.building.map((b) => b.icon).join(' ')}…`, 10, H * 0.08, Math.min(W * 0.045, 22));
 
   if (state.publishing) {
     const p = Math.min(1, (now - state.publishing) / PUBLISH_MS);
@@ -521,7 +588,7 @@ function frame(now) {
   last = now;
   if (!state.finishedAt) {
     energyClock += dt;
-    if (energyClock >= ENERGY_EVERY) {
+    if (energyClock >= energyEvery()) {
       energyClock = 0;
       if (state.energy < maxEnergy()) state.energy += 1;
     }
@@ -529,6 +596,7 @@ function frame(now) {
       const liveBugs = state.bugs.filter((bug) => bug.live).length;
       const rate = funOf(state.live) / 12 - liveBugs * 3; // players per second
       state.players = Math.max(0, state.players + rate * dt);
+      state.cash += (state.players / 10) * dt; // every 10 players pay 1 cash a second
       if (state.players >= GOAL) win(now);
     }
   }
@@ -537,6 +605,8 @@ function frame(now) {
   while (pops.length && pops[0].age > 0.5) pops.shift();
 
   $('energy').textContent = `${state.energy}/${maxEnergy()}`;
+  $('cash').textContent = Math.floor(state.cash);
+  updateShop();
   $('players').textContent = Math.floor(state.players);
   $('bar').style.width = `${Math.min(100, (state.players / GOAL) * 100)}%`;
   $('time').textContent = state.startedAt ? Math.floor(((state.finishedAt || now) - state.startedAt) / 1000) : 0;
@@ -546,6 +616,7 @@ function frame(now) {
 }
 
 resize();
+makeShop();
 renderCards();
 showScores();
 requestAnimationFrame(frame);

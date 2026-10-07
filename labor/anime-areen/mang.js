@@ -4,7 +4,7 @@
 // children drew; more of them will be added later.
 import { lab } from '../lab.js';
 import { clamp, moveFighter, attackHits, applyDamage, cleanCharacter } from './game-core.js';
-import { COLORS, CHARACTERS, drawFighter, drawArena, drawFocusLines } from './joonista.js';
+import { COLORS, CHARACTERS, drawFighter, drawArena, drawFocusLines, drawUltraRing } from './joonista.js';
 
 const W = 640;
 const H = 480;
@@ -20,6 +20,12 @@ const SUPER_MS = 2200;
 const SUPER_SHOT_MS = 600;
 const SUPER_DAMAGE = 25;
 const SUPER_REACH = [260, 60];
+// Its ultra power: a red fire ring for 19 seconds that burns everyone who comes close.
+const ULTRA_COOLDOWN = 60000;
+const ULTRA_MS = 19000;
+const ULTRA_TICK = 1000;
+const ULTRA_DAMAGE = 5;
+const ULTRA_REACH = { x: 95, y: 45 };
 const LIMITS = { v: COLORS.length, p: CHARACTERS.length };
 
 const $ = (id) => document.getElementById(id);
@@ -30,6 +36,7 @@ const olek = $('olek');
 const voitja = $('voitja');
 const teade = $('teade');
 const superNupp = $('super');
+const ultraNupp = $('ultra');
 const ctx = areen.getContext('2d');
 
 const KEYMAP = {
@@ -39,7 +46,7 @@ const KEYMAP = {
   ArrowRight: 'right', KeyD: 'right',
 };
 
-const me = { c: { v: Math.floor(Math.random() * COLORS.length), p: Math.floor(Math.random() * CHARACTERS.length) }, x: 0, y: 0, f: 1, hp: MAX_HP, atk: 0, hurt: 0, sup: 0, down: false, walking: false };
+const me = { c: { v: Math.floor(Math.random() * COLORS.length), p: Math.floor(Math.random() * CHARACTERS.length) }, x: 0, y: 0, f: 1, hp: MAX_HP, atk: 0, hurt: 0, sup: 0, ult: 0, down: false, walking: false };
 const others = new Map();
 const keys = new Set();
 let tuba = null;
@@ -48,6 +55,10 @@ let lastAttack = -Infinity;
 let lastSuper = -Infinity;
 let superWasReady = true;
 let superText = '';
+let lastUltra = -Infinity;
+let ultraWasReady = true;
+let ultraText = '';
+let ultraTick = 0;
 let dpr = 1;
 let lastFrame = performance.now();
 let lastSent = 0;
@@ -117,13 +128,14 @@ function showStatus() {
 function receive(message, from) {
   if (!message || typeof message !== 'object') return;
   if (message.t === 'hi') {
-    const other = others.get(from) ?? { atk: 0, hurt: 0, sup: 0, movedAt: 0, walking: false };
+    const other = others.get(from) ?? { atk: 0, hurt: 0, sup: 0, ult: 0, movedAt: 0, walking: false };
     other.c = cleanCharacter(message.c, LIMITS);
     other.x = other.dx = num(message.x, 0, W, W / 2);
     other.y = other.dy = num(message.y, 0, MOVE_AREA.height, MOVE_AREA.height / 2);
     other.f = message.f < 0 ? -1 : 1;
     other.hp = num(message.hp, 0, MAX_HP, MAX_HP);
     other.down = other.hp === 0;
+    other.ult = 0;
     others.set(from, other);
     showStatus();
     return;
@@ -151,6 +163,8 @@ function receive(message, from) {
     other.atk = 1;
   } else if (message.t === 's') {
     other.sup = 1;
+  } else if (message.t === 'u') {
+    other.ult = ULTRA_MS;
   } else if (message.t === 'hp') {
     const hp = num(message.hp, 0, MAX_HP, other.hp);
     if (hp < other.hp) other.hurt = 1;
@@ -220,6 +234,27 @@ function superPower() {
   }, SUPER_SHOT_MS);
 }
 
+// Starts the red fire ring; it burns once a second (see update).
+function ultraPower() {
+  if (me.down || !canUseSuper()) return;
+  const now = performance.now();
+  if (now - lastUltra < ULTRA_COOLDOWN) return;
+  lastUltra = now;
+  ultraWasReady = false;
+  me.ult = ULTRA_MS;
+  ultraTick = 0;
+  sound('super');
+  send({ t: 'u' });
+  flash('❤️‍🔥 Ultra-võime: 19 sekundit!');
+}
+
+function burnNearby() {
+  if (!tuba?.connected) return;
+  for (const [id, other] of others) {
+    if (!other.down && Math.abs(other.x - me.x) <= ULTRA_REACH.x && Math.abs(other.y - me.y) <= ULTRA_REACH.y) tuba.sendTo(id, { t: 'hit', d: ULTRA_DAMAGE });
+  }
+}
+
 // Keyboard and touch
 
 addEventListener('keydown', (event) => {
@@ -233,6 +268,9 @@ addEventListener('keydown', (event) => {
   } else if (event.code === 'KeyE') {
     event.preventDefault();
     if (!event.repeat) superPower();
+  } else if (event.code === 'KeyR') {
+    event.preventDefault();
+    if (!event.repeat) ultraPower();
   }
 });
 addEventListener('keyup', (event) => {
@@ -266,6 +304,10 @@ superNupp.addEventListener('pointerdown', (event) => {
   event.preventDefault();
   superPower();
 });
+ultraNupp.addEventListener('pointerdown', (event) => {
+  event.preventDefault();
+  ultraPower();
+});
 document.querySelector('.puutenupud').addEventListener('contextmenu', (event) => event.preventDefault());
 
 // Choosing a character; the others see the change right away.
@@ -274,6 +316,7 @@ const choices = document.querySelectorAll('.tegelane');
 function showChoice() {
   for (const button of choices) button.setAttribute('aria-pressed', String(Number(button.dataset.p) === me.c.p));
   superNupp.hidden = !canUseSuper();
+  ultraNupp.hidden = !canUseSuper();
 }
 for (const button of choices) {
   button.addEventListener('click', () => {
@@ -335,6 +378,21 @@ function showSuper(now) {
   superNupp.classList.toggle('laeb', left > 0);
 }
 
+// The ULTRA button shows the seconds the ring still burns, then the wait.
+function showUltra(now) {
+  if (!canUseSuper()) return;
+  const left = Math.ceil((ULTRA_COOLDOWN - (now - lastUltra)) / 1000);
+  if (left <= 0 && !ultraWasReady) {
+    ultraWasReady = true;
+    flash('❤️‍🔥 Ultra-võime on jälle valmis!');
+  }
+  const text = me.ult > 0 ? `🔥 ${Math.ceil(me.ult / 1000)}` : left > 0 ? `⏳ ${left}` : '❤️‍🔥 ULTRA';
+  if (text === ultraText) return;
+  ultraText = text;
+  ultraNupp.textContent = text;
+  ultraNupp.classList.toggle('laeb', left > 0 && me.ult <= 0);
+}
+
 function flash(text) {
   teade.textContent = text;
   teade.classList.add('nahtav');
@@ -392,11 +450,21 @@ function update(now, dt) {
   me.atk = Math.max(0, me.atk - dt / 300);
   me.hurt = Math.max(0, me.hurt - dt / 400);
   me.sup = Math.max(0, me.sup - dt / SUPER_MS);
+  if (me.down) me.ult = 0;
+  if (me.ult > 0) {
+    me.ult = Math.max(0, me.ult - dt);
+    ultraTick -= dt;
+    if (ultraTick <= 0) {
+      ultraTick = ULTRA_TICK;
+      burnNearby();
+    }
+  }
   const follow = Math.min(1, dt / 80);
   for (const other of others.values()) {
     other.atk = Math.max(0, other.atk - dt / 300);
     other.hurt = Math.max(0, other.hurt - dt / 400);
     other.sup = Math.max(0, other.sup - dt / SUPER_MS);
+    other.ult = Math.max(0, other.ult - dt);
     other.dx += (other.x - other.dx) * follow;
     other.dy += (other.y - other.dy) * follow;
     other.walking = now - other.movedAt < 150;
@@ -408,6 +476,7 @@ function update(now, dt) {
     tuba.send({ t: 'm', x: me.x, y: me.y, f: me.f });
   }
   showSuper(now);
+  showUltra(now);
 }
 
 function draw(now) {
@@ -416,9 +485,11 @@ function draw(now) {
   const fighters = [{ ...me, dx: me.x, dy: me.y, mine: true }, ...others.values()];
   fighters.sort((a, b) => a.dy - b.dy);
   for (const f of fighters) {
+    const scale = 0.8 + 0.3 * (f.dy / MOVE_AREA.height);
+    if (f.ult > 0 && !f.down) drawUltraRing(ctx, f.dx, f.dy + FEET_OFFSET, scale, now);
     drawFighter(ctx, f.c, f.dx, f.dy + FEET_OFFSET, {
       facing: f.f,
-      scale: 0.8 + 0.3 * (f.dy / MOVE_AREA.height),
+      scale,
       attack: f.atk,
       hurt: f.hurt,
       flight: f.sup,

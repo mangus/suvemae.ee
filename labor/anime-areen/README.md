@@ -8,7 +8,7 @@ Anime-stiilis võitlusmäng, kus mitu inimest saavad korraga samal areenil mäng
 2. Arvutis liigu WASD-klahvide või nooltega ja löö tühikuga. Telefonis hoia suunanuppe ja vajuta suurt LÖÖ-nuppu.
 3. Kui elu saab otsa, kukub võitleja pikali ja tuleb hetke pärast tagasi.
 
-Mängija valib endale ühe kolmest tegelasest, kelle Rebased joonistasid ise paberile: tulejõududega tiivuline tegelane, kelle löök on tulepall ja kes saab iga 20 sekundi tagant kasutada supervõimet (lendab üles ja laseb tulepüstolist pika tulejoa; arvutis klahv E, telefonis SUPER-nupp), vikatiga võitleja, kelle löök on hõbedane vikatihoop, või sinisejuukseline nugadega võitleja, kelle löök on kaks ristuvat noalõiget. Teised laste joonistatud tegelased tulevad mängu hiljem.
+Mängija valib endale ühe kolmest tegelasest, kelle Rebased joonistasid ise paberile: tulejõududega tiivuline tegelane, kelle löök on tulepall ja kes saab iga 20 sekundi tagant kasutada supervõimet (lendab üles ja laseb tulepüstolist pika tulejoa; arvutis klahv E, telefonis SUPER-nupp) ning iga 60 sekundi tagant ultra-võimet (19 sekundit põleb tema ümber punane tulering, mis teeb haiget kõigile, kes tulevad liiga lähedale; arvutis klahv R, telefonis ULTRA-nupp), vikatiga võitleja, kelle löök on hõbedane vikatihoop, või sinisejuukseline nugadega võitleja, kelle löök on kaks ristuvat noalõiget. Teised laste joonistatud tegelased tulevad mängu hiljem.
 
 ## Materjalid
 

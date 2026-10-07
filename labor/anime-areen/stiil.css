@@ -59,6 +59,7 @@ kbd { padding: 2px 6px; border: 2px solid #1d1430; border-radius: 6px; backgroun
 .runnak { width: 118px; height: 118px; border-radius: 50%; color: white; background: linear-gradient(145deg, #ff5f92, #d92a8a); box-shadow: 0 8px #1d1430; font-size: 1.35rem; }
 .super { width: 84px; height: 84px; border-radius: 50%; background: linear-gradient(145deg, #ffe45c, #ff7a2e); box-shadow: 0 6px #1d1430; font-size: 0.95rem; }
 .super[hidden] { display: none; }
+.ultra { color: white; background: linear-gradient(145deg, #ff6b6b, #c4102a); }
 .super.laeb { background: #d8d0e6; color: #5b426e; }
 
 /* Big screen mode: the arena covers the whole window, the picture keeps its 4:3 shape. */

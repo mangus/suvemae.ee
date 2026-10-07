@@ -481,6 +481,30 @@ export function drawFighter(ctx, character, x, y, options = {}) {
   }
 }
 
+// The fire character's ultra power: a red ring of fire around its feet with
+// sparks swirling round it and rising up.
+export function drawUltraRing(ctx, x, y, scale, time) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  const pulse = 1 + Math.sin(time / 120) * 0.06;
+  ctx.globalAlpha = 0.3;
+  ctx.fillStyle = '#ff2a3d';
+  ctx.beginPath();
+  ctx.ellipse(0, -4, 95 * pulse, 30 * pulse, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = '#c4102a';
+  ctx.stroke();
+  for (let k = 0; k < 12; k += 1) {
+    const a = time / 280 + (k * Math.PI * 2) / 12;
+    const rise = (time / 9 + k * 37) % 60;
+    dot(ctx, Math.cos(a) * 92, -4 + Math.sin(a) * 28 - rise, 7 - rise / 12, k % 2 ? '#ff4a3d' : '#ffd23f');
+  }
+  ctx.restore();
+}
+
 function cloud(ctx, x, y) {
   for (const [dx, dy, rx, ry] of [[0, 0, 34, 11], [18, -8, 20, 12], [-14, -5, 16, 9]]) {
     ctx.beginPath();

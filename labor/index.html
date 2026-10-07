@@ -52,15 +52,21 @@ h2{margin:0;font-size:clamp(1.8rem,4.5vw,2.4rem);line-height:1.2;font-weight:900
 .step h3{margin:.45rem 0 .25rem;font-size:1.25rem;line-height:1.2;font-weight:900}
 .step p{margin:0;color:var(--ink-soft)}
 .address{font-weight:800;color:var(--ink);overflow-wrap:anywhere}
-.frames{list-style:none;margin:30px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:22px}
-.frame{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;min-height:150px;padding:20px;text-align:center;border:3px dashed var(--c);border-radius:22px;background:#fff;background:color-mix(in srgb,var(--c) 9%,#fff);font-weight:800;font-size:1.1rem;transform:rotate(var(--t))}
-.frame:nth-child(1){--c:#ff6f91;--t:-1.5deg}
-.frame:nth-child(2){--c:#3fa7f5;--t:1deg}
-.frame:nth-child(3){--c:#5dbb63;--t:-.6deg}
-.frame:nth-child(4){--c:#ffad1f;--t:1.2deg}
-.frame:nth-child(5){--c:#8c6cf2;--t:-1deg}
-.frame:nth-child(6){--c:#1fb8a8;--t:.8deg}
-.frame-emoji{font-size:2.2rem;line-height:1.1}
+.frames{list-style:none;margin:30px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:26px}
+.frame{--c:#8c6cf2;--t:0deg;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.25rem;min-height:160px;padding:22px 18px;text-align:center;background:#fff;border:3px solid var(--ink);border-radius:22px;box-shadow:5px 6px 0 var(--c);font-weight:800;font-size:1.1rem;line-height:1.25;transform:rotate(var(--t));transition:transform .2s ease,box-shadow .2s ease}
+.frame:hover{transform:rotate(0deg) translateY(-3px);box-shadow:7px 9px 0 var(--c)}
+/* The whole card is clickable through the link's overlay */
+.frame a{text-decoration:none}
+.frame a::after{content:"";position:absolute;inset:0;border-radius:inherit}
+.frame:hover a{text-decoration:underline;text-decoration-color:var(--c);text-decoration-thickness:3px;text-underline-offset:4px}
+.frame a:focus-visible{outline:4px dashed var(--violet);outline-offset:6px}
+.frame:nth-child(6n+1){--c:#ff6f91;--t:-1.5deg}
+.frame:nth-child(6n+2){--c:#3fa7f5;--t:1deg}
+.frame:nth-child(6n+3){--c:#5dbb63;--t:-.6deg}
+.frame:nth-child(6n+4){--c:#ffad1f;--t:1.2deg}
+.frame:nth-child(6n+5){--c:#8c6cf2;--t:-1deg}
+.frame:nth-child(6n+6){--c:#1fb8a8;--t:.8deg}
+.frame-emoji{display:grid;place-items:center;width:60px;height:60px;margin-bottom:.35rem;font-size:2rem;line-height:1;background:#fff;background:color-mix(in srgb,var(--c) 22%,#fff);border:2.5px solid var(--ink);border-radius:50%}
 .frame small{font-size:.92rem;font-weight:700;color:var(--ink-soft)}
 footer{padding:26px 20px 34px;text-align:center;color:var(--ink-soft);font-size:.98rem;background:var(--paper);border-top:3px dashed #cfe3f5}
 footer p{margin:.2rem 0}
@@ -75,7 +81,7 @@ footer a{font-weight:800}
 .peek-t{--r:180deg;--d:27s;left:calc(68% - var(--w)/2);top:calc(var(--h)*-1)}
 @keyframes peek{0%,19%{transform:rotate(var(--r)) translateY(110%) rotate(0deg)}20.5%{transform:rotate(var(--r)) translateY(15%) rotate(-8deg)}22%{transform:rotate(var(--r)) translateY(15%) rotate(5deg)}23.5%{transform:rotate(var(--r)) translateY(15%) rotate(-8deg)}25%,100%{transform:rotate(var(--r)) translateY(110%) rotate(0deg)}}
 @media (max-width:640px){.peek{--w:84px;--h:91px}}
-@media (prefers-reduced-motion:reduce){.bubble,.puff{animation:none}.peeks{display:none}}
+@media (prefers-reduced-motion:reduce){.bubble,.puff{animation:none}.peeks{display:none}.frame{transition:none}}
 </style>
 </head>
 <body>
@@ -132,7 +138,6 @@ footer a{font-weight:800}
 </main>
 <footer>
 <p><strong>Suvemäe labor</strong> · <a href="https://xn--suveme-fua.ee/">suvemäe.ee</a> · <a href="https://tkg.xn--suveme-fua.ee/">Kooli koduleht</a></p>
-<p>Leht on alles valmimas.</p>
 </footer>
 <div class="peeks" aria-hidden="true"><img class="peek peek-r" src="piiluja.svg" alt=""><img class="peek peek-b" src="piiluja.svg" alt=""><img class="peek peek-l" src="piiluja.svg" alt=""><img class="peek peek-t" src="piiluja.svg" alt=""></div>
 </body>

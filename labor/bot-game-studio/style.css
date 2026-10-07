@@ -78,7 +78,8 @@ button, input {
 }
 button { font-weight: 800; background: #8c6cf2; color: #fff; cursor: pointer; }
 button:disabled { opacity: 0.45; cursor: default; }
-#mute { background: #fff; padding: 0.15rem 0.6rem; }
+#mute, #dev { background: #fff; padding: 0.15rem 0.6rem; }
+#dev.on { background: #ffd43b; }
 .publish { width: 100%; font-size: 1.3rem; padding: 0.6rem; background: #ff6b6b; }
 
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }

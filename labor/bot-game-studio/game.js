@@ -64,8 +64,14 @@ const UPGRADES = [
   { id: 'charge', icon: '⚡', name: 'Faster credits', price: 30, max: 5, info: 'credits come faster' },
   { id: 'arms', icon: '🦾', name: 'More robot arms', price: 60, max: 3, info: 'build more at once' },
   { id: 'turbo', icon: '🏎️', name: 'Faster building', price: 40, max: 5, info: 'build ideas faster' },
+  { id: 'cheap', icon: '🏷️', name: 'Cheaper ideas', price: 50, max: 5, info: 'ideas cost 1 ⚡ less' },
+  { id: 'tests', icon: '🧪', name: 'Fewer bugs', price: 40, max: 4, info: 'bugs get in less often' },
+  { id: 'fixer', icon: '🧹', name: 'Bug fixer robot', price: 80, max: 3, info: 'squashes bugs for you' },
+  { id: 'ads', icon: '📣', name: 'Advertising', price: 60, max: 5, info: 'players come faster' },
+  { id: 'tips', icon: '💵', name: 'More cash', price: 50, max: 5, info: 'players pay more cash' },
 ];
-const levels = { tank: 0, charge: 0, arms: 0, turbo: 0 };
+const levels = Object.fromEntries(UPGRADES.map((u) => [u.id, 0]));
+let dev = false; // dev mode for bug testing: every idea open and free, scores not saved
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('preview');
@@ -92,12 +98,16 @@ const pops = []; // little bangs where bugs got squashed
 const has = (id) => state.built.has(id);
 const funOf = (ids) => IDEAS.filter((i) => ids.has(i.id)).reduce((sum, i) => sum + i.fun, 0);
 const pickOne = (list) => list[Math.floor(Math.random() * list.length)];
-const costOf = (idea) => idea.cost + state.built.size; // every build makes the next one cost 1 more
+const costOf = (idea) => (dev ? 0 : Math.max(1, idea.cost + state.built.size - levels.cheap)); // every build makes the next one cost 1 more
 const priceOf = (u) => u.price * 2 ** levels[u.id];
 const maxEnergy = () => START_ENERGY + state.live.size * TANK_GROWTH + levels.tank * 5;
 const energyEvery = () => ENERGY_EVERY * 0.75 ** levels.charge; // seconds per credit
 const slots = () => 1 + levels.arms; // ideas built at the same time
 const buildMs = () => BUILD_MS * 0.75 ** levels.turbo;
+const bugChance = () => BUG_CHANCE * (1 - levels.tests * 0.2);
+const fixEvery = () => 12 / levels.fixer; // seconds per bug the fixer robot squashes
+const playerBoost = () => 1 + levels.ads * 0.25;
+const cashBoost = () => 1 + levels.tips * 0.5;
 
 function say(text) {
   $('say').textContent = text;
@@ -109,7 +119,7 @@ function cardState(idea) {
   if (state.building.includes(idea)) return 'building';
   if (state.live.has(idea.id)) return 'done live';
   if (state.built.has(idea.id)) return 'done';
-  return idea.needs.every(has) ? 'open' : 'locked';
+  return dev || idea.needs.every(has) ? 'open' : 'locked';
 }
 
 function cardInfo(kind, idea) {
@@ -183,7 +193,7 @@ function finishBuild(idea) {
   if (!state.building.length) $('bot').classList.remove('busy');
   beep(660, 0.12);
   if (idea.id === 'music') startMusic();
-  if (Math.random() < BUG_CHANCE && state.bugs.length < MAX_BUGS) {
+  if (Math.random() < bugChance() && state.bugs.length < MAX_BUGS) {
     spawnBug();
     say(`${idea.icon} is in! But oops, a bug 🐛 got in too. Tap it to squash it!`);
   } else {
@@ -269,6 +279,18 @@ $('shop').addEventListener('click', (e) => {
   if (button) buy(button.dataset.id);
 });
 
+// ---- Dev mode for bug testing ----
+
+$('dev').addEventListener('click', () => {
+  if (dev || state.finishedAt) return;
+  dev = true;
+  state.cash += 100000;
+  $('dev').textContent = '🛠️ Dev ON';
+  $('dev').classList.add('on');
+  say('🛠️ Dev mode is on! Every idea is open and free, and you got 100000 💰 for the shop. Times are not saved. Reload the page to play for real.');
+  renderCards();
+});
+
 // ---- Sound (starts only after the first tap) ----
 
 let audio = null;
@@ -332,15 +354,19 @@ function moveBug(bug, dt) {
   bug.y = Math.min(Math.max(bug.y, 16), H - 16);
 }
 
+function squash(i) {
+  const [bug] = state.bugs.splice(i, 1);
+  pops.push({ x: bug.x, y: bug.y, age: 0 });
+  beep(200, 0.15, 'sawtooth');
+}
+
 canvas.addEventListener('pointerdown', (e) => {
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
   const i = state.bugs.findIndex((bug) => Math.hypot(bug.x - x, bug.y - y) < 32);
   if (i < 0) return;
-  const [bug] = state.bugs.splice(i, 1);
-  pops.push({ x: bug.x, y: bug.y, age: 0 });
-  beep(200, 0.15, 'sawtooth');
+  squash(i);
   say(state.bugs.length ? `Squashed! 💥 ${state.bugs.length} more to go.` : pickOne(['Squashed! 💥 No more bugs.', 'Bug gone! 💥 Nice!']));
 });
 
@@ -355,12 +381,14 @@ function win(now) {
   let best = 0;
   try {
     best = Number(localStorage.getItem(BEST_KEY)) || 0;
-    if (!best || secs < best) localStorage.setItem(BEST_KEY, String(secs));
+    if (!dev && (!best || secs < best)) localStorage.setItem(BEST_KEY, String(secs));
   } catch {
     best = 0;
   }
-  $('best').textContent = best && secs >= best ? `Your best: ${best} s` : best ? 'New personal best! 🌟' : '';
+  $('best').textContent = dev ? '🛠️ Dev mode: this time is not saved.' : best && secs >= best ? `Your best: ${best} s` : best ? 'New personal best! 🌟' : '';
   $('win').hidden = false;
+  $('name').disabled = dev;
+  $('save').disabled = dev;
   [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.2), i * 150));
   say(`WOW! ${GOAL} players love your game! 🎉`);
   renderCards();
@@ -382,6 +410,7 @@ async function showScores() {
 }
 
 $('save').addEventListener('click', async () => {
+  if (dev) return; // dev mode times never go in the table
   const name = $('name').value.trim().slice(0, 20);
   if (!name) {
     $('saved').textContent = 'Type a nickname first.';
@@ -639,6 +668,7 @@ function draw(t, now) {
 
 let last = performance.now();
 let energyClock = 0;
+let fixClock = 0;
 
 function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
@@ -649,11 +679,19 @@ function frame(now) {
       energyClock = 0;
       if (state.energy < maxEnergy()) state.energy += 1;
     }
+    if (levels.fixer && state.bugs.length) {
+      fixClock += dt;
+      if (fixClock >= fixEvery()) {
+        fixClock = 0;
+        squash(0);
+        say('🧹 The bug fixer robot squashed a bug!');
+      }
+    }
     if (state.startedAt) {
       const liveBugs = state.bugs.filter((bug) => bug.live).length;
-      const rate = funOf(state.live) / 12 - liveBugs * 3; // players per second
+      const rate = (funOf(state.live) / 12) * playerBoost() - liveBugs * 3; // players per second
       state.players = Math.max(0, state.players + rate * dt);
-      state.cash += (state.players / 10) * dt; // every 10 players pay 1 cash a second
+      state.cash += (state.players / 10) * cashBoost() * dt; // every 10 players pay 1 cash a second
       if (state.players >= GOAL) win(now);
     }
   }

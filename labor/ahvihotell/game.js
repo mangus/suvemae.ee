@@ -160,12 +160,26 @@ function makeWallTex(kind, num) {
     g.textBaseline = 'middle';
     g.fillText(String(num), 32, 16.5);
   } else if (kind === 'lamp') {
-    const lg = g.createRadialGradient(32, 18, 1, 32, 18, 24);
-    lg.addColorStop(0, 'rgba(255,200,120,0.75)');
+    // A brass wall lamp with a round glass bulb, shaded so it looks 3D.
+    const lg = g.createRadialGradient(36, 30, 2, 36, 30, 28);
+    lg.addColorStop(0, 'rgba(255,200,120,0.8)');
     lg.addColorStop(1, 'rgba(255,200,120,0)');
-    g.fillStyle = lg; g.fillRect(0, 0, TEX, 42);
-    g.fillStyle = '#c9a24a'; g.fillRect(30, 22, 4, 10);
-    poly(g, [25, 22, 39, 22, 35, 11, 29, 11], '#ffe2a8');
+    g.fillStyle = lg; g.fillRect(0, 0, TEX, 60);
+    blob(g, 39, 36, 9, 7, 'rgba(0,0,0,0.35)');
+    blob(g, 28, 14, 4, 7, '#6a4a1a');
+    blob(g, 27, 13, 2, 4.5, '#e0bf6a');
+    g.strokeStyle = '#b08a3a';
+    g.lineWidth = 2.5;
+    g.lineCap = 'round';
+    g.beginPath(); g.moveTo(28, 16); g.quadraticCurveTo(43, 17, 36, 23); g.stroke();
+    blob(g, 36, 24, 4, 2, '#b08a3a');
+    const bulb = g.createRadialGradient(33, 28, 1, 36, 31, 9);
+    bulb.addColorStop(0, '#ffffff');
+    bulb.addColorStop(0.5, '#ffd27a');
+    bulb.addColorStop(1, '#c0701a');
+    g.fillStyle = bulb;
+    g.beginPath(); g.arc(36, 31, 9, 0, Math.PI * 2); g.fill();
+    blob(g, 33, 27, 2.5, 1.6, 'rgba(255,255,255,0.85)');
   } else if (kind === 'scratch') {
     g.strokeStyle = '#140705';
     g.lineWidth = 1.5;
@@ -245,6 +259,16 @@ function drawMonkey(g) {
     poly(g, [x, 55, x + 4, 55, x + 2, 59.5], '#f0e8d0');
     poly(g, [x, 65, x + 4, 65, x + 2, 60.5], '#f0e8d0');
   }
+  // Round 3D shading: light from the upper left, shadow on the far side.
+  g.globalCompositeOperation = 'source-atop';
+  const sh = g.createRadialGradient(42, 30, 0, 64, 64, 95);
+  sh.addColorStop(0, 'rgba(255,225,180,0.45)');
+  sh.addColorStop(0.4, 'rgba(0,0,0,0)');
+  sh.addColorStop(1, 'rgba(0,0,0,0.8)');
+  g.fillStyle = sh; g.fillRect(0, 0, 128, 128);
+  blob(g, 52, 30, 9, 5, 'rgba(255,255,255,0.18)');
+  blob(g, 56, 80, 8, 10, 'rgba(255,255,255,0.08)');
+  g.globalCompositeOperation = 'source-over';
 }
 
 function drawMonkeyEyes(g) {

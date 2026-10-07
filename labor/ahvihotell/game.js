@@ -26,6 +26,8 @@ const SCARE_TIME = 1.7;
 // How long each jumpscare waits before the face appears: A jumps at once, B turns the lights off, C breathes behind you.
 const SCARE_LEAD = [0, 1.4, 1.6];
 const TEX = 64;
+// Walls stick out this far from their tile on every side, so the corridors are narrower and corners hide more.
+const THICK = 0.12;
 const LEVELS = 10;
 const MINI = 6;
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
@@ -1053,7 +1055,7 @@ function relocateNear(x, y) {
 }
 
 function blocked(x, y) {
-  const r = 0.22;
+  const r = 0.22 + THICK;
   return wall(Math.floor(x - r), Math.floor(y - r)) || wall(Math.floor(x + r), Math.floor(y - r)) ||
     wall(Math.floor(x - r), Math.floor(y + r)) || wall(Math.floor(x + r), Math.floor(y + r));
 }
@@ -1206,8 +1208,19 @@ function update(dt) {
     const sp = (PLAYER_SPEED * dt) / Math.max(1, Math.hypot(f, s));
     const nx = player.x + (Math.cos(player.a) * f - Math.sin(player.a) * s) * sp;
     const ny = player.y + (Math.sin(player.a) * f + Math.cos(player.a) * s) * sp;
-    if (!blocked(nx, player.y)) player.x = nx;
-    if (!blocked(player.x, ny)) player.y = ny;
+    const stopX = blocked(nx, player.y);
+    const stopY = blocked(player.x, ny);
+    if (!stopX) player.x = nx;
+    if (!stopY) player.y = ny;
+    // At a corner, slide toward the middle of the corridor, so turning into a side corridor is easy.
+    const goX = Math.abs(nx - player.x) > Math.abs(ny - player.y);
+    if (stopX !== stopY && stopX === goX) {
+      const k = stopX ? 'y' : 'x';
+      const step = clamp(Math.floor(player[k]) + 0.5 - player[k], -sp * 0.6, sp * 0.6);
+      const tx = k === 'x' ? player.x + step : player.x;
+      const ty = k === 'y' ? player.y + step : player.y;
+      if (!blocked(tx, ty)) { player.x = tx; player.y = ty; }
+    }
     player.walk += dt * 10;
   }
   const myField = bfs(Math.floor(player.x), Math.floor(player.y));
@@ -1502,7 +1515,7 @@ for (let mask = 0; mask < 16; mask++) {
   for (let y = 0; y < FT; y++) for (let x = 0; x < FT; x++) {
     const fx = (x + 0.5) / FT;
     const fy = (y + 0.5) / FT;
-    const edge = Math.min(mask & 1 ? fx : 9, mask & 2 ? 1 - fx : 9, mask & 4 ? fy : 9, mask & 8 ? 1 - fy : 9);
+    const edge = Math.min(mask & 1 ? fx : 9, mask & 2 ? 1 - fx : 9, mask & 4 ? fy : 9, mask & 8 ? 1 - fy : 9) - THICK;
     const n = ((x * 7 + y * 13) % 5) * 3;
     if (edge < 0.1) t.push([62 - n, 38 - n / 2, 20]);
     else if (edge < 0.16) t.push([196, 150, 56]);
@@ -1558,6 +1571,24 @@ function drawFloor(cam, dirX, dirY, planeX, planeY, horizon, light) {
 }
 
 // Draws the hotel through the eyes of cam: me, or the friend I am watching.
+// How far along the ray it meets the thick box around wall tile (bx, by); Infinity when it misses.
+// hitSide tells which face it meets: 0 for the faces along y, 1 for the faces along x.
+let hitSide = 0;
+function wallHit(ox, oy, rdx, rdy, bx, by) {
+  const ix = 1 / (rdx || 1e-9);
+  const iy = 1 / (rdy || 1e-9);
+  let x0 = (bx - THICK - ox) * ix;
+  let x1 = (bx + 1 + THICK - ox) * ix;
+  let y0 = (by - THICK - oy) * iy;
+  let y1 = (by + 1 + THICK - oy) * iy;
+  if (x0 > x1) [x0, x1] = [x1, x0];
+  if (y0 > y1) [y0, y1] = [y1, y0];
+  const enter = Math.max(x0, y0);
+  if (enter > Math.min(x1, y1) || Math.min(x1, y1) < 0) return Infinity;
+  hitSide = x0 > y0 ? 0 : 1;
+  return enter;
+}
+
 function render(cam) {
   const dirX = Math.cos(cam.a);
   const dirY = Math.sin(cam.a);
@@ -1590,21 +1621,39 @@ function render(cam) {
     let sdy;
     if (rdx < 0) { stepX = -1; sdx = (cam.x - mx) * ddx; } else sdx = (mx + 1 - cam.x) * ddx;
     if (rdy < 0) { stepY = -1; sdy = (cam.y - my) * ddy; } else sdy = (my + 1 - cam.y) * ddy;
+    // Walk the tiles along the ray and keep the nearest thick wall box it meets.
+    let perp = Infinity;
     let side = 0;
-    for (let i = 0; i < 80; i++) {
-      if (sdx < sdy) { sdx += ddx; mx += stepX; side = 0; } else { sdy += ddy; my += stepY; side = 1; }
+    let hx = mx;
+    let hy = my;
+    let at = 0; // how far along the ray tile (mx, my) starts
+    for (let i = 0; i < 80 && at < perp; i++) {
+      for (let oy = -1; oy <= 1; oy++) {
+        for (let ox = -1; ox <= 1; ox++) {
+          if (!wall(mx + ox, my + oy)) continue;
+          const t = wallHit(cam.x, cam.y, rdx, rdy, mx + ox, my + oy);
+          if (t < perp) { perp = t; side = hitSide; hx = mx + ox; hy = my + oy; }
+        }
+      }
       if (wall(mx, my)) break;
+      if (sdx < sdy) { at = sdx; sdx += ddx; mx += stepX; } else { at = sdy; sdy += ddy; my += stepY; }
     }
-    const perp = Math.max(0.05, side === 0 ? sdx - ddx : sdy - ddy);
-    let wx = side === 0 ? cam.y + perp * rdy : cam.x + perp * rdx;
-    wx -= Math.floor(wx);
+    perp = clamp(perp, 0.05, 80);
+    const px = cam.x + perp * rdx;
+    const py = cam.y + perp * rdy;
+    let wx = side === 0 ? py : px;
+    // The picture comes from the wall tile right behind this spot, so doors stay in their place.
+    const along = Math.floor(wx);
+    if (side === 0 && wall(hx, along)) hy = along;
+    if (side === 1 && wall(along, hy)) hx = along;
+    wx -= along;
     let tx = clamp(Math.floor(wx * TEX), 0, TEX - 1);
     if ((side === 0 && rdx > 0) || (side === 1 && rdy < 0)) tx = TEX - tx - 1;
     const lineH = K / perp;
     const top = horizon - lineH / 2;
-    ctx.drawImage(texFor(mx, my), tx, 0, 1, TEX, x, top, 1, lineH);
-    // The open cell in front of the wall decides which lamps light it.
-    const front = side === 0 ? my * MW + mx - stepX : (my - stepY) * MW + mx;
+    ctx.drawImage(texFor(hx, hy), tx, 0, 1, TEX, x, top, 1, lineH);
+    // The open tile in front of the wall decides which lamps light it.
+    const front = Math.floor(py - rdy * 0.02) * MW + Math.floor(px - rdx * 0.02);
     const lit = lampAt(cam.x + perp * rdx, cam.y + perp * rdy, front);
     const shade = 1 - clamp(light(perp) + lit, 0, 1) * (side ? 0.72 : 1);
     if (shade > 0.02) { ctx.fillStyle = `rgba(14,16,30,${shade.toFixed(2)})`; ctx.fillRect(x, top, 1, lineH); }

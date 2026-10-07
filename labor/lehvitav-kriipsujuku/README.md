@@ -1,6 +1,6 @@
 # Lehvitav kriipsujuku
 
-Rõõmus kriipsujuku, kellel on pikad tumepruunid väga krussis liblikalõikusega (butterfly haircut) juuksed roosade salkudega ja tukaga, mis liiguvad nagu päris juuksed, hoiab käes zombinuga, millelt tilgub rohelist zombilima. Taevast sajab brokoleid!
+Rõõmus kriipsujuku, kellel on pikad tumepruunid väga krussis liblikalõikusega (butterfly haircut) juuksed roosade salkudega (pea taga tumesiniste salkudega) ja tukaga, mis liiguvad nagu päris juuksed, hoiab käes zombinuga, millelt tilgub rohelist zombilima. Taevast sajab brokoleid!
 
 ## Kuidas mängida
 

@@ -62,10 +62,12 @@ const JL_KORGUS = 330;
 const KARVU = 200; // fewer, thicker strands keep slow computers smooth
 const TUKK = 26; // short fringe strands over the forehead
 const OSAD = 20; // segments per strand, enough for very tight frizzy curls
-// Four dark browns, then pink streaks.
-const juuksevarvid = ['#4a2511', '#3b1d0c', '#57301a', '#633820', '#ff6fb5'];
-const juuksepaksus = [2.6, 3.2, 2.9, 3.5, 3.1]; // one width per colour, so a colour's strands are drawn together
+// Four dark browns, then pink streaks (front) and dark blue streaks (back).
+const juuksevarvid = ['#4a2511', '#3b1d0c', '#57301a', '#633820', '#ff6fb5', '#1c2f7a'];
+const juuksepaksus = [2.6, 3.2, 2.9, 3.5, 3.1, 3.3]; // one width per colour, so a colour's strands are drawn together
 const ROOSA = 4;
+const SININE = 5;
+const KRUSSIVARV = '#5a321b'; // little curl rings drawn on the back hair mass
 const TAUSTAVARV = '#3b1d0c'; // the thick hair mass behind the face
 const salguToon = (i) => (i % 5 === 2 ? ROOSA : i % 4); // every fifth strand is pink
 let juukseTaust = null;
@@ -78,7 +80,7 @@ function teeJuuksed() {
   const r = pea.offsetWidth / 2;
   const kx = pea.offsetLeft + r - JL_X;
   const ky = pea.offsetTop + r - JL_Y;
-  juukseTaust = { x: kx, y: ky, r };
+  juukseTaust = teeJuukseTaust(kx, ky, r);
   // Fringe first, so it survives when slow computers drop half of the hair.
   for (let j = 0; j < TUKK; j++) {
     const fii = -42 + (84 * (j + 0.5)) / TUKK + (Math.random() - 0.5) * 4;
@@ -164,12 +166,12 @@ function teeJuuksed() {
     const alla = -pool * (8 + Math.random() * 10); // then down the back
     const pikkus = (150 + Math.random() * 80) * (0.85 + Math.random() * 0.3);
     const lokiFaas = Math.random() * 6.3;
-    const lokiSamm = 2.7 + Math.random() * 0.5;
-    const lokiSuurus = 55 + Math.random() * 25;
+    const lokiSamm = 2.9 + Math.random() * 0.4; // tight frizz at the back too
+    const lokiSuurus = 75 + Math.random() * 25;
     const puhke = [];
     for (let k = 0; k < OSAD; k++) {
       const f = (k + 0.5) / OSAD;
-      const lokk = lokiSuurus * Math.min(1, 0.35 + f) * Math.sin(k * lokiSamm + lokiFaas);
+      const lokk = lokiSuurus * Math.min(1, 0.5 + f) * Math.sin(k * lokiSamm + lokiFaas);
       puhke.push(valja + (alla - valja) * f ** 0.6 + lokk);
     }
     const keskmine = (puhke[OSAD >> 1] * Math.PI) / 180;
@@ -184,7 +186,7 @@ function teeJuuksed() {
       nihe: 0,
       kiirus: 0,
       faas: Math.random() * 6.3,
-      toon: salguToon(i),
+      toon: i % 5 === 2 ? SININE : i % 4, // dark blue streaks at the back
       taga: true,
       px: new Float32Array(OSAD + 1),
       py: new Float32Array(OSAD + 1),
@@ -246,22 +248,55 @@ function liigutaJuukseid(dt, aeg) {
   joonistaJuuksed(jlTaga, moot, true);
 }
 
-// A solid curly mass behind the head, so no sky shows between the strands.
-function joonistaJuukseTaust(c) {
-  const { x, y, r } = juukseTaust;
+// A solid frizzy mass behind the head, so no sky shows between the strands.
+// The bumps and curl rings are placed once, so they don't flicker.
+function teeJuukseTaust(x, y, r) {
   const laius = r + 22;
   const alla = y + 105;
-  const LOKKE = 8;
-  const samm = (2 * laius) / LOKKE;
+  const mullid = [];
+  const lisa = (mx, my) => mullid.push({ x: mx, y: my, r: 9 + Math.random() * 6 });
+  for (let j = 0; j <= 14; j++) {
+    const a = Math.PI + (Math.PI * j) / 14; // bumpy top
+    lisa(x + Math.cos(a) * (r + 14), y + Math.sin(a) * (r + 14));
+  }
+  for (let j = 1; j <= 7; j++) {
+    lisa(x - laius, y + ((alla - y) * j) / 7); // bumpy sides
+    lisa(x + laius, y + ((alla - y) * j) / 7);
+  }
+  for (let j = 1; j < 10; j++) lisa(x - laius + (2 * laius * j) / 10, alla); // bumpy bottom
+  const rongad = [];
+  for (let j = 0; j < 40; j++) {
+    rongad.push({
+      x: x + (Math.random() * 2 - 1) * (laius + 4),
+      y: y - r + Math.random() * (alla - y + r + 6),
+      r: 3 + Math.random() * 4,
+    });
+  }
+  return { x, y, r, laius, alla, mullid, rongad };
+}
+
+function joonistaJuukseTaust(c) {
+  const { x, y, r, laius, alla, mullid, rongad } = juukseTaust;
   c.fillStyle = TAUSTAVARV;
   c.beginPath();
   c.arc(x, y, r + 12, Math.PI, 0); // over the top of the head
   c.lineTo(x + laius, alla);
-  for (let j = 0; j < LOKKE; j++) {
-    c.arc(x + laius - samm * (j + 0.5), alla, samm / 2, 0, Math.PI); // curly bottom edge
-  }
+  c.lineTo(x - laius, alla);
   c.closePath();
+  for (const m of mullid) {
+    c.moveTo(m.x + m.r, m.y);
+    c.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+  }
   c.fill();
+  // Small curl rings give the mass a frizzy look.
+  c.strokeStyle = KRUSSIVARV;
+  c.lineWidth = 1.8;
+  c.beginPath();
+  for (const g of rongad) {
+    c.moveTo(g.x + g.r, g.y);
+    c.arc(g.x, g.y, g.r, 0, Math.PI * 1.6);
+  }
+  c.stroke();
 }
 
 function joonistaJuuksed(c, moot, taga) {

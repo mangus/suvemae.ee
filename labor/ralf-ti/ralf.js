@@ -47,6 +47,7 @@ async function laeAined() {
   ained.forEach((a) => {
     a.nupp = nupp(a.emoji + ' ' + a.nimi, $('ained'), () => valiAine(a));
   });
+  teeIndeks();
   utle('Tere! Mina olen Ralf. Aitan sul õppida. Vali aine või kirjuta, mida tahad õppida!');
 }
 
@@ -95,27 +96,71 @@ function avaTeema(leid) {
   valiTeema(leid.teema);
 }
 
-// --- "Ask Ralf": search all topics by keywords ---
+// --- "Ask Ralf": search every topic's name, keywords, cards, video and text ---
 const lihtne = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const tykelda = (s) => lihtne(s).split(/[^a-z0-9]+/).filter((w) => w.length >= 3);
 const KODUTOO = /kodutoo|kirjuta mulle|tee minu|tee mu |lahenda mulle|essee/;
+// Question words that would match almost every topic.
+const TAIDISSONAD = new Set(['mis', 'mida', 'kes', 'kus', 'kas', 'kuidas', 'miks', 'millal', 'see', 'seda',
+  'need', 'ning', 'aga', 'ole', 'oli', 'mul', 'minu', 'sinu', 'palun', 'tahan', 'oppida', 'teada', 'raagi',
+  'ralf', 'klass', 'klassi']);
 
-function otsi(paring) {
-  const sonad = lihtne(paring).split(/[^a-z0-9]+/).filter((s) => s.length >= 3);
-  const leiud = [];
+// Where to look in a topic, with how much a match there counts.
+const VALJAD = [
+  [5, (t) => t.nimi],
+  [4, (t) => t.sonad.join(' ')],
+  [2, (t) => t.kaardid.flat().join(' ')],
+  [1, (t) => t.video.map((s) => s[1]).concat(t.tekst).join(' ')]
+];
+
+let indeks = [];
+
+function teeIndeks() {
+  indeks = [];
   ained.forEach((a) => {
     Object.entries(a.klassid).forEach(([k, teemad]) => {
       teemad.forEach((t) => {
-        const votmed = t.sonad.map(lihtne)
-          .concat(lihtne(t.nimi).split(/[^a-z0-9]+/).filter((s) => s.length >= 4));
-        let punktid = 0;
-        sonad.forEach((s) => {
-          if (votmed.some((v) => s.startsWith(v) || (s.length >= 4 && v.startsWith(s)))) punktid++;
-        });
-        if (punktid) leiud.push({ aine: a, klass: k, teema: t, punktid });
+        const valjad = VALJAD.map(([kaal, vota]) => [kaal, [...new Set(tykelda(vota(t)))]]);
+        indeks.push({ aine: a, klass: k, teema: t, valjad });
       });
     });
   });
+}
+
+// Estonian words change their endings, so compare how the words begin.
+function sobib(s, w) {
+  if (w.startsWith(s)) return true;
+  if (w.length >= 4 && s.startsWith(w)) return true;
+  let i = 0;
+  while (i < s.length && i < w.length && s[i] === w[i]) i++;
+  return i >= 5 && i >= Math.min(s.length, w.length) - 2;
+}
+
+function otsi(paring) {
+  const sonad = [...new Set(tykelda(paring))].filter((s) => !TAIDISSONAD.has(s));
+  const leiud = [];
+  indeks.forEach((rida) => {
+    let punktid = 0;
+    sonad.forEach((s) => {
+      let parim = 0;
+      rida.valjad.forEach(([kaal, sonu]) => {
+        if (kaal > parim && sonu.some((w) => sobib(s, w))) parim = kaal;
+      });
+      // Topics that match more of the words come first.
+      if (parim) punktid += 10 + parim;
+    });
+    if (punktid) leiud.push({ ...rida, punktid });
+  });
   return leiud.sort((x, y) => y.punktid - x.punktid).slice(0, 8);
+}
+
+// Links to study sites; the visitor opens them, Ralf itself sends nothing.
+function naitaEdasi(paring) {
+  const sona = encodeURIComponent(paring.trim());
+  $('viki').href = 'https://et.wikipedia.org/w/index.php?search=' + sona;
+  $('sonaveeb').href = 'https://sonaveeb.ee/search/unif/dlall/dsall/' + sona;
+  $('koolikott').href = 'https://e-koolikott.ee/et/search?q=' + sona;
+  $('edasi').hidden = false;
 }
 
 $('kusi').addEventListener('submit', (e) => {
@@ -123,10 +168,12 @@ $('kusi').addEventListener('submit', (e) => {
   const paring = $('kysimus').value;
   const kast = $('leiud');
   kast.replaceChildren();
+  $('edasi').hidden = true;
   if (!paring.trim()) {
     utle('Kirjuta enne midagi! Näiteks "murrud" või "planeedid".');
     return;
   }
+  naitaEdasi(paring);
   const leiud = otsi(paring);
   const kodutoo = KODUTOO.test(lihtne(paring));
   if (leiud.length === 1 && !kodutoo) {
@@ -142,9 +189,9 @@ $('kusi').addEventListener('submit', (e) => {
   if (kodutoo) {
     utle('Kodutööd ma sinu eest ei tee, aga aitan sul teema selgeks saada! Siis saad ise hakkama.');
   } else if (leiud.length) {
-    utle('Leidsin mitu teemat. Vali, mida mõtlesid!');
+    utle('Leidsin need teemad. Vali, mida mõtlesid! All on ka õppelehed.');
   } else {
-    utle('Hmm, seda ma veel ei oska. Vali aine nuppude alt!');
+    utle('Minu tundides seda pole. Proovi all olevaid õppelehti!');
   }
 });
 

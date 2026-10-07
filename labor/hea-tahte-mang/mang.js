@@ -754,8 +754,8 @@
     // round, pear-shaped body with a pattern and hatched shade
     const body = [[0, -63], [11, -60], [19, -48], [23, -32], [21, -18], [12, -11], [0, -10], [-12, -11], [-21, -18], [-23, -32], [-19, -48], [-11, -60]];
     const k = { umar: 1.15 }[o.bodyShape] || 1;
-    // 'sale' is drawn as a triangle: narrow shoulders, wide hem
-    const kolmnurk = o.bodyShape === 'sale';
+    // triangle body: narrow shoulders, wide hem
+    const kolmnurk = o.bodyShape === 'kolmnurk';
     const kuju = kolmnurk
       ? [[0, -63], [6, -62], [9, -54], [13, -42], [18, -28], [23, -14], [12, -10], [0, -10], [-12, -10], [-23, -14], [-18, -28], [-13, -42], [-9, -54], [-6, -62]]
       : body.map(([px, py]) => [px * k, py]);
@@ -902,7 +902,7 @@
   const LOOK_KEY = 'hea-tahte-tegelane';
   const OSAD = [
     { key: 'headShape', silt: 'Pea', v: [['round', 'ümar'], ['oval', 'pikk'], ['wide', 'lai']] },
-    { key: 'bodyShape', silt: 'Keha', v: [['pirn', 'pirn'], ['sale', 'kolmnurk'], ['umar', 'ümar']] },
+    { key: 'bodyShape', silt: 'Keha', v: [['pirn', 'pirn'], ['kolmnurk', 'kolmnurk'], ['umar', 'ümar']] },
     { key: 'skin', silt: 'Nahk', toon: true, v: [['#f5dcc6', 'hele'], ['#efcfb0', 'roosakas'], ['#e8c4a0', 'kreem'], ['#c99a72', 'pruunikas'], ['#a8714a', 'pruun'], ['#7a4f33', 'tumepruun']] },
     { key: 'hair', silt: 'Soeng', v: [['short', 'lühike'], ['bob', 'pottsoeng'], ['pikk', 'pikk'], ['curly', 'lokid'], ['spiky', 'turris'], ['pats', 'patsid'], ['bun', 'krunn']] },
     { key: 'hairColor', silt: 'Juuste värv', toon: true, v: [['#e8cc85', 'hele'], ['#d99a2b', 'kuldne'], ['#b5562f', 'punane'], ['#5a3a22', 'pruun'], ['#2b2622', 'must'], ['#d98fb5', 'roosa'], ['#7ea6b8', 'sinine']] },

@@ -182,7 +182,7 @@ function teeJuuksed() {
       osa: pikkus / OSAD,
       cos: Math.cos(keskmine),
       sin: Math.sin(keskmine),
-      jaikus: 45 + Math.random() * 30,
+      jaikus: 25 + Math.random() * 20, // softer, so the back hair swings more
       nihe: 0,
       kiirus: 0,
       faas: Math.random() * 6.3,
@@ -217,12 +217,24 @@ function liigutaJuukseid(dt, aeg) {
 
   const t = aeg / 1000;
   for (const k of karvad) {
-    const tuul = vaikne ? 0 : 5 * Math.sin(t * 1.3 + k.faas) + 2.5 * Math.sin(t * 2.9 + k.faas * 2);
+    const tugevus = k.taga ? 2 : 1; // the back hair sways more in the wind
+    const tuul = vaikne ? 0 : tugevus * (5 * Math.sin(t * 1.3 + k.faas) + 2.5 * Math.sin(t * 2.9 + k.faas * 2));
     const siht = tuul + 1.7 * (vx * k.cos + vy * k.sin);
     k.kiirus += 0.45 * (dvx * k.cos + dvy * k.sin);
     k.kiirus += (k.jaikus * (siht - k.nihe) - 4 * k.kiirus) * dt;
     k.kiirus = piira(k.kiirus, -900, 900);
     k.nihe = piira(k.nihe + k.kiirus * dt, -70, 70);
+  }
+
+  // The back hair mass swings too: it lags behind the head and sways in the wind.
+  if (juukseTaust) {
+    const tt = juukseTaust;
+    const tuulX = vaikne ? 0 : 6 * Math.sin(t * 1.1) + 3 * Math.sin(t * 2.3 + 1);
+    tt.kiirusX += (70 * (tuulX - 0.05 * vx - tt.dx) - 6 * tt.kiirusX) * dt - 0.4 * dvx;
+    tt.kiirusY += (70 * (-0.04 * vy - tt.dy) - 6 * tt.kiirusY) * dt - 0.3 * dvy;
+    tt.dx = piira(tt.dx + tt.kiirusX * dt, -28, 28);
+    tt.dy = piira(tt.dy + tt.kiirusY * dt, -18, 18);
+    tt.t = t;
   }
 
   for (const k of karvad) {
@@ -253,8 +265,11 @@ function liigutaJuukseid(dt, aeg) {
 function teeJuukseTaust(x, y, r) {
   const laius = r + 22;
   const alla = y + 105;
+  // How much a point swings: nothing at the top of the head, most at the bottom.
+  const kiik = (py) => piira((py - y) / (alla - y), 0, 1) ** 1.2;
   const mullid = [];
-  const lisa = (mx, my) => mullid.push({ x: mx, y: my, r: 9 + Math.random() * 6 });
+  const lisa = (mx, my) =>
+    mullid.push({ x: mx, y: my, r: 9 + Math.random() * 6, f: kiik(my), faas: Math.random() * 6.3 });
   for (let j = 0; j <= 14; j++) {
     const a = Math.PI + (Math.PI * j) / 14; // bumpy top
     lisa(x + Math.cos(a) * (r + 14), y + Math.sin(a) * (r + 14));
@@ -266,26 +281,31 @@ function teeJuukseTaust(x, y, r) {
   for (let j = 1; j < 10; j++) lisa(x - laius + (2 * laius * j) / 10, alla); // bumpy bottom
   const rongad = [];
   for (let j = 0; j < 40; j++) {
+    const gy = y - r + Math.random() * (alla - y + r + 6);
     rongad.push({
       x: x + (Math.random() * 2 - 1) * (laius + 4),
-      y: y - r + Math.random() * (alla - y + r + 6),
+      y: gy,
       r: 3 + Math.random() * 4,
+      f: kiik(gy),
     });
   }
-  return { x, y, r, laius, alla, mullid, rongad };
+  return { x, y, r, laius, alla, mullid, rongad, dx: 0, dy: 0, kiirusX: 0, kiirusY: 0, t: 0 };
 }
 
 function joonistaJuukseTaust(c) {
-  const { x, y, r, laius, alla, mullid, rongad } = juukseTaust;
+  const { x, y, r, laius, alla, mullid, rongad, dx, dy, t } = juukseTaust;
+  const lainetus = vaikne ? 0 : 1.6; // each bump wobbles a little on its own
   c.fillStyle = TAUSTAVARV;
   c.beginPath();
   c.arc(x, y, r + 12, Math.PI, 0); // over the top of the head
-  c.lineTo(x + laius, alla);
-  c.lineTo(x - laius, alla);
+  c.lineTo(x + laius + dx, alla + dy);
+  c.lineTo(x - laius + dx, alla + dy);
   c.closePath();
   for (const m of mullid) {
-    c.moveTo(m.x + m.r, m.y);
-    c.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+    const mx = m.x + dx * m.f + lainetus * Math.sin(t * 2.2 + m.faas);
+    const my = m.y + dy * m.f + lainetus * Math.cos(t * 1.9 + m.faas);
+    c.moveTo(mx + m.r, my);
+    c.arc(mx, my, m.r, 0, Math.PI * 2);
   }
   c.fill();
   // Small curl rings give the mass a frizzy look.
@@ -293,8 +313,10 @@ function joonistaJuukseTaust(c) {
   c.lineWidth = 1.8;
   c.beginPath();
   for (const g of rongad) {
-    c.moveTo(g.x + g.r, g.y);
-    c.arc(g.x, g.y, g.r, 0, Math.PI * 1.6);
+    const gx = g.x + dx * g.f;
+    const gy = g.y + dy * g.f;
+    c.moveTo(gx + g.r, gy);
+    c.arc(gx, gy, g.r, 0, Math.PI * 1.6);
   }
   c.stroke();
 }

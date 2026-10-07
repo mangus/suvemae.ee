@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vanaisa Puupakk</title>
+<meta name="description" content="Põgene laulva ja tantsiva Vanaisa Puupaku eest, kes hüppab majanurkade tagant välja!">
+<link rel="stylesheet" href="stiil.css">
+<script type="module" src="mang.js"></script>
+</head>
+<body>
+<a class="tagasi" href="../">← labor</a>
+<h1>🪵 Vanaisa Puupakk</h1>
+<p class="juhend">Põgene! Vanaisa laulab, tantsib ja hüppab nurga tagant välja. Liigu nooleklahvide, WASD või sõrmega.</p>
+<div class="mangukast">
+<canvas id="louend" width="400" height="560"></canvas>
+<div id="kate" class="kate">
+<p id="kateTekst">Tung-tung-tung! Kas jõuad ära joosta?</p>
+<button id="alusta" type="button">Alusta ▶</button>
+</div>
+</div>
+<p class="info"><span>Aeg: <b id="aeg">0</b> s</span><span>Parim: <b id="parim">0</b> s</span><button id="heliNupp" type="button">🔊 Heli sees</button></p>
+<section class="tabel">
+<h2>Kõige kauem vastu pidanud</h2>
+<form id="vorm" hidden>
+<input id="nimi" maxlength="16" placeholder="Hüüdnimi" aria-label="Hüüdnimi edetabelisse"> <button type="submit">Salvesta</button>
+</form>
+<ol id="edetabel"></ol>
+</section>
+</body>
+</html>

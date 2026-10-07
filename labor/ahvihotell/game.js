@@ -394,7 +394,7 @@ let overT = 0;
 let drips = [];
 let distField = new Int16Array(MW * MH);
 let miniBase = null;
-const keys = { up: false, down: false, left: false, right: false };
+const keys = { up: false, down: false, left: false, right: false, sleft: false, sright: false };
 
 function newGame() {
   makeMaze();
@@ -504,13 +504,19 @@ function stepMonkey(m, dt, ptx, pty) {
 
 function update(dt) {
   time += dt;
-  const turn = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+  // With mouse look, A and D step sideways; without it they turn.
+  const locked = document.pointerLockElement === canvas;
+  const side = (keys.sright ? 1 : 0) - (keys.sleft ? 1 : 0);
+  const turn = (keys.right ? 1 : 0) - (keys.left ? 1 : 0) + (locked ? 0 : side);
+  const strafe = locked ? side : 0;
   player.a += turn * TURN_SPEED * dt;
   const fwd = (keys.up ? 1 : 0) - (keys.down ? 1 : 0);
-  if (fwd) {
-    const sp = PLAYER_SPEED * dt * (fwd > 0 ? 1 : -0.7);
-    const nx = player.x + Math.cos(player.a) * sp;
-    const ny = player.y + Math.sin(player.a) * sp;
+  if (fwd || strafe) {
+    const f = fwd > 0 ? 1 : fwd < 0 ? -0.7 : 0;
+    const s = strafe * 0.8;
+    const sp = (PLAYER_SPEED * dt) / Math.max(1, Math.hypot(f, s));
+    const nx = player.x + (Math.cos(player.a) * f - Math.sin(player.a) * s) * sp;
+    const ny = player.y + (Math.sin(player.a) * f + Math.cos(player.a) * s) * sp;
     if (!blocked(nx, player.y)) player.x = nx;
     if (!blocked(player.x, ny)) player.y = ny;
     walk += dt * 10;
@@ -573,7 +579,11 @@ function afterScare() {
 function showPlayUi(on) {
   $('hud').hidden = !on;
   $('controls').hidden = !on;
-  if (!on) mini.hidden = true;
+  if (!on) {
+    mini.hidden = true;
+    if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
+  }
+  updateHint();
 }
 
 function gameOver() {
@@ -854,7 +864,7 @@ function drawOver(dt) {
 
 // ---------- Input and main loop ----------
 
-const KEYMAP = { KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right' };
+const KEYMAP = { KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down', KeyA: 'sleft', ArrowLeft: 'left', KeyD: 'sright', ArrowRight: 'right' };
 window.addEventListener('keydown', (e) => {
   const k = KEYMAP[e.code];
   if (!k) return;
@@ -876,11 +886,45 @@ for (const b of document.querySelectorAll('[data-key]')) {
   b.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
+// Mouse look: click the picture to lock the mouse, Esc lets it go.
+const finePointer = window.matchMedia('(pointer: fine)').matches;
+function lockMouse() {
+  if (finePointer && state === 'play' && canvas.requestPointerLock) canvas.requestPointerLock();
+}
+function updateHint() {
+  $('hint').hidden = !(finePointer && state === 'play' && document.pointerLockElement !== canvas);
+}
+canvas.addEventListener('click', lockMouse);
+document.addEventListener('pointerlockchange', updateHint);
+document.addEventListener('mousemove', (e) => {
+  if (document.pointerLockElement === canvas && state === 'play') player.a += e.movementX * 0.0025;
+});
+
+// Touch: drag a finger across the picture to look around.
+let touchId = null;
+let touchX = 0;
+canvas.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'touch' || touchId !== null) return;
+  touchId = e.pointerId;
+  touchX = e.clientX;
+  initAudio();
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (e.pointerId !== touchId) return;
+  if (state === 'play') player.a += (e.clientX - touchX) * 0.008;
+  touchX = e.clientX;
+});
+for (const ev of ['pointerup', 'pointercancel']) {
+  canvas.addEventListener(ev, (e) => { if (e.pointerId === touchId) touchId = null; });
+}
+
 function start() {
   initAudio();
   for (const id of ['start', 'win', 'over']) $(id).hidden = true;
   showPlayUi(true);
   newGame();
+  updateHint();
+  lockMouse();
 }
 for (const id of ['startBtn', 'winBtn', 'overBtn']) $(id).addEventListener('click', start);
 

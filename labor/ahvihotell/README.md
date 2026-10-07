@@ -4,7 +4,8 @@ Pime hotell, mille koridorid on labürint. Korja kõik 100 kalliskivi, enne kui 
 
 ## Kuidas mängida
 
-- **W** edasi, **S** tagasi, **A** ja **D** pööravad (ka nooleklahvid). Telefonis on ekraanil nupud.
+- Hiirega vaatad ringi (klõpsa pildile, **Esc** vabastab hiire). **W** edasi, **S** tagasi, **A** ja **D** külgsuunas. Nooleklahvidega saab ka pöörata.
+- Telefonis on ekraanil nupud ja sõrmega pilti lohistades saad ringi vaadata.
 - Korja kõik 100 kalliskivi. Siis oled võitnud.
 - Kolm ahvi teavad alati, kus sa oled. Nad on sinust natuke aeglasemad.
 - Kui ahv sind kätte saab, tuleb jumpscare ja üks elu läheb. Elusid on 3.

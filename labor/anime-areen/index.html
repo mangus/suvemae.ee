@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anime Areen</title>
+<meta name="description" content="Anime-stiilis võitlusmäng, kus igaüks teeb ise oma võitleja ja mitu inimest saavad korraga samal areenil mängida.">
+<link rel="stylesheet" href="stiil.css">
+<script type="module" src="mang.js"></script>
+</head>
+<body>
+<a class="tagasi" href="../">← labor</a>
+<main>
+<header>
+<p class="kulm">⚡ VÕRGUVÕITLUS ⚡</p>
+<h1>Anime Areen</h1>
+<p>Tee oma anime-võitleja ja astu areenile! Teised võitlejad on päris inimesed, kes mängivad samal ajal.</p>
+</header>
+
+<section id="looja" class="looja" aria-labelledby="looja-pealkiri">
+<h2 id="looja-pealkiri">1. Tee oma võitleja</h2>
+<div class="looja-sisu">
+<div class="eelvaade-kast">
+<canvas id="eelvaade" aria-label="Sinu võitleja"></canvas>
+<strong id="nimesilt">…</strong>
+</div>
+<div id="valikud" class="valikud"></div>
+</div>
+<div class="looja-nupud">
+<button id="juhuslik" class="nupp kollane" type="button">🎲 Üllata mind</button>
+<button id="alusta" class="nupp roosa" type="button">2. Areenile! ⚡</button>
+</div>
+</section>
+
+<section id="mang" hidden>
+<div class="manguala" aria-label="Anime Areeni mäng">
+<div class="hud">
+<div class="eluriba"><span id="elu" style="width: 100%"></span></div>
+<strong id="elutekst">100</strong>
+<span id="olek">Ühendan areeniga…</span>
+<span id="voitja">Võite: 0</span>
+</div>
+<canvas id="areen" aria-label="Võitlusareen"></canvas>
+<div id="teade" class="teade" aria-live="polite">Valmis võitluseks!</div>
+</div>
+
+<div class="puutenupud" aria-label="Puutejuhtimine">
+<div class="rist">
+<button class="suund yles" type="button" data-key="up" aria-label="Liigu üles">▲</button>
+<button class="suund vasak" type="button" data-key="left" aria-label="Liigu vasakule">◀</button>
+<button class="suund parem" type="button" data-key="right" aria-label="Liigu paremale">▶</button>
+<button class="suund alla" type="button" data-key="down" aria-label="Liigu alla">▼</button>
+</div>
+<button id="runnak" class="runnak" type="button">LÖÖ!<small>⚡</small></button>
+</div>
+
+<section class="juhised">
+<div>
+<h2>Arvutis</h2>
+<p><kbd>WASD</kbd> või nooled liiguvad. <kbd>Tühik</kbd> ründab.</p>
+</div>
+<div>
+<h2>Telefonis</h2>
+<p>Hoia suunanuppe liikumiseks ja vajuta LÖÖ!</p>
+</div>
+</section>
+
+<div class="mangu-nupud"><button id="muuda" class="nupp kollane" type="button">✏️ Muuda võitlejat</button></div>
+</section>
+</main>
+</body>
+</html>

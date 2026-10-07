@@ -1,0 +1,118 @@
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+:root {
+  color-scheme: light;
+  font-family: ui-rounded, "Trebuchet MS", system-ui, sans-serif;
+  color: #271842;
+  background: #fff4fb;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  padding: 14px;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 12% 10%, #ffe15c 0 5%, transparent 5.2%),
+    radial-gradient(circle at 88% 18%, #ff8ddd 0 7%, transparent 7.2%),
+    linear-gradient(145deg, #fff5cf, #f9e7ff 45%, #dffaff);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  background: repeating-linear-gradient(115deg, transparent 0 22px, #7548bd 23px 25px);
+}
+
+main { position: relative; width: min(100%, 980px); margin: 0 auto; }
+.tagasi { position: relative; z-index: 2; color: #4b287e; font-weight: 900; }
+header { text-align: center; margin: 0 auto 12px; max-width: 760px; }
+.kulm { margin: 0; color: #de2f85; font-size: 0.78rem; font-weight: 1000; letter-spacing: 0.22em; }
+h1 { margin: 0; font-size: clamp(2.1rem, 9vw, 4.8rem); line-height: 0.95; font-style: italic; text-transform: uppercase; text-shadow: 4px 4px 0 #fff, 7px 7px 0 #ffc92f; }
+header > p:last-child { margin: 0.8rem auto; font-weight: 700; }
+
+button { border: 3px solid #271842; color: #271842; font: inherit; font-weight: 1000; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:active, button.vajutatud { transform: translateY(3px); filter: brightness(0.9); }
+.nupp { padding: 12px 22px; border-radius: 999px; font-size: 1.15rem; box-shadow: 0 5px #271842; }
+.kollane { background: #ffe15c; }
+.roosa { color: #fff; background: linear-gradient(145deg, #ff5f92, #d92a8a); }
+
+.looja { position: relative; padding: 14px; border: 4px solid #271842; border-radius: 24px; background: #ffffffdd; box-shadow: 8px 10px 0 #271842; }
+.looja h2 { margin: 0 0 10px; font-size: 1.35rem; text-align: center; }
+.looja-sisu { display: grid; grid-template-columns: 260px 1fr; gap: 14px; align-items: start; }
+.eelvaade-kast { text-align: center; }
+#eelvaade { display: block; width: 260px; height: 260px; margin: 0 auto; border: 3px solid #271842; border-radius: 20px; background: radial-gradient(circle, #fff8c4, #ffd6f0 70%); }
+#nimesilt { display: inline-block; margin-top: 8px; padding: 4px 18px; border: 3px solid #271842; border-radius: 999px; background: #fff; font-size: 1.4rem; font-style: italic; }
+.valikud { display: grid; gap: 8px; }
+.valikud fieldset { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 6px 8px 9px; border: 3px solid #271842; border-radius: 14px; background: #fff; }
+.valikud legend { padding: 0 6px; font-weight: 1000; }
+.valikud button { min-height: 38px; padding: 4px 11px; border-width: 2px; border-radius: 999px; background: #f3ecff; box-shadow: 0 3px #271842; font-size: 0.92rem; }
+.valikud button[aria-pressed="true"] { background: #ffe15c; outline: 3px solid #de2f85; outline-offset: 2px; }
+.valikud .varv { width: 38px; padding: 0; }
+.looja-nupud { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 16px; }
+
+.manguala {
+  position: relative;
+  overflow: hidden;
+  border: 4px solid #271842;
+  border-radius: 24px;
+  background: #efe6ff;
+  box-shadow: 8px 10px 0 #271842;
+}
+
+.hud {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: #271842;
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.eluriba { width: min(28vw, 220px); height: 20px; overflow: hidden; border: 2px solid #fff; border-radius: 999px; background: #5b426e; }
+.eluriba span { display: block; height: 100%; background: linear-gradient(90deg, #39df8f, #f4ed4f); transition: width 0.2s; }
+#olek { flex: 1; text-align: center; }
+#voitja { white-space: nowrap; }
+#areen { display: block; width: min(100%, 92vh); aspect-ratio: 4 / 3; margin: 0 auto; touch-action: none; }
+.teade { position: absolute; left: 50%; top: 64px; transform: translateX(-50%); max-width: 92%; padding: 7px 14px; border: 2px solid #271842; border-radius: 999px; background: #fff8ac; font-weight: 1000; text-align: center; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+.teade.nahtav { opacity: 1; }
+
+.juhised { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0 10px; }
+.juhised div { padding: 10px 14px; border: 3px solid #271842; border-radius: 18px; background: #ffffffcc; }
+h2 { margin: 0 0 4px; font-size: 1rem; }
+.juhised p { margin: 0; font-size: 0.9rem; }
+kbd { padding: 2px 6px; border: 2px solid #271842; border-radius: 6px; background: white; box-shadow: 0 2px #271842; }
+.mangu-nupud { margin: 16px 0 8px; text-align: center; }
+
+.puutenupud { display: flex; justify-content: space-between; align-items: center; width: min(100%, 560px); margin: 12px auto 4px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.rist { position: relative; width: 164px; height: 164px; }
+.suund { position: absolute; width: 58px; height: 58px; border-radius: 16px; background: #7ee8ff; box-shadow: 0 5px #271842; }
+.yles { left: 53px; top: 0; }
+.alla { left: 53px; bottom: 0; }
+.vasak { left: 0; top: 53px; }
+.parem { right: 0; top: 53px; }
+.runnak { width: 118px; height: 118px; border-radius: 50%; color: white; background: linear-gradient(145deg, #ff5f92, #d92a8a); box-shadow: 0 8px #271842; font-size: 1.25rem; }
+.runnak small { display: block; font-size: 2rem; }
+
+@media (max-width: 600px) {
+  body { padding: 8px; }
+  .tagasi { font-size: 0.86rem; }
+  header > p:last-child { font-size: 0.9rem; }
+  .looja { padding: 10px; border-width: 3px; border-radius: 18px; box-shadow: 5px 7px 0 #271842; }
+  .looja-sisu { grid-template-columns: 1fr; }
+  #eelvaade { width: 220px; height: 220px; }
+  .manguala { border-width: 3px; border-radius: 18px; box-shadow: 5px 7px 0 #271842; }
+  .hud { flex-wrap: wrap; gap: 4px 7px; font-size: 0.7rem; }
+  #olek { order: 3; flex-basis: 100%; }
+  .juhised { grid-template-columns: 1fr; gap: 7px; }
+  .juhised div:first-child { display: none; }
+  .rist { transform: scale(0.84); transform-origin: left center; }
+  .runnak { width: 98px; height: 98px; }
+}

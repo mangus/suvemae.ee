@@ -108,98 +108,6 @@
   ];
 
 
-  // ---------- Answer check ----------
-  // The player types their own answer. It is good when it has a good-will word for the
-  // situation and no unkind word. "ei", "pole" or "ära" right before a good word turns it
-  // around ("ei aita"); before an unkind word it cancels it ("ära löö").
-  // A stem matches the start of a word, "x=" matches the whole word, "a b" is a phrase.
-  const HALVAD = ['löö=', 'lööb', 'löön', 'lööme', 'lööd=', 'lööks', 'löövad', 'tõuka', 'peks', 'hammust',
-    'sõima', 'loll', 'rumal', 'tola', 'idioot', 'vihka', 'kakle', 'karju', 'varasta', 'naeran', 'naerame',
-    'naerda', 'välja naer', 'mõnita', 'narri', 'kole', 'lõhu', 'pole minu asi', 'pole minu mure',
-    'ei ole minu asi', 'ei huvita'];
-  const SONAD = [
-    [['küsi', 'luba', 'otsusta', 'keha', 'rahule', 'stopp', 'lõpeta', 'austa', 'ära kallista', 'ei taha'],
-      ['kallista', 'sundi', 'tee ikka', 'ei sekku']],
-    [['{nimi}', 'soovi', 'tahad', 'vabanda', 'selge', 'muidugi', 'olgu', 'okei', 'austa', 'õige nim'],
-      ['hüüdnim', 'naljak', 'kuidas ise tahan', 'kuidas mina tahan', 'nagu mina tahan']],
-    [['küsi', 'luba', 'tohin', 'tohiks', 'laena', 'palun', 'oota'],
-      ['vaikselt', 'salaja', 'napsa', 'ilma küsimata', 'ilma loata', 'keegi ei märka']],
-    [['aita', 'korja', 'korista', 'koos', 'hoolit', 'ehitame', 'jah', 'muidugi'],
-      ['diivani', 'peida', 'lükka', 'ei ehitanud', 'ei viitsi']],
-    [['pese', 'korista', 'viin', 'nõudepesu', 'kraanikau', 'masinasse'],
-      ['peida', 'jätan lauale', 'jätan sinna', 'keegi teine', 'küll keegi']],
-    [['ütle', 'räägi', 'kutsu', 'täiskasvan', 'õpetaja', 'teata', 'paranda', 'kinni', 'näita'],
-      ['rohkem lahti', 'veel lahti', 'pole minu']],
-    [['seisma', 'peatu', 'lõpeta', 'kuula', 'vabanda', 'stopp', 'jään', 'küsi', 'olgu'],
-      ['mängin edasi', 'jooksen ära', 'see on ju mäng', 'see on mäng']],
-    [['stopp', 'ütle', 'palun', 'lõpeta', 'mulle ei meeldi', 'räägi', 'täiskasvan', 'õpetaja', 'ära tõuka'],
-      ['olen vait', 'kurvastan üksi']],
-    [['räägi', 'arutame', 'lepime', 'kokku', 'jaga', 'kordamööda', 'koos', 'kuula', 'vabanda', 'lahenda', 'küsi'],
-      ['võtan palli', 'kõik vaatama', 'teised vaatama']],
-    [['ring', 'väike', 'arutame', 'räägi', 'õpetaja', 'täiskasvan', 'abi', 'küsi'],
-      ['unust', 'küll möödub', 'ise möödub']],
-    [['ütle', 'arvan', 'mõte', 'mõtte', 'idee', 'pakun', 'kuula', 'hääleta', 'räägi', 'tahaks', 'tahan'],
-      ['ükskõik']],
-    [['meeldi', 'ilus', 'tore', 'vahva', 'äge', 'proovi', 'koos', 'aita', 'värv', 'julge', 'hästi'],
-      ['halb', 'jube', 'nõme', 'oskan paremini', 'mina oskan']],
-    [['taha', 'õppi', 'huvi', 'eesmär', 'meeldi', 'unista', 'proovi'],
-      ['ei tea', 'minu eest', 'ükskõik']],
-    [['lepime', 'kokku', 'kirja', 'plaan', 'kirjuta', 'räägi', 'õpetaja', 'näita', 'eesmär'],
-      ['valeta', 'luiska', 'kuigi ei', 'ei räägi']],
-    [['tule', 'jah', 'muidugi', 'koos', 'liitu', 'võid', 'tohid', 'mängime', 'olgu', 'pole liiga väike'],
-      ['väike', 'liiga', 'teeme näo', 'ei kuule', 'mine ära', 'ei saa']],
-    [['tunne', 'tunde', 'ütle', 'räägi', 'aita', 'rahune', 'hinga', 'ehitame', 'koos', 'mõistan', 'saan aru', 'vihane', 'kurb'],
-      ['löö kõik']],
-    [['kuula', 'aita', 'turva', 'räägi', 'toeta', 'küsi', 'kaitse', 'hooli', 'lohuta'],
-      ['ise hakkama', 'mitte midagi', 'ei tee midagi', 'saagu']],
-    [['küsi', 'lähen', 'kõik hästi', 'lohuta', 'mängi', 'tule', 'aita', 'kuidas sul', 'räägi', 'istun', 'kalli'],
-      ['mööda', 'imelik']],
-    [['jah', 'aitäh', 'taha', 'kuula', 'palun', 'muidugi', 'olgu', 'hea meel'],
-      ['tean ise', 'kõrvad kinni', 'tean kõike']],
-  ];
-  OLUKORRAD.forEach((o, i) => { o.head = SONAD[i][0]; o.halb = SONAD[i][1]; });
-
-  const EITUS = { ei: 2, pole: 2, mitte: 2, ega: 2, ära: 1, ärge: 1, ara: 1, arge: 1 };
-  const fold = (t) => t.replace(/õ/g, 'o').replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u')
-    .replace(/š/g, 's').replace(/ž/g, 'z');
-  const clean = (t) => t.toLowerCase().replace(/[^a-z0-9õäöüšž ]+/g, ' ').replace(/ +/g, ' ').trim();
-
-  // Returns 'hea', 'halb', 'segane' (no known word) or 'tyhi' (nothing typed)
-  function hinda(vastus, o, nimi) {
-    let tekst = clean(vastus);
-    if (tekst.replace(/ /g, '').length < 2) return 'tyhi';
-    // Typed without Estonian letters? Then compare without them on both sides.
-    const plain = !/[õäöüšž]/.test(tekst);
-    const norm = (t) => (plain ? fold(clean(t)) : clean(t));
-    tekst = norm(tekst);
-    const sonad = tekst.split(' ');
-    const leia = (list) => {
-      const r = { jah: false, eitatud: false };
-      list.forEach((v0) => {
-        const exact = v0.endsWith('=');
-        const v = norm(v0.replace('=', '').split('{nimi}').join(nimi));
-        if (!v) return;
-        if (v.includes(' ')) {
-          if ((' ' + tekst).includes(' ' + v)) r.jah = true;
-          return;
-        }
-        sonad.forEach((w, i) => {
-          if (exact ? w !== v : !w.startsWith(v)) return;
-          let neg = false;
-          for (let k = 1; k <= 2 && i - k >= 0; k++) {
-            const e = EITUS[sonad[i - k]];
-            if (e && e >= k) neg = true;
-          }
-          if (neg) r.eitatud = true; else r.jah = true;
-        });
-      });
-      return r;
-    };
-    const hea = leia(o.head);
-    if (leia(HALVAD).jah || leia(o.halb).jah || hea.eitatud) return 'halb';
-    return hea.jah ? 'hea' : 'segane';
-  }
-
   // ---------- Helpers ----------
   function rng(seed) {
     return () => {
@@ -1178,7 +1086,7 @@
   }
 
   function lukusta() {
-    $('valikud').querySelectorAll('button, textarea').forEach((b) => {
+    $('valikud').querySelectorAll('button').forEach((b) => {
       b.disabled = true;
       if (b.dataset.ok) b.classList.add('oige');
     });

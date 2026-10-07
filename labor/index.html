@@ -44,9 +44,10 @@ h2{margin:0;font-size:clamp(1.8rem,4.5vw,2.4rem);line-height:1.2;font-weight:900
 .story{position:relative;margin:30px 0 0;max-width:46rem;padding:26px 28px 26px 96px;font-size:clamp(1.08rem,2.4vw,1.25rem);font-weight:700;background:#fff;border:3px solid var(--ink);border-radius:255px 18px 225px 18px/18px 225px 18px 255px;box-shadow:6px 8px 0 var(--yellow);transform:rotate(-.6deg)}
 .story-emoji{position:absolute;left:26px;top:50%;transform:translateY(-50%);font-size:2.6rem;line-height:1}
 .story a{font-weight:800}
-.frames{list-style:none;margin:30px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:26px}
-.frame{--c:#8c6cf2;--t:0deg;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.25rem;min-height:160px;padding:22px 18px;text-align:center;background:#fff;border:3px solid var(--ink);border-radius:22px;box-shadow:5px 6px 0 var(--c);font-weight:800;font-size:1.1rem;line-height:1.25;transform:rotate(var(--t));transition:transform .2s ease,box-shadow .2s ease}
-.frame:hover{transform:rotate(0deg) translateY(-3px);box-shadow:7px 9px 0 var(--c)}
+/* Cards look like game cartridges: a coloured dotted "screen" with a big emoji, a play button, title and blurb below */
+.frames{list-style:none;margin:30px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr));gap:28px 24px}
+.frame{--c:#8c6cf2;--t:0deg;position:relative;display:flex;flex-direction:column;align-items:center;gap:.3rem;padding:0 14px 20px;text-align:center;background:#fff;border:3px solid var(--ink);border-radius:24px;box-shadow:6px 7px 0 var(--ink);font-weight:900;font-size:1.18rem;line-height:1.2;transform:rotate(var(--t));transition:transform .25s cubic-bezier(.3,1.6,.5,1),box-shadow .25s ease}
+.frame:hover,.frame:focus-within{transform:rotate(0deg) translateY(-8px) scale(1.03);box-shadow:9px 13px 0 var(--ink)}
 /* The whole card is clickable through the link's overlay */
 .frame a{text-decoration:none}
 .frame a::after{content:"";position:absolute;inset:0;border-radius:inherit}
@@ -58,8 +59,13 @@ h2{margin:0;font-size:clamp(1.8rem,4.5vw,2.4rem);line-height:1.2;font-weight:900
 .frame:nth-child(6n+4){--c:#ffad1f;--t:1.2deg}
 .frame:nth-child(6n+5){--c:#8c6cf2;--t:-1deg}
 .frame:nth-child(6n+6){--c:#1fb8a8;--t:.8deg}
-.frame-emoji{display:grid;place-items:center;width:60px;height:60px;margin-bottom:.35rem;font-size:2rem;line-height:1;background:#fff;background:color-mix(in srgb,var(--c) 22%,#fff);border:2.5px solid var(--ink);border-radius:50%}
-.frame small{font-size:.92rem;font-weight:700;color:var(--ink-soft)}
+.frame-emoji{position:relative;display:grid;place-items:center;align-self:stretch;height:118px;margin:0 -14px .7rem;font-size:3.6rem;line-height:1;background-color:var(--c);background-image:radial-gradient(rgba(255,255,255,.4) 2.5px,transparent 3px),linear-gradient(160deg,rgba(255,255,255,.35),rgba(255,255,255,0) 55%);background-size:16px 16px,100% 100%;border-bottom:3px solid var(--ink);border-radius:21px 21px 0 0;text-shadow:3px 4px 0 rgba(43,35,64,.25)}
+.frame-emoji::after{content:"\25B6";position:absolute;right:12px;bottom:-21px;display:grid;place-items:center;width:40px;height:40px;padding-left:3px;font-size:1rem;color:var(--ink);text-shadow:none;background:var(--yellow);border:3px solid var(--ink);border-radius:50%;box-shadow:2px 3px 0 var(--ink);transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+.frame:hover .frame-emoji,.frame:focus-within .frame-emoji{animation:cart-dots 1.2s linear infinite}
+.frame:hover .frame-emoji::after,.frame:focus-within .frame-emoji::after{transform:scale(1.2) rotate(-8deg)}
+.frame small{max-width:22ch;font-size:.92rem;font-weight:700;line-height:1.3;color:var(--ink-soft)}
+@keyframes cart-dots{to{background-position:16px 16px,0 0}}
+@media (max-width:440px){.frames{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 14px}.frame{font-size:1rem;padding:0 8px 16px}.frame-emoji{height:92px;margin:0 -8px .6rem;font-size:2.8rem}.frame-emoji::after{width:34px;height:34px;bottom:-18px;right:8px;font-size:.85rem}.frame small{font-size:.82rem}}
 footer{padding:26px 20px 34px;text-align:center;color:var(--ink-soft);font-size:.98rem;background:var(--paper);border-top:3px dashed #cfe3f5}
 footer p{margin:.2rem 0}
 footer a{font-weight:800}
@@ -73,7 +79,7 @@ footer a{font-weight:800}
 .peek-t{--r:180deg;--d:27s;left:calc(68% - var(--w)/2);top:calc(var(--h)*-1)}
 @keyframes peek{0%,19%{transform:rotate(var(--r)) translateY(110%) rotate(0deg)}20.5%{transform:rotate(var(--r)) translateY(15%) rotate(-8deg)}22%{transform:rotate(var(--r)) translateY(15%) rotate(5deg)}23.5%{transform:rotate(var(--r)) translateY(15%) rotate(-8deg)}25%,100%{transform:rotate(var(--r)) translateY(110%) rotate(0deg)}}
 @media (max-width:640px){.peek{--w:84px;--h:91px}}
-@media (prefers-reduced-motion:reduce){.bubble,.puff{animation:none}.peeks{display:none}.frame{transition:none}}
+@media (prefers-reduced-motion:reduce){.bubble,.puff{animation:none}.peeks{display:none}.frame,.frame-emoji::after{transition:none}.frame .frame-emoji{animation:none!important}}
 </style>
 </head>
 <body>

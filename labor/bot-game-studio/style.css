@@ -95,6 +95,7 @@ button:disabled { opacity: 0.45; cursor: default; }
   text-align: center;
 }
 .card .icon { font-size: 1.8rem; }
+.card .sprite { width: 52px; height: 52px; }
 .card small { font-weight: 700; color: #8c6cf2; }
 .card.open:hover { background: #fff3c4; }
 .card.done { background: #d9f7dc; }

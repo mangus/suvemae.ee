@@ -12,3 +12,7 @@ Idea by the ⚡ Uku group. Made with the help of the Suvemäe labor [AI agent on
 The shop has 9 upgrades: bigger credit tank, faster credits, more robot arms, faster building, cheaper ideas, fewer bugs, a bug fixer robot, advertising and more cash.
 
 Dev mode: press 🛠️ Dev to open every idea for free and get 100000 cash for bug testing. Times made in dev mode are not saved. Reload the page to play for real.
+
+All ideas, bugs and the rocket are 2D sprites drawn with canvas shapes in `sprites.js` (made for this game, no image files).
+
+Boss bugs: once 6 ideas are built, some bugs are big boss bugs. Tap one 3 times to squash it. While it is live it scares away players 3 times as much as a normal bug.

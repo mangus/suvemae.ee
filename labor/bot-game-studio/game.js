@@ -1,5 +1,6 @@
 // Bot Game Studio: pick ideas for a robot helper, squash bugs, publish, reach 5000 players.
 import { lab } from '../lab.js';
+import { drawSprite, spriteImage } from './sprites.js';
 
 const studio = lab();
 
@@ -11,51 +12,53 @@ const TANK_GROWTH = 3; // more credit space for every published idea
 const ENERGY_EVERY = 1.5; // seconds per credit
 const BUG_CHANCE = 0.4;
 const MAX_BUGS = 6;
+const BOSS_HP = 3; // taps a boss bug needs
+const BOSS_CHANCE = 0.3; // share of bugs that are boss bugs, once 6 ideas are built
 const BEST_KEY = 'bot-game-studio-best-5000';
 const BOARD = 'goal5000'; // own table, so times for other goals don't mix in
 
 const IDEAS = [
-  { id: 'sky', icon: '🎨', name: 'Paint a sky', fun: 5, cost: 1, needs: [], code: 'sky.color = "light blue";' },
-  { id: 'hero', icon: '🙂', name: 'Add a hero', fun: 10, cost: 2, needs: [], code: 'let hero = new Hero("smiley");' },
-  { id: 'sun', icon: '☀️', name: 'Add a sun', fun: 5, cost: 1, needs: ['sky'], code: 'sky.add(new Sun());' },
-  { id: 'clouds', icon: '☁️', name: 'Add clouds', fun: 5, cost: 1, needs: ['sky'], code: 'clouds.add(3);' },
-  { id: 'music', icon: '🎵', name: 'Add music', fun: 10, cost: 2, needs: ['sky'], code: 'music.play("happy tune");' },
-  { id: 'jump', icon: '🦘', name: 'Make the hero jump', fun: 10, cost: 2, needs: ['hero'], code: 'onTap(() => hero.jump());' },
-  { id: 'trees', icon: '🌳', name: 'Plant trees', fun: 5, cost: 2, needs: ['hero'], code: 'ground.plant("tree", 2);' },
-  { id: 'coins', icon: '🪙', name: 'Add coins', fun: 15, cost: 3, needs: ['hero'], code: 'coins.spawn({ every: 1 });' },
-  { id: 'hat', icon: '🎩', name: 'Give the hero a hat', fun: 10, cost: 2, needs: ['hero'], code: 'hero.wear("top hat");' },
-  { id: 'bird', icon: '🐦', name: 'Add a bird', fun: 10, cost: 2, needs: ['clouds'], code: 'bird.fly("across the sky");' },
-  { id: 'flowers', icon: '🌸', name: 'Grow flowers', fun: 5, cost: 2, needs: ['trees'], code: 'ground.plant("flower", 5);' },
-  { id: 'pet', icon: '🐶', name: 'Add a pet', fun: 15, cost: 3, needs: ['jump'], code: 'hero.pet = new Puppy();' },
-  { id: 'monster', icon: '👾', name: 'Add a monster', fun: 15, cost: 3, needs: ['jump'], code: 'monster.walk("left", "right");' },
-  { id: 'rainbow', icon: '🌈', name: 'Add a rainbow', fun: 10, cost: 2, needs: ['clouds'], code: 'sky.add(new Rainbow());' },
-  { id: 'house', icon: '🏠', name: 'Build a house', fun: 10, cost: 3, needs: ['trees'], code: 'world.build(new House());' },
-  { id: 'hearts', icon: '❤️', name: 'Add lives', fun: 15, cost: 3, needs: ['monster'], code: 'hero.lives = 3;' },
-  { id: 'scores', icon: '🏆', name: 'Add high scores', fun: 15, cost: 3, needs: ['coins'], code: 'scores.save(nickname, points);' },
-  { id: 'stars', icon: '✨', name: 'Add sparkles', fun: 10, cost: 3, needs: ['rainbow'], code: 'sky.sparkle(5);' },
-  { id: 'boss', icon: '🐉', name: 'Add a big boss', fun: 25, cost: 4, needs: ['monster'], code: 'let boss = new Dragon("huge");' },
-  { id: 'fireworks', icon: '🎆', name: 'Add fireworks', fun: 20, cost: 4, needs: ['boss'], code: 'onWin(() => fireworks.go());' },
-  { id: 'levels', icon: '🗺️', name: 'Add more levels', fun: 20, cost: 4, needs: ['boss'], code: 'levels.push(level2, level3);' },
-  { id: 'castle', icon: '🏰', name: 'Build a castle', fun: 25, cost: 5, needs: ['levels'], code: 'level3.add(new Castle());' },
-  { id: 'friends', icon: '🤝', name: 'Play with friends', fun: 30, cost: 5, needs: ['scores', 'castle'], code: 'room.join("friends");' },
-  { id: 'moon', icon: '🌙', name: 'Add a moon', fun: 10, cost: 2, needs: ['sun'], code: 'sky.add(new Moon());' },
-  { id: 'snow', icon: '❄️', name: 'Make it snow', fun: 15, cost: 3, needs: ['clouds'], code: 'weather.snow = true;' },
-  { id: 'fish', icon: '🐟', name: 'Add a fish pond', fun: 15, cost: 3, needs: ['trees'], code: 'ground.dig("pond").add(fish);' },
-  { id: 'dance', icon: '💃', name: 'Make the hero dance', fun: 20, cost: 3, needs: ['music', 'hero'], code: 'hero.dance(music.beat);' },
-  { id: 'car', icon: '🚗', name: 'Add a car', fun: 20, cost: 4, needs: ['house'], code: 'road.drive(new Car("red"));' },
-  { id: 'storm', icon: '⛈️', name: 'Add a thunderstorm', fun: 20, cost: 4, needs: ['snow'], code: 'weather.thunder({ every: 5 });' },
-  { id: 'shield', icon: '🛡️', name: 'Give the hero a shield', fun: 20, cost: 4, needs: ['hearts'], code: 'hero.shield = 100;' },
-  { id: 'magic', icon: '🪄', name: 'Add a magic wand', fun: 25, cost: 4, needs: ['hat'], code: 'hero.cast("sparkle spell");' },
-  { id: 'treasure', icon: '💎', name: 'Hide treasure', fun: 25, cost: 4, needs: ['coins'], code: 'world.hide(new Gem("blue"));' },
-  { id: 'ufo', icon: '🛸', name: 'Add a flying saucer', fun: 25, cost: 5, needs: ['stars'], code: 'sky.add(new Saucer());' },
-  { id: 'dino', icon: '🦖', name: 'Add a friendly dino', fun: 30, cost: 5, needs: ['pet'], code: 'let dino = new Dino("friendly");' },
-  { id: 'store', icon: '🛍️', name: 'Add a game shop', fun: 30, cost: 5, needs: ['treasure'], code: 'shop.sell("hats", "skins");' },
-  { id: 'crown', icon: '👑', name: 'Crown for the winner', fun: 30, cost: 5, needs: ['scores', 'boss'], code: 'onWin(() => hero.wear("crown"));' },
-  { id: 'unicorn', icon: '🦄', name: 'Add a unicorn', fun: 40, cost: 6, needs: ['rainbow', 'dino'], code: 'let unicorn = new Unicorn();' },
-  { id: 'space', icon: '🪐', name: 'Add a space level', fun: 40, cost: 6, needs: ['levels', 'ufo'], code: 'levels.push(spaceLevel);' },
-  { id: 'languages', icon: '🌐', name: 'Many languages', fun: 40, cost: 6, needs: ['friends'], code: 'game.speak("et", "en", "fi");' },
-  { id: 'party', icon: '🥳', name: 'Party mode', fun: 60, cost: 8, needs: ['friends', 'fireworks', 'dance'], code: 'party.start({ confetti: true });' },
-  { id: 'park', icon: '🎡', name: 'Theme park level', fun: 80, cost: 10, needs: ['space', 'unicorn', 'party'], code: 'levels.push(themePark);' },
+  { id: 'sky', name: 'Paint a sky', fun: 5, cost: 1, needs: [], code: 'sky.color = "light blue";' },
+  { id: 'hero', name: 'Add a hero', fun: 10, cost: 2, needs: [], code: 'let hero = new Hero("smiley");' },
+  { id: 'sun', name: 'Add a sun', fun: 5, cost: 1, needs: ['sky'], code: 'sky.add(new Sun());' },
+  { id: 'clouds', name: 'Add clouds', fun: 5, cost: 1, needs: ['sky'], code: 'clouds.add(3);' },
+  { id: 'music', name: 'Add music', fun: 10, cost: 2, needs: ['sky'], code: 'music.play("happy tune");' },
+  { id: 'jump', name: 'Make the hero jump', fun: 10, cost: 2, needs: ['hero'], code: 'onTap(() => hero.jump());' },
+  { id: 'trees', name: 'Plant trees', fun: 5, cost: 2, needs: ['hero'], code: 'ground.plant("tree", 2);' },
+  { id: 'coins', name: 'Add coins', fun: 15, cost: 3, needs: ['hero'], code: 'coins.spawn({ every: 1 });' },
+  { id: 'hat', name: 'Give the hero a hat', fun: 10, cost: 2, needs: ['hero'], code: 'hero.wear("top hat");' },
+  { id: 'bird', name: 'Add a bird', fun: 10, cost: 2, needs: ['clouds'], code: 'bird.fly("across the sky");' },
+  { id: 'flowers', name: 'Grow flowers', fun: 5, cost: 2, needs: ['trees'], code: 'ground.plant("flower", 5);' },
+  { id: 'pet', name: 'Add a pet', fun: 15, cost: 3, needs: ['jump'], code: 'hero.pet = new Puppy();' },
+  { id: 'monster', name: 'Add a monster', fun: 15, cost: 3, needs: ['jump'], code: 'monster.walk("left", "right");' },
+  { id: 'rainbow', name: 'Add a rainbow', fun: 10, cost: 2, needs: ['clouds'], code: 'sky.add(new Rainbow());' },
+  { id: 'house', name: 'Build a house', fun: 10, cost: 3, needs: ['trees'], code: 'world.build(new House());' },
+  { id: 'hearts', name: 'Add lives', fun: 15, cost: 3, needs: ['monster'], code: 'hero.lives = 3;' },
+  { id: 'scores', name: 'Add high scores', fun: 15, cost: 3, needs: ['coins'], code: 'scores.save(nickname, points);' },
+  { id: 'stars', name: 'Add sparkles', fun: 10, cost: 3, needs: ['rainbow'], code: 'sky.sparkle(5);' },
+  { id: 'boss', name: 'Add a big boss', fun: 25, cost: 4, needs: ['monster'], code: 'let boss = new Dragon("huge");' },
+  { id: 'fireworks', name: 'Add fireworks', fun: 20, cost: 4, needs: ['boss'], code: 'onWin(() => fireworks.go());' },
+  { id: 'levels', name: 'Add more levels', fun: 20, cost: 4, needs: ['boss'], code: 'levels.push(level2, level3);' },
+  { id: 'castle', name: 'Build a castle', fun: 25, cost: 5, needs: ['levels'], code: 'level3.add(new Castle());' },
+  { id: 'friends', name: 'Play with friends', fun: 30, cost: 5, needs: ['scores', 'castle'], code: 'room.join("friends");' },
+  { id: 'moon', name: 'Add a moon', fun: 10, cost: 2, needs: ['sun'], code: 'sky.add(new Moon());' },
+  { id: 'snow', name: 'Make it snow', fun: 15, cost: 3, needs: ['clouds'], code: 'weather.snow = true;' },
+  { id: 'fish', name: 'Add a fish pond', fun: 15, cost: 3, needs: ['trees'], code: 'ground.dig("pond").add(fish);' },
+  { id: 'dance', name: 'Make the hero dance', fun: 20, cost: 3, needs: ['music', 'hero'], code: 'hero.dance(music.beat);' },
+  { id: 'car', name: 'Add a car', fun: 20, cost: 4, needs: ['house'], code: 'road.drive(new Car("red"));' },
+  { id: 'storm', name: 'Add a thunderstorm', fun: 20, cost: 4, needs: ['snow'], code: 'weather.thunder({ every: 5 });' },
+  { id: 'shield', name: 'Give the hero a shield', fun: 20, cost: 4, needs: ['hearts'], code: 'hero.shield = 100;' },
+  { id: 'magic', name: 'Add a magic wand', fun: 25, cost: 4, needs: ['hat'], code: 'hero.cast("sparkle spell");' },
+  { id: 'treasure', name: 'Hide treasure', fun: 25, cost: 4, needs: ['coins'], code: 'world.hide(new Gem("blue"));' },
+  { id: 'ufo', name: 'Add a flying saucer', fun: 25, cost: 5, needs: ['stars'], code: 'sky.add(new Saucer());' },
+  { id: 'dino', name: 'Add a friendly dino', fun: 30, cost: 5, needs: ['pet'], code: 'let dino = new Dino("friendly");' },
+  { id: 'store', name: 'Add a game shop', fun: 30, cost: 5, needs: ['treasure'], code: 'shop.sell("hats", "skins");' },
+  { id: 'crown', name: 'Crown for the winner', fun: 30, cost: 5, needs: ['scores', 'boss'], code: 'onWin(() => hero.wear("crown"));' },
+  { id: 'unicorn', name: 'Add a unicorn', fun: 40, cost: 6, needs: ['rainbow', 'dino'], code: 'let unicorn = new Unicorn();' },
+  { id: 'space', name: 'Add a space level', fun: 40, cost: 6, needs: ['levels', 'ufo'], code: 'levels.push(spaceLevel);' },
+  { id: 'languages', name: 'Many languages', fun: 40, cost: 6, needs: ['friends'], code: 'game.speak("et", "en", "fi");' },
+  { id: 'party', name: 'Party mode', fun: 60, cost: 8, needs: ['friends', 'fireworks', 'dance'], code: 'party.start({ confetti: true });' },
+  { id: 'park', name: 'Theme park level', fun: 80, cost: 10, needs: ['space', 'unicorn', 'party'], code: 'levels.push(themePark);' },
 ];
 
 // Shop upgrades: every level costs twice as much as the one before
@@ -138,9 +141,7 @@ function renderCards() {
     button.className = 'card ' + kind;
     button.dataset.id = idea.id;
     button.disabled = kind === 'locked';
-    const icon = document.createElement('span');
-    icon.className = 'icon';
-    icon.textContent = kind === 'locked' ? '🔒' : idea.icon;
+    const icon = spriteImage(kind === 'locked' ? 'lock' : idea.id);
     const name = document.createElement('span');
     name.textContent = kind === 'locked' ? '???' : idea.name;
     const info = document.createElement('small');
@@ -180,7 +181,7 @@ function pick(id) {
   state.energy -= costOf(idea);
   state.building.push(idea);
   $('bot').classList.add('busy');
-  say(`${pickOne(['On it!', 'Writing code…', 'Great idea!', 'Beep boop, building!'])} ${idea.icon}`);
+  say(`${pickOne(['On it!', 'Writing code…', 'Great idea!', 'Beep boop, building!'])} ${idea.name}…`);
   typeCode(idea.code);
   beep(440, 0.08);
   setTimeout(() => finishBuild(idea), buildMs());
@@ -194,10 +195,13 @@ function finishBuild(idea) {
   beep(660, 0.12);
   if (idea.id === 'music') startMusic();
   if (Math.random() < bugChance() && state.bugs.length < MAX_BUGS) {
-    spawnBug();
-    say(`${idea.icon} is in! But oops, a bug 🐛 got in too. Tap it to squash it!`);
+    const boss = state.built.size >= 6 && Math.random() < BOSS_CHANCE;
+    spawnBug(boss);
+    say(boss
+      ? `"${idea.name}" is in! But oh no, a BOSS BUG got in too! Tap it ${BOSS_HP} times to squash it!`
+      : `"${idea.name}" is in! But oops, a bug got in too. Tap it to squash it!`);
   } else {
-    say(`Done! ${idea.icon} is in your game. New ideas now cost 1 ⚡ more. Press Publish so players can see it.`);
+    say(`Done! "${idea.name}" is in your game. New ideas now cost 1 ⚡ more. Press Publish so players can see it.`);
   }
   renderCards();
 }
@@ -334,8 +338,10 @@ $('mute').addEventListener('click', () => {
 
 // ---- Bugs ----
 
-function spawnBug() {
+function spawnBug(boss = false) {
   state.bugs.push({
+    boss,
+    hp: boss ? BOSS_HP : 1,
     x: W * (0.15 + Math.random() * 0.7),
     y: H * (0.25 + Math.random() * 0.6),
     vx: (Math.random() - 0.5) * 90,
@@ -354,6 +360,19 @@ function moveBug(bug, dt) {
   bug.y = Math.min(Math.max(bug.y, 16), H - 16);
 }
 
+// One tap (or one fixer robot swipe) on bug i. Returns true when the bug is gone.
+function hit(i) {
+  const bug = state.bugs[i];
+  bug.hp -= 1;
+  if (bug.hp > 0) {
+    pops.push({ x: bug.x, y: bug.y, age: 0.3 });
+    beep(150, 0.1, 'sawtooth');
+    return false;
+  }
+  squash(i);
+  return true;
+}
+
 function squash(i) {
   const [bug] = state.bugs.splice(i, 1);
   pops.push({ x: bug.x, y: bug.y, age: 0 });
@@ -364,9 +383,10 @@ canvas.addEventListener('pointerdown', (e) => {
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
-  const i = state.bugs.findIndex((bug) => Math.hypot(bug.x - x, bug.y - y) < 32);
+  const i = state.bugs.findIndex((bug) => Math.hypot(bug.x - x, bug.y - y) < (bug.boss ? 48 : 32));
   if (i < 0) return;
-  squash(i);
+  const bug = state.bugs[i];
+  if (!hit(i)) return say(`👊 Boss bug! Tap it ${bug.hp} more time${bug.hp > 1 ? 's' : ''}!`);
   say(state.bugs.length ? `Squashed! 💥 ${state.bugs.length} more to go.` : pickOne(['Squashed! 💥 No more bugs.', 'Bug gone! 💥 Nice!']));
 });
 
@@ -521,19 +541,19 @@ function draw(t, now) {
   if (has('stars')) {
     for (let i = 0; i < 5; i += 1) {
       const size = H * (0.04 + 0.03 * Math.abs(Math.sin(t * 3 + i)));
-      label('✨', W * (0.2 + i * 0.15), H * (0.08 + (i % 2) * 0.1), size, 'center');
+      drawSprite(ctx, 'stars', W * (0.2 + i * 0.15), H * (0.08 + (i % 2) * 0.1), size * 1.3, t + i);
     }
   }
 
-  if (has('moon')) label('🌙', W * 0.9, H * 0.12, H * 0.1, 'center');
-  if (has('space')) label('🪐', W * 0.75, H * 0.1, H * 0.1, 'center');
-  if (has('storm')) label('⛈️', W * 0.45, H * 0.12, H * 0.1, 'center');
-  if (has('ufo')) label('🛸', W * 0.5 + Math.sin(t) * W * 0.3, H * 0.22, H * 0.1, 'center');
+  if (has('moon')) drawSprite(ctx, 'moon', W * 0.9, H * 0.12, H * 0.14, t);
+  if (has('space')) drawSprite(ctx, 'space', W * 0.75, H * 0.1, H * 0.15, t);
+  if (has('storm')) drawSprite(ctx, 'storm', W * 0.45, H * 0.13, H * 0.16, t);
+  if (has('ufo')) drawSprite(ctx, 'ufo', W * 0.5 + Math.sin(t) * W * 0.3, H * 0.22, H * 0.14, t);
   if (has('snow')) {
-    for (let i = 0; i < 8; i += 1) label('❄️', W * (0.06 + i * 0.12) + Math.sin(t + i) * 8, (t * 40 + i * 37) % H, H * 0.04, 'center');
+    for (let i = 0; i < 8; i += 1) drawSprite(ctx, 'snow', W * (0.06 + i * 0.12) + Math.sin(t + i) * 8, (t * 40 + i * 37) % H, H * 0.05);
   }
 
-  if (has('bird')) label('🐦', ((t * 50) % (W + 80)) - 40, H * 0.3 + Math.sin(t * 5) * 8, H * 0.08, 'center');
+  if (has('bird')) drawSprite(ctx, 'bird', ((t * 50) % (W + 80)) - 40, H * 0.3 + Math.sin(t * 5) * 8, H * 0.1, t);
 
   const ground = H * 0.82;
   if (has('hero')) {
@@ -544,17 +564,16 @@ function draw(t, now) {
   }
 
   if (has('flowers')) {
-    for (let i = 0; i < 6; i += 1) label('🌸', W * (0.05 + i * 0.18), ground + H * 0.08, H * 0.06, 'center');
+    for (let i = 0; i < 6; i += 1) drawSprite(ctx, 'flowers', W * (0.05 + i * 0.18), ground + H * 0.08, H * 0.08);
   }
 
   if (has('trees')) {
-    label('🌳', W * 0.06, ground - H * 0.09, H * 0.2, 'center');
-    label('🌳', W * 0.42, ground - H * 0.07, H * 0.15, 'center');
+    drawSprite(ctx, 'trees', W * 0.06, ground - H * 0.095, H * 0.22);
+    drawSprite(ctx, 'trees', W * 0.42, ground - H * 0.07, H * 0.16);
   }
 
   if (has('park')) {
-    label('🎡', W * 0.3, ground - H * 0.2, H * 0.3, 'center');
-    label('🎢', W * 0.12, ground - H * 0.12, H * 0.2, 'center');
+    drawSprite(ctx, 'park', W * 0.3, ground - H * 0.14, H * 0.3, t);
   }
   if (has('fish')) {
     // the pond: blue water with a lighter edge
@@ -566,16 +585,16 @@ function draw(t, now) {
     ctx.strokeStyle = '#a8dcff';
     ctx.stroke();
   }
-  if (has('fish')) label('🐟', W * 0.52 + Math.sin(t * 2) * 10, ground + H * 0.1, H * 0.06, 'center');
-  if (has('treasure')) label('💎', W * 0.7, ground + H * 0.08, H * 0.06, 'center');
-  if (has('car')) label('🚗', ((t * 60) % (W + 80)) - 40, ground + H * 0.12, H * 0.08, 'center');
-  if (has('store')) label('🛍️', W * 0.68, ground - H * 0.05, H * 0.09, 'center');
-  if (has('dino')) label('🦖', W * 0.4, ground - H * 0.08, H * 0.14, 'center');
-  if (has('unicorn')) label('🦄', W * 0.55 + Math.sin(t) * W * 0.05, ground - H * 0.08, H * 0.13, 'center');
+  if (has('fish')) drawSprite(ctx, 'fish', W * 0.52 + Math.sin(t * 2) * 10, ground + H * 0.1, H * 0.07, t);
+  if (has('treasure')) drawSprite(ctx, 'treasure', W * 0.7, ground + H * 0.08, H * 0.07);
+  if (has('car')) drawSprite(ctx, 'car', ((t * 60) % (W + 80)) - 40, ground + H * 0.11, H * 0.11);
+  if (has('store')) drawSprite(ctx, 'store', W * 0.68, ground - H * 0.05, H * 0.1);
+  if (has('dino')) drawSprite(ctx, 'dino', W * 0.4, ground - H * 0.07, H * 0.16);
+  if (has('unicorn')) drawSprite(ctx, 'unicorn', W * 0.55 + Math.sin(t) * W * 0.05, ground - H * 0.08, H * 0.15);
 
-  if (has('house')) label('🏠', W * 0.62, ground - H * 0.08, H * 0.17, 'center');
+  if (has('house')) drawSprite(ctx, 'house', W * 0.62, ground - H * 0.07, H * 0.17);
 
-  if (has('castle')) label('🏰', W * 0.9, ground - H * 0.14, H * 0.28, 'center');
+  if (has('castle')) drawSprite(ctx, 'castle', W * 0.9, ground - H * 0.12, H * 0.28);
 
   if (has('levels')) {
     const w = H * 0.1;
@@ -620,11 +639,11 @@ function draw(t, now) {
     const heroX = W * 0.22 + (has('dance') ? Math.sin(t * 6) * r * 0.5 : 0);
     const heroY = ground - r - hop(0);
     drawFace(heroX, heroY, r, '#ffc933');
-    if (has('hat')) label('🎩', heroX, heroY - r * 1.1, r * 1.2, 'center');
-    if (has('crown')) label('👑', heroX, heroY - r * (has('hat') ? 2.1 : 1.1), r, 'center');
-    if (has('magic')) label('🪄', heroX - r * 1.2, heroY, r, 'center');
-    if (has('shield')) label('🛡️', heroX + r * 1.2, heroY, r, 'center');
-    if (has('pet')) label('🐶', W * 0.33, ground - r * 0.7 - hop(0.6) * 0.5, r * 1.4, 'center');
+    if (has('hat')) drawSprite(ctx, 'hat', heroX, heroY - r * 1.1, r * 1.2);
+    if (has('crown')) drawSprite(ctx, 'crown', heroX, heroY - r * (has('hat') ? 2.1 : 1.1), r);
+    if (has('magic')) drawSprite(ctx, 'magic', heroX - r * 1.3, heroY, r * 1.2, t);
+    if (has('shield')) drawSprite(ctx, 'shield', heroX + r * 1.3, heroY, r * 1.1);
+    if (has('pet')) drawSprite(ctx, 'pet', W * 0.33, ground - r * 0.7 - hop(0.6) * 0.5, r * 1.4);
   }
 
   if (has('music')) {
@@ -634,34 +653,52 @@ function draw(t, now) {
     }
   }
 
-  if (has('languages')) label('🌐', W * 0.5, H * 0.93, H * 0.06, 'center');
+  if (has('languages')) drawSprite(ctx, 'languages', W * 0.5, H * 0.93, H * 0.08);
   if (has('party')) {
-    for (let i = 0; i < 10; i += 1) label(i % 2 ? '🎊' : '🎉', W * ((i * 0.11 + t * 0.05) % 1), H * ((i * 0.17 + t * 0.2) % 1), H * 0.05, 'center');
+    // confetti
+    const colors = ['#ff6b6b', '#ffa94d', '#ffd43b', '#69db7c', '#4dabf7', '#9775fa'];
+    for (let i = 0; i < 14; i += 1) {
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.fillRect(W * ((i * 0.11 + t * 0.05) % 1), H * ((i * 0.17 + t * 0.2) % 1), H * 0.025, H * 0.035);
+    }
   }
 
-  if (has('hearts')) label('❤️❤️❤️', 10, H * 0.93, H * 0.06);
+  if (has('hearts')) {
+    for (let i = 0; i < 3; i += 1) drawSprite(ctx, 'hearts', 10 + H * 0.04 + i * H * 0.08, H * 0.93, H * 0.07, t + i * 0.3);
+  }
 
-  if (has('fireworks')) label('🎆', W * (0.3 + (Math.floor(t) % 3) * 0.2), H * 0.2, H * (0.06 + (t % 1) * 0.12), 'center');
+  if (has('fireworks')) drawSprite(ctx, 'fireworks', W * (0.3 + (Math.floor(t) % 3) * 0.2), H * 0.2, H * (0.1 + (t % 1) * 0.15), t);
 
-  if (has('scores')) label(`🏆 ${Math.floor(t * 10) % 10000}`, W - 10, H * 0.08, H * 0.06, 'right');
+  if (has('scores')) {
+    drawSprite(ctx, 'scores', W - 10 - H * 0.04, H * 0.08, H * 0.09);
+    label(`${Math.floor(t * 10) % 10000}`, W - 16 - H * 0.09, H * 0.08, H * 0.06, 'right');
+  }
 
   if (!state.built.size && !state.building.length) {
     label('Your game is empty…', W / 2, H * 0.42, Math.min(W * 0.05, 26), 'center', '#8a84a0');
     label('pick an idea below! 👇', W / 2, H * 0.56, Math.min(W * 0.05, 26), 'center', '#8a84a0');
   }
 
-  if (state.building.length) label(`🔧 Building ${state.building.map((b) => b.icon).join(' ')}…`, 10, H * 0.08, Math.min(W * 0.045, 22));
+  if (state.building.length) {
+    const size = Math.min(W * 0.045, 22);
+    label('🔧 Building', 10, H * 0.08, size);
+    const x = 10 + ctx.measureText('🔧 Building').width + size;
+    state.building.forEach((b, i) => drawSprite(ctx, b.id, x + i * size * 1.8, H * 0.08, size * 1.6, t));
+  }
 
   if (state.publishing) {
     const p = Math.min(1, (now - state.publishing) / PUBLISH_MS);
-    label('🚀', W / 2, H * (1.1 - p * 1.3), H * 0.15, 'center');
+    drawSprite(ctx, 'rocket', W / 2, H * (1.1 - p * 1.3), H * 0.2, t);
   }
 
   for (const bug of state.bugs) {
-    if (bug.live) circle(bug.x, bug.y, 22, 'rgba(255, 80, 80, 0.45)');
-    label('🐛', bug.x, bug.y, 28, 'center');
+    const size = bug.boss ? 76 : 44;
+    if (bug.live) circle(bug.x, bug.y, size / 2, 'rgba(255, 80, 80, 0.45)');
+    drawSprite(ctx, bug.boss ? 'bossbug' : 'bug', bug.x, bug.y, size, t);
+    // a boss bug shows how many taps it still needs
+    if (bug.boss) for (let k = 0; k < bug.hp; k += 1) circle(bug.x - 12 + k * 12, bug.y - size * 0.6, 5, '#e03131');
   }
-  for (const pop of pops) label('💥', pop.x, pop.y, 28 + pop.age * 40, 'center');
+  for (const pop of pops) drawSprite(ctx, 'pop', pop.x, pop.y, 30 + pop.age * 50);
 }
 
 // ---- Main loop ----
@@ -683,12 +720,11 @@ function frame(now) {
       fixClock += dt;
       if (fixClock >= fixEvery()) {
         fixClock = 0;
-        squash(0);
-        say('🧹 The bug fixer robot squashed a bug!');
+        say(hit(0) ? '🧹 The bug fixer robot squashed a bug!' : '🧹 The bug fixer robot hit the boss bug!');
       }
     }
     if (state.startedAt) {
-      const liveBugs = state.bugs.filter((bug) => bug.live).length;
+      const liveBugs = state.bugs.filter((bug) => bug.live).reduce((sum, bug) => sum + (bug.boss ? 3 : 1), 0); // a boss bug scares players 3 times as much
       const rate = (funOf(state.live) / 12) * playerBoost() - liveBugs * 3; // players per second
       state.players = Math.max(0, state.players + rate * dt);
       state.cash += (state.players / 10) * cashBoost() * dt; // every 10 players pay 1 cash a second

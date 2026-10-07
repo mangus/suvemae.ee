@@ -106,6 +106,99 @@
       miks: 'Õpetaja annab regulaarset tagasisidet, et saaksid areneda.' },
   ];
 
+
+  // ---------- Answer check ----------
+  // The player types their own answer. It is good when it has a good-will word for the
+  // situation and no unkind word. "ei", "pole" or "ära" right before a good word turns it
+  // around ("ei aita"); before an unkind word it cancels it ("ära löö").
+  // A stem matches the start of a word, "x=" matches the whole word, "a b" is a phrase.
+  const HALVAD = ['löö=', 'lööb', 'löön', 'lööme', 'lööd=', 'lööks', 'löövad', 'tõuka', 'peks', 'hammust',
+    'sõima', 'loll', 'rumal', 'tola', 'idioot', 'vihka', 'kakle', 'karju', 'varasta', 'naeran', 'naerame',
+    'naerda', 'välja naer', 'mõnita', 'narri', 'kole', 'lõhu', 'pole minu asi', 'pole minu mure',
+    'ei ole minu asi', 'ei huvita'];
+  const SONAD = [
+    [['küsi', 'luba', 'otsusta', 'keha', 'rahule', 'stopp', 'lõpeta', 'austa', 'ära kallista', 'ei taha'],
+      ['kallista', 'sundi', 'tee ikka', 'ei sekku']],
+    [['{nimi}', 'soovi', 'tahad', 'vabanda', 'selge', 'muidugi', 'olgu', 'okei', 'austa', 'õige nim'],
+      ['hüüdnim', 'naljak', 'kuidas ise tahan', 'kuidas mina tahan', 'nagu mina tahan']],
+    [['küsi', 'luba', 'tohin', 'tohiks', 'laena', 'palun', 'oota'],
+      ['vaikselt', 'salaja', 'napsa', 'ilma küsimata', 'ilma loata', 'keegi ei märka']],
+    [['aita', 'korja', 'korista', 'koos', 'hoolit', 'ehitame', 'jah', 'muidugi'],
+      ['diivani', 'peida', 'lükka', 'ei ehitanud', 'ei viitsi']],
+    [['pese', 'korista', 'viin', 'nõudepesu', 'kraanikau', 'masinasse'],
+      ['peida', 'jätan lauale', 'jätan sinna', 'keegi teine', 'küll keegi']],
+    [['ütle', 'räägi', 'kutsu', 'täiskasvan', 'õpetaja', 'teata', 'paranda', 'kinni', 'näita'],
+      ['rohkem lahti', 'veel lahti', 'pole minu']],
+    [['seisma', 'peatu', 'lõpeta', 'kuula', 'vabanda', 'stopp', 'jään', 'küsi', 'olgu'],
+      ['mängin edasi', 'jooksen ära', 'see on ju mäng', 'see on mäng']],
+    [['stopp', 'ütle', 'palun', 'lõpeta', 'mulle ei meeldi', 'räägi', 'täiskasvan', 'õpetaja', 'ära tõuka'],
+      ['olen vait', 'kurvastan üksi']],
+    [['räägi', 'arutame', 'lepime', 'kokku', 'jaga', 'kordamööda', 'koos', 'kuula', 'vabanda', 'lahenda', 'küsi'],
+      ['võtan palli', 'kõik vaatama', 'teised vaatama']],
+    [['ring', 'väike', 'arutame', 'räägi', 'õpetaja', 'täiskasvan', 'abi', 'küsi'],
+      ['unust', 'küll möödub', 'ise möödub']],
+    [['ütle', 'arvan', 'mõte', 'mõtte', 'idee', 'pakun', 'kuula', 'hääleta', 'räägi', 'tahaks', 'tahan'],
+      ['ükskõik']],
+    [['meeldi', 'ilus', 'tore', 'vahva', 'äge', 'proovi', 'koos', 'aita', 'värv', 'julge', 'hästi'],
+      ['halb', 'jube', 'nõme', 'oskan paremini', 'mina oskan']],
+    [['taha', 'õppi', 'huvi', 'eesmär', 'meeldi', 'unista', 'proovi'],
+      ['ei tea', 'minu eest', 'ükskõik']],
+    [['lepime', 'kokku', 'kirja', 'plaan', 'kirjuta', 'räägi', 'õpetaja', 'näita', 'eesmär'],
+      ['valeta', 'luiska', 'kuigi ei', 'ei räägi']],
+    [['tule', 'jah', 'muidugi', 'koos', 'liitu', 'võid', 'tohid', 'mängime', 'olgu', 'pole liiga väike'],
+      ['väike', 'liiga', 'teeme näo', 'ei kuule', 'mine ära', 'ei saa']],
+    [['tunne', 'tunde', 'ütle', 'räägi', 'aita', 'rahune', 'hinga', 'ehitame', 'koos', 'mõistan', 'saan aru', 'vihane', 'kurb'],
+      ['löö kõik']],
+    [['kuula', 'aita', 'turva', 'räägi', 'toeta', 'küsi', 'kaitse', 'hooli', 'lohuta'],
+      ['ise hakkama', 'mitte midagi', 'ei tee midagi', 'saagu']],
+    [['küsi', 'lähen', 'kõik hästi', 'lohuta', 'mängi', 'tule', 'aita', 'kuidas sul', 'räägi', 'istun', 'kalli'],
+      ['mööda', 'imelik']],
+    [['jah', 'aitäh', 'taha', 'kuula', 'palun', 'muidugi', 'olgu', 'hea meel'],
+      ['tean ise', 'kõrvad kinni', 'tean kõike']],
+  ];
+  OLUKORRAD.forEach((o, i) => { o.head = SONAD[i][0]; o.halb = SONAD[i][1]; });
+
+  const EITUS = { ei: 2, pole: 2, mitte: 2, ega: 2, ära: 1, ärge: 1, ara: 1, arge: 1 };
+  const fold = (t) => t.replace(/õ/g, 'o').replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u')
+    .replace(/š/g, 's').replace(/ž/g, 'z');
+  const clean = (t) => t.toLowerCase().replace(/[^a-z0-9õäöüšž ]+/g, ' ').replace(/ +/g, ' ').trim();
+
+  // Returns 'hea', 'halb', 'segane' (no known word) or 'tyhi' (nothing typed)
+  function hinda(vastus, o, nimi) {
+    let tekst = clean(vastus);
+    if (tekst.replace(/ /g, '').length < 2) return 'tyhi';
+    // Typed without Estonian letters? Then compare without them on both sides.
+    const plain = !/[õäöüšž]/.test(tekst);
+    const norm = (t) => (plain ? fold(clean(t)) : clean(t));
+    tekst = norm(tekst);
+    const sonad = tekst.split(' ');
+    const leia = (list) => {
+      const r = { jah: false, eitatud: false };
+      list.forEach((v0) => {
+        const exact = v0.endsWith('=');
+        const v = norm(v0.replace('=', '').split('{nimi}').join(nimi));
+        if (!v) return;
+        if (v.includes(' ')) {
+          if ((' ' + tekst).includes(' ' + v)) r.jah = true;
+          return;
+        }
+        sonad.forEach((w, i) => {
+          if (exact ? w !== v : !w.startsWith(v)) return;
+          let neg = false;
+          for (let k = 1; k <= 2 && i - k >= 0; k++) {
+            const e = EITUS[sonad[i - k]];
+            if (e && e >= k) neg = true;
+          }
+          if (neg) r.eitatud = true; else r.jah = true;
+        });
+      });
+      return r;
+    };
+    const hea = leia(o.head);
+    if (leia(HALVAD).jah || leia(o.halb).jah || hea.eitatud) return 'halb';
+    return hea.jah ? 'hea' : 'segane';
+  }
+
   // ---------- Helpers ----------
   function rng(seed) {
     return () => {
@@ -840,6 +933,7 @@
   let target = null;
   const keys = new Set();
   let current = null;
+  let lahendatud = false;
   let toastTimer = 0;
 
   // ---------- Sound (starts after the first click) ----------
@@ -907,50 +1001,122 @@
     const fill = (t) => t.split('{nimi}').join(npc.name);
     $('kes').textContent = npc.label;
     $('jutt').textContent = fill(s.tekst);
+    lahendatud = false;
     const box = $('valikud');
     box.textContent = '';
-    shuffle(s.valikud.slice()).forEach(([t, ok]) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.textContent = fill(t);
-      btn.dataset.ok = ok ? '1' : '';
-      btn.addEventListener('click', () => choose(btn, ok));
-      box.appendChild(btn);
+    // The player writes their own answer; the ready-made choices are a helping hand
+    const vorm = document.createElement('form');
+    vorm.className = 'vastus';
+    const sisend = document.createElement('textarea');
+    sisend.rows = 2;
+    sisend.maxLength = 200;
+    sisend.placeholder = 'Kirjuta, mida sa ütled või teed…';
+    sisend.setAttribute('aria-label', 'Sinu vastus');
+    const vasta = document.createElement('button');
+    vasta.type = 'submit';
+    vasta.className = 'vasta';
+    vasta.textContent = 'Vasta';
+    vorm.append(sisend, vasta);
+    vorm.addEventListener('submit', (e) => { e.preventDefault(); kontrolli(sisend.value); });
+    sisend.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kontrolli(sisend.value); }
     });
+    const abi = document.createElement('button');
+    abi.type = 'button';
+    abi.className = 'abi';
+    abi.textContent = 'Ei tea? Näita valikuid';
+    abi.addEventListener('click', () => {
+      abi.remove();
+      const nupud = document.createElement('div');
+      nupud.className = 'valikud';
+      shuffle(s.valikud.slice()).forEach(([t, ok]) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = fill(t);
+        btn.dataset.ok = ok ? '1' : '';
+        btn.addEventListener('click', () => choose(ok));
+        nupud.appendChild(btn);
+      });
+      box.appendChild(nupud);
+    });
+    box.append(vorm, abi);
     $('tagasiside').classList.add('peidus');
     $('reegel').classList.add('peidus');
     $('edasi').classList.add('peidus');
     $('dialoog').classList.remove('peidus');
     $('dialoog').scrollTop = 0;
+    if (window.matchMedia('(pointer: fine)').matches) sisend.focus();
   }
 
-  function choose(btn, ok) {
-    const s = current.event;
-    $('valikud').querySelectorAll('button').forEach((b) => {
+  function lukusta() {
+    $('valikud').querySelectorAll('button, textarea').forEach((b) => {
       b.disabled = true;
       if (b.dataset.ok) b.classList.add('oige');
     });
-    const fb = $('tagasiside');
-    if (ok) {
-      setHearts(hearts + 1);
-      stickers.add(s.reegel);
-      fb.textContent = '♥ Super! ' + s.miks;
-      fb.className = 'tagasiside hea';
-      soundGood();
-    } else {
-      fb.textContent = 'Hmm, mitte päris. ' + s.miks;
-      fb.className = 'tagasiside halb';
-      pool.push(s); // it may come back later
-      soundBad();
-    }
+  }
+
+  function naitaReeglit(s) {
     $('reegel').textContent = 'Kokkulepe: ' + s.reegel;
     $('reegel').classList.remove('peidus');
     $('edasi').classList.remove('peidus');
   }
 
+  function kiida(s) {
+    lahendatud = true;
+    setHearts(hearts + 1);
+    stickers.add(s.reegel);
+    $('tagasiside').textContent = '♥ Super! ' + s.miks;
+    $('tagasiside').className = 'tagasiside hea';
+    soundGood();
+  }
+
+  // A typed answer: a heart when it fits, otherwise a kind hint and another try
+  function kontrolli(text) {
+    if (lahendatud || !current) return;
+    const s = current.event;
+    const fb = $('tagasiside');
+    const tulemus = hinda(text, s, current.name);
+    if (tulemus === 'tyhi') {
+      fb.textContent = 'Kirjuta enne oma vastus.';
+      fb.className = 'tagasiside';
+      return;
+    }
+    if (tulemus === 'hea') {
+      lukusta();
+      kiida(s);
+    } else if (tulemus === 'halb') {
+      fb.textContent = 'Hmm, see pole hea tahte moodi. ' + s.miks + ' Proovi uuesti!';
+      fb.className = 'tagasiside halb';
+      soundBad();
+    } else {
+      fb.textContent = 'Ma ei saanud päris aru. Kirjuta, mida sa teed või ütled. Vihje: ' + s.miks;
+      fb.className = 'tagasiside halb';
+      soundPop();
+    }
+    naitaReeglit(s);
+  }
+
+  // A ready-made choice: one try only
+  function choose(ok) {
+    if (lahendatud) return;
+    const s = current.event;
+    lukusta();
+    if (ok) {
+      kiida(s);
+    } else {
+      lahendatud = true;
+      pool.push(s); // it may come back later
+      $('tagasiside').textContent = 'Hmm, mitte päris. ' + s.miks;
+      $('tagasiside').className = 'tagasiside halb';
+      soundBad();
+    }
+    naitaReeglit(s);
+  }
+
   function closeDialog() {
     $('dialoog').classList.add('peidus');
     if (current) {
+      if (!lahendatud) pool.push(current.event); // skipped: it may come back later
       current.event = null;
       current.cooldown = 4;
       current = null;

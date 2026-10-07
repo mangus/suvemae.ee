@@ -1,44 +1,30 @@
-// Anime Areen: everyone designs their own anime fighter, then battles the
-// others in one shared realtime room. Each player keeps track of their own
-// health; an attacker only tells the target that it was hit.
+// Anime Areen: a realtime fighting game for several players in one shared
+// room. Each player keeps track of their own health; an attacker only tells
+// the target that it was hit. The fighters are drawn stand-ins until the
+// children's own character pictures are added.
 import { lab } from '../lab.js';
 import { clamp, moveFighter, attackHits, applyDamage, cleanCharacter } from './game-core.js';
-import { CHOICES, NAMES, HAIR_STYLES, HAIR_COLORS, EYES, OUTFITS, POWERS, drawFighter, drawArena, randomCharacter } from './joonista.js';
+import { COLORS, drawFighter, drawArena } from './joonista.js';
 
 const W = 640;
 const H = 480;
-const MOVE_AREA = { width: W, height: 427 };
-const DRAW_OFFSET = 56;
+const MOVE_AREA = { width: W, height: 367 };
+const FEET_OFFSET = 134;
 const MAX_HP = 100;
 const DAMAGE = 10;
 const ATTACK_COOLDOWN = 450;
 const RESPAWN_MS = 2500;
-const SAVE_KEY = 'anime-areen-voitleja';
-const PREVIEW = 260;
+const LIMITS = { v: COLORS.length };
 
 const $ = (id) => document.getElementById(id);
-const looja = $('looja');
-const mang = $('mang');
-const eelvaade = $('eelvaade');
-const valikud = $('valikud');
-const nimesilt = $('nimesilt');
 const areen = $('areen');
 const elu = $('elu');
 const elutekst = $('elutekst');
 const olek = $('olek');
 const voitja = $('voitja');
 const teade = $('teade');
-const actx = areen.getContext('2d');
-const pctx = eelvaade.getContext('2d');
+const ctx = areen.getContext('2d');
 
-const GROUPS = [
-  { key: 'n', title: 'Nimi', labels: NAMES },
-  { key: 's', title: 'Juuksed', labels: HAIR_STYLES },
-  { key: 'h', title: 'Juuste värv', colors: HAIR_COLORS },
-  { key: 'e', title: 'Silmad', labels: EYES },
-  { key: 'o', title: 'Riided', colors: OUTFITS },
-  { key: 'p', title: 'Võlujõud', labels: POWERS.map((power) => power.name) },
-];
 const KEYMAP = {
   ArrowUp: 'up', KeyW: 'up',
   ArrowDown: 'down', KeyS: 'down',
@@ -46,14 +32,12 @@ const KEYMAP = {
   ArrowRight: 'right', KeyD: 'right',
 };
 
-const me = { c: loadCharacter(), x: 0, y: 0, f: 1, hp: MAX_HP, atk: 0, hurt: 0, down: false };
+const me = { c: { v: Math.floor(Math.random() * COLORS.length) }, x: 0, y: 0, f: 1, hp: MAX_HP, atk: 0, hurt: 0, down: false, walking: false };
 const others = new Map();
 const keys = new Set();
 let tuba = null;
-let inArena = false;
 let wins = 0;
 let lastAttack = -Infinity;
-let previewAttack = 0;
 let dpr = 1;
 let lastFrame = performance.now();
 let lastSent = 0;
@@ -63,37 +47,13 @@ let audio = null;
 
 placeRandomly(me);
 
-function loadCharacter() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(SAVE_KEY));
-    if (saved) return cleanCharacter(saved, CHOICES);
-  } catch {
-    // A broken save just means a new random fighter.
-  }
-  return randomCharacter();
-}
-
-function saveCharacter() {
-  try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(me.c));
-  } catch {
-    // Private mode: the fighter is simply not remembered.
-  }
-}
-
 function placeRandomly(fighter) {
   fighter.x = Math.round(60 + Math.random() * (W - 120));
-  fighter.y = Math.round(60 + Math.random() * (MOVE_AREA.height - 120));
+  fighter.y = Math.round(40 + Math.random() * (MOVE_AREA.height - 80));
 }
 
 function num(value, min, max, fallback) {
   return typeof value === 'number' && Number.isFinite(value) ? clamp(value, min, max) : fallback;
-}
-
-function nameOf(id) {
-  if (tuba && id === tuba.id) return 'Sina';
-  const other = others.get(id);
-  return other ? NAMES[other.c.n] : 'Keegi';
 }
 
 function hello() {
@@ -103,81 +63,6 @@ function hello() {
 function send(data) {
   if (tuba?.connected) tuba.send(data);
 }
-
-// Character creator
-
-function buildCreator() {
-  valikud.replaceChildren(...GROUPS.map((group) => {
-    const box = document.createElement('fieldset');
-    const legend = document.createElement('legend');
-    legend.textContent = group.title;
-    box.append(legend);
-    (group.colors ?? group.labels).forEach((item, index) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.dataset.key = group.key;
-      button.dataset.value = index;
-      if (group.colors) {
-        button.className = 'varv';
-        button.style.background = item;
-        button.setAttribute('aria-label', `${group.title} ${index + 1}`);
-      } else {
-        button.textContent = item;
-      }
-      box.append(button);
-    });
-    return box;
-  }));
-  markChoices();
-}
-
-function markChoices() {
-  for (const button of valikud.querySelectorAll('button')) {
-    button.setAttribute('aria-pressed', String(me.c[button.dataset.key] === Number(button.dataset.value)));
-  }
-  nimesilt.textContent = NAMES[me.c.n];
-}
-
-function characterChanged() {
-  saveCharacter();
-  markChoices();
-  previewAttack = performance.now();
-  send(hello());
-  sound('pick');
-}
-
-valikud.addEventListener('click', (event) => {
-  const button = event.target.closest('button');
-  if (!button) return;
-  me.c = { ...me.c, [button.dataset.key]: Number(button.dataset.value) };
-  characterChanged();
-});
-
-$('juhuslik').addEventListener('click', () => {
-  me.c = randomCharacter();
-  characterChanged();
-});
-
-$('alusta').addEventListener('click', () => {
-  looja.hidden = true;
-  mang.hidden = false;
-  inArena = true;
-  resize();
-  if (tuba) send(hello());
-  else connect();
-  showStatus();
-  updateHud();
-  mang.scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
-
-$('muuda').addEventListener('click', () => {
-  inArena = false;
-  keys.clear();
-  mang.hidden = true;
-  looja.hidden = false;
-  resize();
-  looja.scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
 
 // Playing together
 
@@ -222,10 +107,10 @@ function showStatus() {
 function receive(message, from) {
   if (!message || typeof message !== 'object') return;
   if (message.t === 'hi') {
-    const other = others.get(from) ?? { atk: 0, hurt: 0 };
-    other.c = cleanCharacter(message.c, CHOICES);
+    const other = others.get(from) ?? { atk: 0, hurt: 0, movedAt: 0, walking: false };
+    other.c = cleanCharacter(message.c, LIMITS);
     other.x = other.dx = num(message.x, 0, W, W / 2);
-    other.y = other.dy = num(message.y, 0, H, H / 2);
+    other.y = other.dy = num(message.y, 0, MOVE_AREA.height, MOVE_AREA.height / 2);
     other.f = message.f < 0 ? -1 : 1;
     other.hp = num(message.hp, 0, MAX_HP, MAX_HP);
     other.down = other.hp === 0;
@@ -238,21 +123,20 @@ function receive(message, from) {
     return;
   }
   if (message.t === 'ko') {
-    const loser = nameOf(from);
     if (tuba && message.by === tuba.id) {
       wins += 1;
       updateHud();
-      flash(`⭐ Sa lõid ${loser} pikali!`);
-    } else {
-      flash(`💥 ${nameOf(message.by)} lõi ${loser} pikali!`);
+      flash('⭐ Lõid ühe võitleja pikali!');
     }
+    return;
   }
   const other = others.get(from);
   if (!other) return;
   if (message.t === 'm') {
     other.x = num(message.x, 0, W, other.x);
-    other.y = num(message.y, 0, H, other.y);
+    other.y = num(message.y, 0, MOVE_AREA.height, other.y);
     other.f = message.f < 0 ? -1 : 1;
+    other.movedAt = performance.now();
   } else if (message.t === 'a') {
     other.atk = 1;
   } else if (message.t === 'hp') {
@@ -273,7 +157,7 @@ function getHit(from, damage) {
   if (result.knockedOut) {
     me.down = true;
     send({ t: 'ko', by: from });
-    flash(`😵 ${nameOf(from)} lõi sind pikali! Tuled kohe tagasi…`);
+    flash('😵 Said pikali! Tuled kohe tagasi…');
     setTimeout(respawn, RESPAWN_MS);
   }
   updateHud();
@@ -288,12 +172,12 @@ function respawn() {
 }
 
 function attack() {
-  if (!inArena || me.down) return;
+  if (me.down) return;
   const now = performance.now();
   if (now - lastAttack < ATTACK_COOLDOWN) return;
   lastAttack = now;
   me.atk = 1;
-  sound('zap');
+  sound('punch');
   send({ t: 'a' });
   if (!tuba?.connected) return;
   for (const [id, other] of others) {
@@ -304,7 +188,6 @@ function attack() {
 // Keyboard and touch
 
 addEventListener('keydown', (event) => {
-  if (!inArena) return;
   const key = KEYMAP[event.code];
   if (key) {
     keys.add(key);
@@ -317,7 +200,7 @@ addEventListener('keydown', (event) => {
 addEventListener('keyup', (event) => {
   const key = KEYMAP[event.code];
   if (key) keys.delete(key);
-  if (inArena && event.code === 'Space') event.preventDefault();
+  if (event.code === 'Space') event.preventDefault();
 });
 addEventListener('blur', () => keys.clear());
 
@@ -357,7 +240,7 @@ for (const type of ['pointerdown', 'click', 'keydown']) addEventListener(type, u
 
 function sound(kind) {
   if (!audio || audio.state !== 'running') return;
-  const [type, from, to, length] = { zap: ['square', 880, 220, 0.12], hit: ['sawtooth', 200, 60, 0.18], pick: ['triangle', 520, 780, 0.08] }[kind];
+  const [type, from, to, length] = { punch: ['triangle', 420, 110, 0.09], hit: ['sawtooth', 200, 60, 0.18] }[kind];
   const t = audio.currentTime;
   const osc = audio.createOscillator();
   const gain = audio.createGain();
@@ -390,13 +273,11 @@ function resize() {
   dpr = Math.min(2, window.devicePixelRatio || 1);
   areen.width = W * dpr;
   areen.height = H * dpr;
-  const size = eelvaade.clientWidth || PREVIEW;
-  eelvaade.width = Math.round(size * dpr);
-  eelvaade.height = Math.round(size * dpr);
 }
 addEventListener('resize', resize);
 
 function update(now, dt) {
+  me.walking = false;
   if (!me.down) {
     const dir = {
       x: (keys.has('right') ? 1 : 0) - (keys.has('left') ? 1 : 0),
@@ -405,6 +286,7 @@ function update(now, dt) {
     if (dir.x || dir.y) {
       Object.assign(me, moveFighter(me, dir, dt, MOVE_AREA));
       if (dir.x) me.f = dir.x;
+      me.walking = true;
     }
   }
   me.atk = Math.max(0, me.atk - dt / 300);
@@ -415,6 +297,7 @@ function update(now, dt) {
     other.hurt = Math.max(0, other.hurt - dt / 400);
     other.dx += (other.x - other.dx) * follow;
     other.dy += (other.y - other.dy) * follow;
+    other.walking = now - other.movedAt < 150;
   }
   const position = `${me.x},${me.y},${me.f}`;
   if (tuba?.connected && now - lastSent > 50 && position !== sentPosition) {
@@ -424,48 +307,37 @@ function update(now, dt) {
   }
 }
 
-function drawGame(now) {
-  actx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  drawArena(actx, W, H, now);
+function draw(now) {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawArena(ctx, W, H, now);
   const fighters = [{ ...me, dx: me.x, dy: me.y, mine: true }, ...others.values()];
   fighters.sort((a, b) => a.dy - b.dy);
   for (const f of fighters) {
-    drawFighter(actx, f.c, f.dx, f.dy + DRAW_OFFSET, {
+    drawFighter(ctx, f.c, f.dx, f.dy + FEET_OFFSET, {
       facing: f.f,
+      scale: 0.8 + 0.3 * (f.dy / MOVE_AREA.height),
       attack: f.atk,
       hurt: f.hurt,
       down: f.down,
+      walking: f.walking,
       time: now + f.dx * 7,
-      label: f.mine ? `${NAMES[f.c.n]} (sina)` : NAMES[f.c.n],
+      label: f.mine ? 'Sina' : '',
       hp: f.hp,
       me: Boolean(f.mine),
     });
   }
 }
 
-function drawPreview(now) {
-  const s = eelvaade.width / PREVIEW;
-  pctx.setTransform(s, 0, 0, s, 0, 0);
-  pctx.clearRect(0, 0, PREVIEW, PREVIEW);
-  const since = now - previewAttack;
-  if (since > 2600) previewAttack = now;
-  const attackAmount = since < 350 ? 1 - since / 350 : 0;
-  drawFighter(pctx, me.c, 82, 168, { scale: 1.9, time: now, attack: attackAmount });
-}
-
 function frame(now) {
   const dt = Math.min(50, now - lastFrame);
   lastFrame = now;
-  if (inArena) {
-    update(now, dt);
-    drawGame(now);
-  } else {
-    drawPreview(now);
-  }
+  update(now, dt);
+  draw(now);
   requestAnimationFrame(frame);
 }
 
-buildCreator();
+connect();
 resize();
 updateHud();
+showStatus();
 requestAnimationFrame(frame);

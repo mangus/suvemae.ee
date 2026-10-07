@@ -1,35 +1,59 @@
-// Drawing of the chibi anime fighters that players design themselves, and
-// of the arena. Everything is drawn with canvas shapes: no outside pictures.
+// Drawing of the arena and of the anime fighters. Everything is drawn with
+// canvas shapes. The fighters are stand-ins until the children's own
+// character pictures are added.
 
-export const NAMES = ['Säde', 'Tuuli', 'Kiisu', 'Täheke', 'Leek', 'Laine', 'Pilvik', 'Mõmm', 'Rakett', 'Nupsu'];
-export const HAIR_STYLES = ['Okkalised', 'Hobusesaba', 'Kaks nuppu', 'Lühike salk'];
-export const HAIR_COLORS = ['#ff4fa3', '#3d8bff', '#ffd23f', '#38c97a', '#9b5cff', '#ff7b2e', '#3a2a55', '#f2f0ff'];
-export const EYES = ['Säravad', 'Kindlad', 'Rõõmsad', 'Tähed', 'Kassisilmad'];
-export const OUTFITS = ['#ff5f92', '#2ec4f1', '#ffb703', '#5fd38d', '#a66cff', '#ff6b4a'];
-export const POWERS = [
-  { name: '⚡ Välk', color: '#ffe14d', word: 'ZÄPP!' },
-  { name: '🌸 Lilled', color: '#ff8ad0', word: 'PÕMM!' },
-  { name: '❄️ Jää', color: '#7fe3ff', word: 'KRÕKS!' },
-  { name: '🔥 Tuli', color: '#ff7a2e', word: 'VUHH!' },
-];
+export const COLORS = ['#e8364f', '#2f7df6', '#f5a623', '#21b573', '#9b51e0', '#ff5fa8', '#13b5c6', '#ff7a2e'];
 
-// How many options each part of a character has.
-export const CHOICES = {
-  n: NAMES.length,
-  s: HAIR_STYLES.length,
-  h: HAIR_COLORS.length,
-  e: EYES.length,
-  o: OUTFITS.length,
-  p: POWERS.length,
-};
+const INK = '#1d1430';
+const SKIN = '#f9dccb';
+const HAIR = '#2a2140';
+const PANTS = '#2d3557';
 
-const INK = '#271842';
-const SKIN = '#ffe3d1';
+function shade(hex, amount) {
+  const n = parseInt(hex.slice(1), 16);
+  const part = (value) => Math.round(value * amount);
+  return `rgb(${part(n >> 16)}, ${part((n >> 8) & 255)}, ${part(n & 255)})`;
+}
 
-export function randomCharacter() {
-  const character = {};
-  for (const [key, count] of Object.entries(CHOICES)) character[key] = Math.floor(Math.random() * count);
-  return character;
+function mix(a, b, t) {
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+}
+
+function path(ctx, points) {
+  ctx.beginPath();
+  ctx.moveTo(points[0][0], points[0][1]);
+  for (const [x, y] of points.slice(1)) ctx.lineTo(x, y);
+}
+
+// A limb: a thick coloured line with a dark outline.
+function limb(ctx, points, width, color) {
+  path(ctx, points);
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = width + 3;
+  ctx.stroke();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.stroke();
+}
+
+function shape(ctx, points, fill) {
+  path(ctx, points);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function dot(ctx, x, y, r, fill) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2;
+  ctx.stroke();
 }
 
 function star(ctx, x, y, outer, inner, points) {
@@ -42,374 +66,268 @@ function star(ctx, x, y, outer, inner, points) {
   ctx.closePath();
 }
 
-function rounded(ctx, x, y, w, h, r) {
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
+function leg(ctx, hip, knee, foot) {
+  limb(ctx, [hip, knee, foot], 8, PANTS);
+  limb(ctx, [[foot[0] - 2, foot[1] - 2], [foot[0] + 6, foot[1] - 2]], 5, '#fff');
 }
 
-function blob(ctx, fill) {
-  ctx.fillStyle = fill;
+function arm(ctx, shoulder, elbow, hand, color) {
+  limb(ctx, [shoulder, elbow], 7, color);
+  limb(ctx, [elbow, hand], 5.5, SKIN);
+  dot(ctx, hand[0], hand[1], 4, SKIN);
+}
+
+// Face with a pointed anime chin, seen from three quarters.
+function face(ctx, x, y) {
+  ctx.beginPath();
+  ctx.moveTo(x - 8, y - 3);
+  ctx.quadraticCurveTo(x - 8, y + 6, x + 3, y + 10);
+  ctx.quadraticCurveTo(x + 8, y + 6, x + 8.5, y - 3);
+  ctx.arc(x + 0.25, y - 3, 8.25, 0, Math.PI, true);
+  ctx.closePath();
+  ctx.fillStyle = SKIN;
   ctx.fill();
-  ctx.stroke();
-}
-
-function limb(ctx, x1, y1, x2, y2) {
-  ctx.save();
-  ctx.lineWidth = 9;
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.stroke();
-  ctx.strokeStyle = SKIN;
-  ctx.lineWidth = 5;
-  ctx.stroke();
-  ctx.restore();
-}
-
-function backHair(ctx, style, color) {
-  ctx.beginPath();
-  if (style === 0) {
-    // Spikes around the back and the top of the head.
-    const steps = 8;
-    for (let i = 0; i <= steps; i += 1) {
-      const a = Math.PI * (0.85 + (1.1 * i) / steps);
-      const r = i % 2 ? 38 : 22;
-      ctx.lineTo(Math.cos(a) * r, -30 + Math.sin(a) * r);
-    }
-    ctx.closePath();
-  } else if (style === 1) {
-    ctx.moveTo(-14, -46);
-    ctx.quadraticCurveTo(-50, -44, -44, -6);
-    ctx.quadraticCurveTo(-40, 6, -28, 8);
-    ctx.quadraticCurveTo(-34, -18, -12, -34);
-    ctx.closePath();
-    blob(ctx, color);
-    ctx.beginPath();
-    ctx.arc(0, -31, 24, 0, Math.PI * 2);
-  } else if (style === 2) {
-    ctx.arc(-14, -50, 10, 0, Math.PI * 2);
-    blob(ctx, color);
-    ctx.beginPath();
-    ctx.arc(13, -52, 10, 0, Math.PI * 2);
-    blob(ctx, color);
-    ctx.beginPath();
-    ctx.arc(0, -31, 24, 0, Math.PI * 2);
-  } else {
-    rounded(ctx, -27, -53, 54, 50, 16);
-  }
-  blob(ctx, color);
-}
-
-function frontHair(ctx, style, color) {
-  ctx.beginPath();
-  ctx.moveTo(-23, -24);
-  ctx.quadraticCurveTo(-27, -56, 2, -54);
-  ctx.quadraticCurveTo(29, -52, 24, -24);
-  ctx.lineTo(19, -37);
-  ctx.lineTo(14, -29);
-  ctx.lineTo(8, -39);
-  ctx.lineTo(2, -30);
-  ctx.lineTo(-4, -39);
-  ctx.lineTo(-10, -31);
-  ctx.lineTo(-15, -39);
-  ctx.closePath();
-  blob(ctx, color);
-  ctx.save();
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-  ctx.beginPath();
-  ctx.arc(2, -40, 13, Math.PI * 1.2, Math.PI * 1.45);
-  ctx.stroke();
-  ctx.restore();
-  if (style === 3) {
-    // A little curl sticking up from the top.
-    ctx.save();
-    ctx.lineWidth = 7;
-    ctx.beginPath();
-    ctx.moveTo(0, -52);
-    ctx.quadraticCurveTo(2, -70, 15, -64);
-    ctx.stroke();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 3.5;
-    ctx.stroke();
-    ctx.restore();
-  }
-}
-
-function eyes(ctx, type, color, starColor) {
-  const ey = -20;
-  for (const ex of [-3, 11]) {
-    ctx.lineWidth = 2;
-    if (type === 2) {
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.arc(ex, ey + 2, 4.5, Math.PI * 1.15, Math.PI * 1.85);
-      ctx.stroke();
-      continue;
-    }
-    if (type === 3) {
-      star(ctx, ex, ey, 6.5, 3, 5);
-      blob(ctx, starColor);
-      continue;
-    }
-    ctx.beginPath();
-    ctx.ellipse(ex, ey, 4.8, 7, 0, 0, Math.PI * 2);
-    blob(ctx, '#fff');
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.ellipse(ex + 1, ey + 1, 3.6, 5.4, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = INK;
-    ctx.beginPath();
-    if (type === 4) ctx.ellipse(ex + 1, ey + 1, 1.2, 4.6, 0, 0, Math.PI * 2);
-    else ctx.ellipse(ex + 1, ey + 1.5, 2, 3, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(ex + 2.4, ey - 2.2, 1.6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(ex - 0.6, ey + 3, 0.9, 0, Math.PI * 2);
-    ctx.fill();
-    if (type === 1) {
-      // Determined brows slope down towards the nose.
-      const left = ex < 4;
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(ex - 5, ey + (left ? -12 : -9));
-      ctx.lineTo(ex + 5, ey + (left ? -9 : -12));
-      ctx.stroke();
-    }
-  }
-  ctx.lineWidth = 3;
-}
-
-function dizzy(ctx) {
-  ctx.lineWidth = 2.5;
-  for (const ex of [-3, 11]) {
-    ctx.beginPath();
-    ctx.moveTo(ex - 3.5, -24);
-    ctx.lineTo(ex + 3.5, -17);
-    ctx.moveTo(ex + 3.5, -24);
-    ctx.lineTo(ex - 3.5, -17);
-    ctx.stroke();
-  }
-  ctx.lineWidth = 3;
-}
-
-function blast(ctx, power, amount, facing) {
-  const p = 1 - amount;
-  const cx = 34 + p * 42;
-  const cy = -10;
-  const r = 9 + p * 20;
-  ctx.save();
-  ctx.globalAlpha = Math.min(1, amount * 1.6);
-  ctx.strokeStyle = power.color;
-  ctx.lineWidth = 3;
-  for (let i = -1; i <= 1; i += 1) {
-    ctx.beginPath();
-    ctx.moveTo(22, cy + i * 9);
-    ctx.lineTo(cx - r * 0.6, cy + i * 9);
-    ctx.stroke();
-  }
   ctx.strokeStyle = INK;
-  ctx.lineWidth = 2.5;
-  star(ctx, cx, cy, r, r * 0.5, 8);
-  blob(ctx, power.color);
-  ctx.fillStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
   ctx.beginPath();
-  ctx.arc(cx, cy, r * 0.35, 0, Math.PI * 2);
+  ctx.ellipse(x - 4, y + 1, 2, 3, 0, 0, Math.PI * 2);
   ctx.fill();
-  // The sound word is turned back so it never reads mirrored.
-  ctx.translate(cx, cy - r - 8);
-  ctx.scale(facing, 1);
-  ctx.font = '900 16px ui-rounded, "Trebuchet MS", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.lineWidth = 4;
-  ctx.strokeText(power.word, 0, 0);
-  ctx.fillStyle = power.color;
-  ctx.fillText(power.word, 0, 0);
-  ctx.restore();
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 }
 
-// Draws one fighter with its feet around (x, y + 33 * scale).
+// Spiky hair swept back, with a fringe over the forehead.
+function hair(ctx, x, y) {
+  const cx = x - 1;
+  const cy = y - 4;
+  const points = [];
+  for (let i = 0; i <= 12; i += 1) {
+    const a = -0.3 - (i / 12) * (Math.PI + 0.9);
+    const r = i % 2 ? 10 : 16;
+    points.push([cx + Math.cos(a) * r - (i % 2 ? 0 : 3), cy + Math.sin(a) * r]);
+  }
+  points.push([x - 5, y + 2], [x - 1, y - 5], [x + 1, y - 3], [x + 3, y - 6], [x + 5, y - 3.5], [x + 7, y - 6], [x + 9, y - 3]);
+  shape(ctx, points, HAIR);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 9, -2.4, -1.6);
+  ctx.stroke();
+}
+
+function features(ctx, x, y, eyeColor, mood) {
+  ctx.strokeStyle = INK;
+  if (mood === 'down') {
+    ctx.lineWidth = 1.5;
+    path(ctx, [[x + 2.5, y], [x + 6.5, y]]);
+    ctx.stroke();
+    path(ctx, [[x - 2.5, y], [x + 0.5, y]]);
+    ctx.stroke();
+  } else if (mood === 'hurt') {
+    // Eyes squeezed shut.
+    ctx.lineWidth = 1.5;
+    path(ctx, [[x + 2.5, y - 2.5], [x + 5.5, y], [x + 2.5, y + 2]]);
+    ctx.stroke();
+    path(ctx, [[x + 0.5, y - 2.5], [x - 2, y], [x + 0.5, y + 2]]);
+    ctx.stroke();
+  } else {
+    for (const [ex, rx] of [[x + 4.5, 2.3], [x - 1, 1.7]]) {
+      ctx.beginPath();
+      ctx.ellipse(ex, y, rx, 3, 0, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(ex + 0.3, y + 0.4, rx * 0.75, 2.4, 0, 0, Math.PI * 2);
+      ctx.fillStyle = eyeColor;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(ex + 0.3, y + 0.6, rx * 0.35, 1.2, 0, 0, Math.PI * 2);
+      ctx.fillStyle = INK;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(ex + 0.9, y - 1, 0.7, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+    }
+    ctx.lineWidth = 1.3;
+    path(ctx, [[x + 2.5, y - 4.6], [x + 7, y - 4]]);
+    ctx.stroke();
+    path(ctx, [[x - 2.5, y - 4.4], [x + 0.5, y - 4.8]]);
+    ctx.stroke();
+  }
+  if (mood === 'shout' || mood === 'hurt') {
+    ctx.beginPath();
+    ctx.ellipse(x + 4, y + 6, 1.6, 1.8, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#b8324f';
+    ctx.fill();
+  } else {
+    ctx.lineWidth = 1.2;
+    path(ctx, [[x + 2.5, y + 6], [x + 5, y + 5.6]]);
+    ctx.stroke();
+  }
+}
+
+// Draws one fighter standing with its feet at (x, y).
 export function drawFighter(ctx, character, x, y, options = {}) {
-  const { facing = 1, scale = 1, attack = 0, hurt = 0, time = 0, label = '', hp = null, me = false, down = false } = options;
-  const hair = HAIR_COLORS[character.h] ?? HAIR_COLORS[0];
-  const outfit = OUTFITS[character.o] ?? OUTFITS[0];
-  const power = POWERS[character.p] ?? POWERS[0];
-  const eyeColor = character.h === 7 ? '#7b6cff' : hair;
+  const { facing = 1, scale = 1, attack = 0, hurt = 0, time = 0, walking = false, label = '', hp = null, me = false, down = false } = options;
+  const color = COLORS[character.v] ?? COLORS[0];
+  const punch = attack > 0.55 ? 1 : attack / 0.55;
+  const step = walking && !down ? Math.sin(time / 85) : 0;
+  const breath = down ? 0 : Math.sin(time / 420) * 1.2;
+  const lean = punch * 5 - hurt * 5;
+  const mood = down ? 'down' : hurt > 0.4 ? 'hurt' : punch > 0.3 ? 'shout' : '';
 
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(scale, scale);
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
-  ctx.fillStyle = 'rgba(39, 24, 66, 0.18)';
+  ctx.fillStyle = 'rgba(29, 20, 48, 0.2)';
   ctx.beginPath();
-  ctx.ellipse(0, 33, 24, 6, 0, 0, Math.PI * 2);
+  ctx.ellipse(down ? -55 * facing : 0, 0, down ? 62 : 22, 6, 0, 0, Math.PI * 2);
   ctx.fill();
-  if (me) {
-    ctx.strokeStyle = '#ffb703';
+  if (me && !down) {
+    ctx.strokeStyle = '#ffd23f';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.ellipse(0, 33, 30, 8, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 28, 8, 0, 0, Math.PI * 2);
     ctx.stroke();
   }
   ctx.scale(facing, 1);
   if (down) {
-    ctx.translate(0, 30);
+    ctx.translate(0, -5);
     ctx.rotate(-Math.PI / 2);
-    ctx.translate(0, -30);
   }
-  if (attack > 0) blast(ctx, power, attack, facing);
-  ctx.translate(0, down ? 0 : Math.sin(time / 170) * 1.5);
-  if (hurt > 0 && Math.floor(time / 70) % 2 === 0) ctx.globalAlpha = 0.45;
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 3;
+  if (hurt > 0 && Math.floor(time / 70) % 2 === 0) ctx.globalAlpha = 0.5;
 
-  backHair(ctx, character.s, hair);
-  ctx.beginPath();
-  rounded(ctx, -12, 14, 9, 18, 4);
-  rounded(ctx, 3, 14, 9, 18, 4);
-  blob(ctx, INK);
-  limb(ctx, -10, -4, -17, 10);
-  ctx.beginPath();
-  ctx.moveTo(-12, -9);
-  ctx.lineTo(12, -9);
-  ctx.lineTo(16, 18);
-  ctx.lineTo(-16, 18);
+  const sb = [-6 + lean, -97 + breath];
+  const sf = [7 + lean, -97 + breath];
+  // Back arm and leg first, so the body covers them.
+  arm(ctx, sb, [sb[0] + 3, -79 + breath], [sb[0] + 14, -90 + breath], shade(color, 0.75));
+  leg(ctx, [-4, -62], [-9 - step * 6, -31], [-15 - step * 12, 0]);
+  // Jacket with a darker back half, a collar and a belt.
+  shape(ctx, [[-11 + lean, -100 + breath], [12 + lean, -100 + breath], [8, -60], [-8, -60]], color);
+  path(ctx, [[-11 + lean, -100 + breath], [-2 + lean, -100 + breath], [-3, -60], [-8, -60]]);
   ctx.closePath();
-  blob(ctx, outfit);
-  ctx.beginPath();
-  ctx.moveTo(-6, -9);
-  ctx.lineTo(0, -1);
-  ctx.lineTo(6, -9);
-  ctx.closePath();
-  blob(ctx, '#fff');
-  ctx.lineWidth = 1.5;
-  star(ctx, 0, 7, 5.5, 2.5, 5);
-  blob(ctx, power.color);
-  ctx.lineWidth = 3;
-  if (attack > 0) {
-    limb(ctx, 10, -3, 30, -6);
-    ctx.beginPath();
-    ctx.arc(31, -6, 4.5, 0, Math.PI * 2);
-    blob(ctx, SKIN);
-  } else {
-    limb(ctx, 10, -4, 17, 10);
+  ctx.fillStyle = shade(color, 0.8);
+  ctx.fill();
+  shape(ctx, [[-1 + lean, -100 + breath], [5 + lean, -100 + breath], [2 + lean * 0.6, -88 + breath]], '#fff');
+  limb(ctx, [[-8.5, -63], [8.5, -63]], 3, INK);
+  leg(ctx, [5, -62], [13 + step * 6, -32], [17 + step * 12, 0]);
+  limb(ctx, [[1 + lean, -99 + breath], [2 + lean, -104 + breath]], 4, SKIN);
+  const hx = 2 + lean * 1.2;
+  const hy = -114 + breath;
+  face(ctx, hx, hy);
+  hair(ctx, hx, hy);
+  features(ctx, hx, hy, color, mood);
+  // Front arm: guard up, or a straight punch.
+  const elbow = mix([sf[0] + 9, -80 + breath], [sf[0] + 20, -95 + breath], punch);
+  const hand = mix([sf[0] + 15, -95 + breath], [sf[0] + 40, -96 + breath], punch);
+  if (punch > 0.2) {
+    ctx.strokeStyle = `rgba(255, 255, 255, ${0.9 * punch})`;
+    ctx.lineWidth = 2;
+    for (let i = -1; i <= 1; i += 1) {
+      path(ctx, [[hand[0] - 30, hand[1] + i * 5], [hand[0] - 8, hand[1] + i * 5]]);
+      ctx.stroke();
+    }
   }
-
-  ctx.beginPath();
-  ctx.arc(0, -28, 21, 0, Math.PI * 2);
-  blob(ctx, SKIN);
-  ctx.fillStyle = 'rgba(255, 110, 150, 0.45)';
-  ctx.beginPath();
-  ctx.ellipse(-8, -14, 4, 2.5, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(13, -15, 4, 2.5, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  if (attack > 0 || hurt > 0) {
-    ctx.ellipse(6, -11, 3, 3.5, 0, 0, Math.PI * 2);
-    blob(ctx, '#e0457b');
-  } else {
-    ctx.arc(5, -14, 3.5, Math.PI * 0.15, Math.PI * 0.85);
+  arm(ctx, sf, elbow, hand, color);
+  if (attack > 0.4) {
+    star(ctx, hand[0] + 9, hand[1], 11 * attack + 3, 5 * attack + 1, 8);
+    ctx.fillStyle = '#fff7b0';
+    ctx.fill();
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2;
     ctx.stroke();
   }
-  ctx.lineWidth = 3;
-  frontHair(ctx, character.s, hair);
-  if (down) dizzy(ctx);
-  else eyes(ctx, character.e, eyeColor, power.color);
   ctx.restore();
 
-  if (label) {
-    const top = y - 80 * scale;
+  if (hp !== null) {
+    const top = y - (down ? 40 : 140) * scale;
     ctx.save();
-    ctx.font = '900 12px ui-rounded, "Trebuchet MS", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = '#fff';
-    ctx.strokeText(label, x, top - 4);
     ctx.fillStyle = INK;
-    ctx.fillText(label, x, top - 4);
-    if (hp !== null) {
-      ctx.fillRect(x - 21, top - 1, 42, 7);
-      ctx.fillStyle = hp > 50 ? '#39df8f' : hp > 25 ? '#ffc92f' : '#ff4f6d';
-      ctx.fillRect(x - 20, top, 40 * (hp / 100), 5);
+    ctx.fillRect(x - 21, top, 42, 7);
+    ctx.fillStyle = hp > 50 ? '#39df8f' : hp > 25 ? '#ffc92f' : '#ff4f6d';
+    ctx.fillRect(x - 20, top + 1, 40 * (hp / 100), 5);
+    if (label) {
+      ctx.font = '900 13px ui-rounded, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#fff';
+      ctx.strokeText(label, x, top - 4);
+      ctx.fillStyle = INK;
+      ctx.fillText(label, x, top - 4);
     }
     ctx.restore();
   }
 }
 
+function cloud(ctx, x, y) {
+  for (const [dx, dy, rx, ry] of [[0, 0, 34, 11], [18, -8, 20, 12], [-14, -5, 16, 9]]) {
+    ctx.beginPath();
+    ctx.ellipse(x + dx, y + dy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
 export function drawArena(ctx, width, height, time) {
-  const horizon = 120;
+  const horizon = 150;
+  ctx.save();
   const sky = ctx.createLinearGradient(0, 0, 0, horizon);
-  sky.addColorStop(0, '#ffc8ea');
-  sky.addColorStop(1, '#fff1b0');
+  sky.addColorStop(0, '#6fc3ff');
+  sky.addColorStop(1, '#ffe8d2');
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, width, horizon);
 
-  const sunX = width * 0.8;
-  const sunY = 62;
-  ctx.save();
-  ctx.translate(sunX, sunY);
-  ctx.rotate(time / 8000);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
-  for (let i = 0; i < 12; i += 1) {
-    ctx.rotate(Math.PI / 6);
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(300, -26);
-    ctx.lineTo(300, 26);
-    ctx.closePath();
-    ctx.fill();
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+  for (let i = 0; i < 5; i += 1) {
+    cloud(ctx, ((i * 170 + time * 0.01 * (1 + (i % 2))) % (width + 160)) - 80, 30 + ((i * 37) % 60));
   }
-  ctx.restore();
 
-  ctx.save();
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 3;
-  ctx.lineJoin = 'round';
-  ctx.beginPath();
-  ctx.arc(sunX, sunY, 30, 0, Math.PI * 2);
-  blob(ctx, '#ffe15c');
+  // Far mountains and near hills.
+  ctx.fillStyle = '#b5c9f2';
   ctx.beginPath();
   ctx.moveTo(0, horizon);
-  for (let x = 0; x <= width; x += 80) ctx.quadraticCurveTo(x + 40, horizon - (x % 160 ? 40 : 60), x + 80, horizon);
+  for (const [px, py] of [[0, 110], [90, 70], [180, 105], [280, 60], [380, 100], [470, 75], [560, 108], [640, 80]]) ctx.lineTo((px * width) / 640, py);
+  ctx.lineTo(width, horizon);
   ctx.closePath();
-  blob(ctx, '#c7b3ff');
+  ctx.fill();
+  ctx.fillStyle = '#9edcae';
+  ctx.beginPath();
+  ctx.moveTo(0, horizon);
+  for (let x = 0; x < width; x += 80) ctx.quadraticCurveTo(x + 40, horizon - 28, x + 80, horizon);
+  ctx.closePath();
+  ctx.fill();
 
+  // Wooden dojo floor in perspective, with a red ring.
   const floor = ctx.createLinearGradient(0, horizon, 0, height);
-  floor.addColorStop(0, '#efe4ff');
-  floor.addColorStop(1, '#d6f7ff');
+  floor.addColorStop(0, '#f6d6a2');
+  floor.addColorStop(1, '#d9a066');
   ctx.fillStyle = floor;
   ctx.fillRect(0, horizon, width, height - horizon);
-  ctx.strokeStyle = 'rgba(117, 72, 189, 0.2)';
-  ctx.lineWidth = 2;
-  for (let y = horizon + 40; y < height; y += 48) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(width, y);
+  ctx.strokeStyle = 'rgba(125, 72, 30, 0.25)';
+  ctx.lineWidth = 1.5;
+  for (let i = -12; i <= 12; i += 1) {
+    path(ctx, [[width / 2 + i * 28, horizon], [width / 2 + i * 95, height]]);
     ctx.stroke();
   }
-  for (let i = -10; i <= 10; i += 1) {
-    ctx.beginPath();
-    ctx.moveTo(width / 2 + i * 24, horizon);
-    ctx.lineTo(width / 2 + i * 90, height);
+  for (let k = 1; k < 8; k += 1) {
+    const y = horizon + (height - horizon) * (k / 8) ** 1.7;
+    path(ctx, [[0, y], [width, y]]);
     ctx.stroke();
   }
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgba(232, 54, 79, 0.5)';
+  ctx.lineWidth = 4;
   ctx.beginPath();
-  ctx.moveTo(0, horizon);
-  ctx.lineTo(width, horizon);
+  ctx.ellipse(width / 2, horizon + (height - horizon) * 0.55, width * 0.38, (height - horizon) * 0.36, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2;
+  path(ctx, [[0, horizon], [width, horizon]]);
   ctx.stroke();
 
   // Falling blossom petals.

@@ -18,31 +18,31 @@ h1 { margin: 40px 10px 4px; font-size: clamp(1.6rem, 6vw, 2.6rem); }
 .k1 { left: 6%; } .k2 { left: 10%; bottom: 13%; transform: rotate(40deg); }
 .amblik { position: absolute; top: 4px; right: 4px; font-size: 40px; opacity: .8; }
 .porand { position: absolute; left: 0; right: 0; bottom: 0; height: 18%; background: #8c8c8c; border-top: 6px solid #6e6e6e; }
-#vanaema { position: absolute; bottom: 6%; left: 0; width: 120px; height: 200px; cursor: pointer; outline: none;
-  animation: kõnni 12s linear infinite; }
-#vanaema svg { width: 100%; height: 100%; display: block; }
-.keha { transform-origin: 60px 190px; animation: kiigu .6s ease-in-out infinite alternate; }
-.jalg { transform-box: fill-box; transform-origin: top center; animation: samm .6s ease-in-out infinite alternate; }
-.jalg.b { animation-direction: alternate-reverse; }
+#mutt { position: absolute; bottom: 8%; left: 0; width: 170px; height: 110px; cursor: pointer; outline: none;
+  animation: kõnni 14s linear infinite; }
+#mutt svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.keha { transform-origin: 85px 100px; animation: kiigu .4s ease-in-out infinite alternate; }
+.jalg, .kapp { transform-box: fill-box; transform-origin: center; animation: samm .4s ease-in-out infinite alternate; }
+.jalg.b, .kapp.b { animation-direction: alternate-reverse; }
 .suu { transform-box: fill-box; transform-origin: center; animation: suu 1.2s ease-in-out infinite; }
 .silmad { animation: pilgu 4s infinite; transform-box: fill-box; transform-origin: center; }
-.kasi { transform-box: fill-box; transform-origin: top center; }
+.muld { position: absolute; left: 50%; bottom: -6px; width: 0; height: 0; margin-left: 0; border-radius: 50% 50% 0 0; background: #6b4a2f; transition: all .3s; }
 @keyframes kõnni {
   0% { left: 2%; transform: scaleX(1); }
-  48% { left: calc(98% - 120px); transform: scaleX(1); }
-  50% { left: calc(98% - 120px); transform: scaleX(-1); }
+  48% { left: calc(98% - 170px); transform: scaleX(1); }
+  50% { left: calc(98% - 170px); transform: scaleX(-1); }
   98% { left: 2%; transform: scaleX(-1); }
   100% { left: 2%; transform: scaleX(1); }
 }
-@keyframes kiigu { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
-@keyframes samm { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
-@keyframes suu { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.35); } }
+@keyframes kiigu { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-3px) rotate(2deg); } }
+@keyframes samm { from { transform: translateX(-4px); } to { transform: translateX(4px); } }
+@keyframes suu { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.4); } }
 @keyframes pilgu { 0%,94%,100% { transform: scaleY(1); } 97% { transform: scaleY(.1); } }
-#vanaema.lehvitab .kasi { animation: lehvita .3s ease-in-out 6 alternate; }
-@keyframes lehvita { from { transform: rotate(0); } to { transform: rotate(-150deg); } }
-#vanaema.lehvitab { animation-play-state: paused; }
-#vanaema.lehvitab .keha, #vanaema.lehvitab .jalg { animation-play-state: paused; }
+#mutt.kaevab, #mutt.kaevab .keha, #mutt.kaevab .jalg, #mutt.kaevab .kapp { animation-play-state: paused; }
+#mutt.kaevab svg { animation: kaeva 1.8s ease-in-out; }
+#mutt.kaevab .muld { width: 120px; height: 30px; margin-left: -60px; }
+@keyframes kaeva { 0% { transform: translateY(0); } 35%,60% { transform: translateY(80%); opacity: .2; } 100% { transform: translateY(0); opacity: 1; } }
 #jutt { position: absolute; top: 28%; left: 50%; transform: translateX(-50%); background: #fff; border-radius: 16px; padding: 8px 14px; font-weight: bold; font-size: 1.2rem;
   opacity: 0; transition: opacity .3s; pointer-events: none; }
 #jutt.nahtav { opacity: 1; }
-@media (max-width: 500px) { #vanaema { width: 90px; height: 150px; } .riiul { width: 110px; font-size: 20px; top: 100px; } .aken { width: 80px; margin-left: -40px; } }
+@media (max-width: 500px) { #mutt { width: 120px; height: 78px; } .riiul { width: 110px; font-size: 20px; top: 100px; } .aken { width: 80px; margin-left: -40px; } }

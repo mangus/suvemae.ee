@@ -96,6 +96,7 @@ const HAAL = {
   'Ma-ma! Näen sind!': 'naen',
   'Mis see oli?': 'mis',
   'Sain kätte! Kalli-kalli!': 'kalli',
+  'Tere! Sa oled nii nämma, ma söön su ära!': 'namma',
   'Sain kätte!': 'sain',
   'Oi! Sa pääsesid minema!': 'paasesid',
 };
@@ -1619,9 +1620,9 @@ function kinni() {
     return;
   }
   mang.paev++;
-  heli.kone('Sain kätte! Kalli-kalli!', true);
+  heli.kone('Tere! Sa oled nii nämma, ma söön su ära!', true);
   sisene(mang.kodu);
-  huua(`🌙 Beebi kallistas sind ja sa jäid magama. Päev ${mang.paev}/${PAEVI}`, 3);
+  huua(`👶 Tere! Sa oled nii nämma, ma söön su ära! 🌙 Beebi kallistas sind ja sa jäid magama. Päev ${mang.paev}/${PAEVI}`, 3);
 }
 
 function uuendaSees(dt) {

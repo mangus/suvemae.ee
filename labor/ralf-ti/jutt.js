@@ -10,6 +10,36 @@ const kell = () => 'Praegu on kell ' +
 const paev = () => 'Täna on ' +
   new Date().toLocaleDateString('et-EE', { weekday: 'long', day: 'numeric', month: 'long' }) + '. 📅';
 
+// Ralf's birth: the moment his first version was published.
+const SYND = new Date('2026-10-07T07:50:10Z');
+const UHIKUD = [['aasta', 'aastat'], ['kuu', 'kuud'], ['nädal', 'nädalat'], ['päev', 'päeva'],
+  ['tund', 'tundi'], ['minut', 'minutit'], ['sekund', 'sekundit']];
+
+// Calendar years and months since the birth, then the rest as weeks, days, hours, minutes and seconds.
+function vanuseOsad(nyyd) {
+  const kuuParast = (k) => { const d = new Date(SYND); d.setUTCMonth(d.getUTCMonth() + k); return d; };
+  let kuud = (nyyd.getUTCFullYear() - SYND.getUTCFullYear()) * 12 + nyyd.getUTCMonth() - SYND.getUTCMonth();
+  if (kuuParast(kuud) > nyyd) kuud--;
+  let s = Math.max(0, Math.floor((nyyd - kuuParast(kuud)) / 1000));
+  const osad = [Math.floor(kuud / 12), kuud % 12];
+  for (const pikkus of [604800, 86400, 3600, 60]) {
+    osad.push(Math.floor(s / pikkus));
+    s %= pikkus;
+  }
+  osad.push(s);
+  return osad;
+}
+
+const vanus = () => {
+  const tekstid = vanuseOsad(new Date())
+    .map((arv, i) => (arv ? arv + ' ' + UHIKUD[i][arv === 1 ? 0 : 1] : null))
+    .filter(Boolean);
+  if (!tekstid.length) tekstid.push('0 sekundit');
+  const viimane = tekstid.pop();
+  const kokku = tekstid.length ? tekstid.join(', ') + ' ja ' + viimane : viimane;
+  return 'Mind tehti 7. oktoobril 2026. Praegu olen ' + kokku + ' vana! 🎂';
+};
+
 const JUTUD = [
   {
     kui: [['kes', 'tegi'], ['kes', 'tegid'], ['kes', 'teinud'], ['kes', 'loi'], ['kes', 'lonud'],
@@ -27,9 +57,9 @@ const JUTUD = [
     vastus: ['Mina olen Ralf TI, õpperobot. 🤖 Aitan sul kooliasju õppida.']
   },
   {
-    kui: [['vana', 'oled'], ['vana', 'sa'], ['su', 'vanus'], ['sinu', 'vanus'], ['millal', 'sundisid'],
-      ['sinu', 'sunnipaev'], ['su', 'sunnipaev']],
-    vastus: ['Mind tehti 2026. aasta oktoobris. Olen väga noor robot! 🎂']
+    kui: [['kui', 'vana'], ['vana', 'oled'], ['vana', 'sa'], ['su', 'vanus'], ['sinu', 'vanus'], ['vanus'],
+      ['millal', 'sundisid'], ['millal', 'tehti'], ['sinu', 'sunnipaev'], ['su', 'sunnipaev']],
+    vastus: vanus
   },
   {
     kui: [['kus', 'elad'], ['kus', 'oled'], ['kus', 'sa', 'oled']],

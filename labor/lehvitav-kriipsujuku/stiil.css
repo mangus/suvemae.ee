@@ -145,7 +145,7 @@ p {
 }
 
 .brokoli.pyutud {
-  filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 9px #ffef5a);
+  filter: drop-shadow(0 0 7px #ffef5a);
   animation: vingu .3s ease-in-out infinite alternate;
   cursor: default;
 }

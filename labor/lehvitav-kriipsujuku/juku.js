@@ -32,6 +32,7 @@ let tykeldatud = 0;
 let hoivatud = false;
 let tekkeAeg = 0;
 let eelmine = 0;
+let aeglased = 0; // how many recent frames came late
 
 const brokolid = [];
 const jarjekord = [];
@@ -51,9 +52,10 @@ const JL_X = -70; // canvas box inside the figure, matches .juuksed
 const JL_Y = -70;
 const JL_LAIUS = 370;
 const JL_KORGUS = 330;
-const KARVU = 180;
+const KARVU = 90; // fewer, thicker strands keep slow computers smooth
 const OSAD = 6; // segments per strand
 const juuksevarvid = ['#8d4b1f', '#7a3f17', '#9c5826', '#a8632d'];
+const juuksepaksus = [2.6, 3.2, 2.9, 3.5]; // one width per colour, so a colour's strands are drawn together
 const vaikne = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const karvad = [];
 let juukseMoot = 0;
@@ -95,8 +97,9 @@ function teeJuuksed() {
       nihe: 0,
       kiirus: 0,
       faas: Math.random() * 6.3,
-      paks: 1.6 + Math.random() * 1.4,
-      varv: juuksevarvid[i % juuksevarvid.length],
+      toon: i % juuksevarvid.length,
+      px: new Float32Array(OSAD + 1),
+      py: new Float32Array(OSAD + 1),
     });
   }
 }
@@ -132,7 +135,18 @@ function liigutaJuukseid(dt, aeg) {
     k.nihe = piira(k.nihe + k.kiirus * dt, -70, 70);
   }
 
-  const moot = s * (window.devicePixelRatio || 1);
+  for (const k of karvad) {
+    k.px[0] = k.x;
+    k.py[0] = k.y;
+    for (let i = 0; i < OSAD; i++) {
+      const a = ((k.puhke[i] + k.nihe * ((i + 1) / OSAD) ** 1.5) * Math.PI) / 180;
+      k.px[i + 1] = k.px[i] - Math.sin(a) * k.osa;
+      k.py[i + 1] = k.py[i] + Math.cos(a) * k.osa;
+    }
+  }
+
+  // Sharp enough on phones without drawing four times the pixels.
+  const moot = s * Math.min(window.devicePixelRatio || 1, 1.5);
   if (moot !== juukseMoot) {
     juukseMoot = moot;
     juukseLouend.width = Math.round(JL_LAIUS * moot);
@@ -141,21 +155,18 @@ function liigutaJuukseid(dt, aeg) {
   jl.setTransform(moot, 0, 0, moot, 0, 0);
   jl.clearRect(0, 0, JL_LAIUS, JL_KORGUS);
   jl.lineCap = 'round';
-  for (const k of karvad) {
-    let px = k.x;
-    let py = k.y;
-    jl.strokeStyle = k.varv;
+  // One path per colour and segment: two dozen strokes a frame instead of a thousand.
+  for (let v = 0; v < juuksevarvid.length; v++) {
+    jl.strokeStyle = juuksevarvid[v];
     for (let i = 0; i < OSAD; i++) {
-      const a = ((k.puhke[i] + k.nihe * ((i + 1) / OSAD) ** 1.5) * Math.PI) / 180;
-      const nx = px - Math.sin(a) * k.osa;
-      const ny = py + Math.cos(a) * k.osa;
-      jl.lineWidth = k.paks * (1 - i / (OSAD + 2));
+      jl.lineWidth = juuksepaksus[v] * (1 - i / (OSAD + 2));
       jl.beginPath();
-      jl.moveTo(px, py);
-      jl.lineTo(nx, ny);
+      for (const k of karvad) {
+        if (k.toon !== v) continue;
+        jl.moveTo(k.px[i], k.py[i]);
+        jl.lineTo(k.px[i + 1], k.py[i + 1]);
+      }
       jl.stroke();
-      px = nx;
-      py = ny;
     }
   }
 }
@@ -372,8 +383,17 @@ async function soo() {
 }
 
 function samm(aeg) {
-  const dt = Math.min(0.05, (aeg - eelmine) / 1000 || 0);
+  const vahe = (aeg - eelmine) / 1000 || 0;
+  const dt = Math.min(0.05, vahe);
   eelmine = aeg;
+
+  // Hair reads the head position before this frame moves anything,
+  // so the browser does not have to lay out the page twice.
+  liigutaJuukseid(dt, aeg);
+
+  // On a computer that keeps missing frames, thin the hair out by half once.
+  aeglased = vahe > 0.034 ? aeglased + 1 : Math.max(0, aeglased - 1);
+  if (aeglased > 60 && karvad.length > KARVU / 2) karvad.length = KARVU / 2;
 
   if (olek === 'kaib') {
     tekkeAeg -= dt;
@@ -408,7 +428,6 @@ function samm(aeg) {
     joonistaTykk(t);
   }
 
-  liigutaJuukseid(dt, aeg);
   requestAnimationFrame(samm);
 }
 

@@ -26,11 +26,10 @@ a{color:inherit}
 .d-star{top:30px;left:6%;width:clamp(42px,6vw,66px);transform:rotate(-12deg)}
 .d-plane{top:46%;left:7%;width:clamp(72px,8vw,104px)}
 .d-squiggle{top:56%;right:7%;width:clamp(92px,10vw,132px)}
-/* Ladybug walks right, turns around, walks back; legs step in a tripod gait */
-.d-ladybug{bottom:clamp(34px,6vw,96px);left:18%;width:clamp(46px,5.5vw,70px);animation:crawl 10s linear infinite,walk-d 37s ease-in-out -2s infinite}
-.d-ladybug svg{display:block;width:100%;height:auto;transform:rotate(90deg);animation:lb-turn 10s linear infinite}
-@keyframes crawl{0%,92%,100%{transform:translateX(0)}42%,50%{transform:translateX(80px)}}
-@keyframes lb-turn{0%,42%{transform:rotate(90deg)}50%,92%{transform:rotate(270deg)}100%{transform:rotate(450deg)}}
+/* Ladybug strolls calmly across the hero from the left edge and out the right edge; legs step in a tripod gait */
+.d-ladybug{bottom:clamp(34px,6vw,96px);left:18%;width:clamp(46px,5.5vw,70px);animation:lb-stroll 45s linear -16s infinite}
+.d-ladybug svg{display:block;width:100%;height:auto;transform:rotate(90deg)}
+@keyframes lb-stroll{from{transform:translateX(calc(-18vw - 90px))}to{transform:translateX(calc(82vw + 20px))}}
 .lb-l{--s:1}.lb-r{--s:-1}
 .lb-leg{animation:lb-step .5s linear infinite}.lb-leg.b{animation-delay:-.25s}
 @keyframes lb-step{0%,100%{transform:rotate(calc(var(--s)*-14deg))}35%{transform:rotate(calc(var(--s)*14deg))}}

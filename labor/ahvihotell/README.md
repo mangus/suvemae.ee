@@ -11,6 +11,8 @@ Pime hotell, mille koridorid on labürint. Korja kõik 100 kalliskivi, enne kui 
 - Kui ahv sind kätte saab, tuleb jumpscare ja üks elu läheb. Elusid on 3.
 - Kalliskivide vahel on vahel sinine pall. See näitab 30 sekundit kaardil kõiki ahve ja palle.
 - Labürint on iga kord uus ja selles pole ühtegi tupikut, ainult koridorid.
+- **Mängi koos:** loo tuba või vali menüüst vaba tuba. Ühes toas on 2–4 mängijat, kes korjavad koos samu kalliskive. Kui sinu elud saavad otsa, vaatad edasi teiste mängimist.
+- Iga korjatud kalliskivi läheb sinu kotti. **Poest** saad nende eest osta oma tegelasele aksessuaare: lips, müts, sall, prillid, kübar, supermantel ja kroon.
 
 ## Tegijad
 

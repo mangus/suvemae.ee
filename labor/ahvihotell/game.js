@@ -1,6 +1,7 @@
-// Ahvihotell: a first-person maze game in a dark hotel.
+// Ahvihotell: a first-person maze game in a dark hotel, alone or together with 2-4 players.
 // Collect all gems while three monkeys hunt you. A blue ball shows them on the map for 30 s.
-'use strict';
+// Every gem you pick up goes to your wallet; the shop sells accessories for your character.
+import { lab } from '../lab.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('game');
@@ -27,6 +28,19 @@ const LEVELS = 10;
 const MINI = 6;
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 const GEM_COLORS = ['#ff3b6b', '#3bd1ff', '#5dff6e', '#ffd23b', '#c77bff'];
+const MAX_PLAYERS = 4;
+const NET_STEP = 1 / 15; // send our position 15 times a second
+const SHIRTS = [['#e53935', '🔴'], ['#fb8c00', '🟠'], ['#fdd835', '🟡'], ['#43a047', '🟢'], ['#1e88e5', '🔵'], ['#8e24aa', '🟣']];
+const SKINS = ['#f6d3b3', '#e2b08a', '#b47b52', '#70472c'];
+const SHOP = [
+  { id: 'lips', slot: 'head', name: 'Juukselips', icon: '🎀', price: 20 },
+  { id: 'myts', slot: 'head', name: 'Nokamüts', icon: '🧢', price: 25 },
+  { id: 'sall', slot: 'neck', name: 'Sall', icon: '🧣', price: 30 },
+  { id: 'prillid', slot: 'eyes', name: 'Päikeseprillid', icon: '🕶️', price: 40 },
+  { id: 'kubar', slot: 'head', name: 'Kübar', icon: '🎩', price: 60 },
+  { id: 'keep', slot: 'back', name: 'Supermantel', icon: '🦸', price: 100 },
+  { id: 'kroon', slot: 'head', name: 'Kroon', icon: '👑', price: 150 },
+];
 
 let W = 320;
 let H = 240;
@@ -34,14 +48,33 @@ let K = 200;   // projection scale: pixels per unit at distance 1
 let FOV = 0.7; // half-width of the camera plane
 let zbuf = new Float32Array(W);
 
-const rand = (n) => Math.floor(Math.random() * n);
+// Random numbers; while building a level they come from a seed, so everyone in a room gets the same maze.
+let rng = Math.random;
+const rand = (n) => Math.floor(rng() * n);
+function seeded(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+const r2 = (v) => Math.round(v * 100) / 100;
+const num = (v, d) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
 function shuffle(a) {
   for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
 }
 function makeCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text) e.textContent = text;
+  return e;
+}
 function blob(g, x, y, rx, ry, color) {
   g.fillStyle = color;
   g.beginPath();
@@ -213,9 +246,95 @@ function shaded(size, draw, glow, after) {
   }
   return out;
 }
+// A player is a person in a coloured shirt, with the accessories they wear.
+function drawHuman(g, look) {
+  const shirt = SHIRTS[look.s][0];
+  const skin = SKINS[look.k];
+  const hair = '#3a2414';
+  const has = (id) => look.w.includes(id);
+  if (has('keep')) poly(g, [46, 54, 82, 54, 98, 118, 30, 118], '#d32f2f');
+  g.fillStyle = '#2b3a67';
+  g.fillRect(50, 94, 12, 26);
+  g.fillRect(66, 94, 12, 26);
+  blob(g, 55, 121, 9, 4, '#1b1b1b');
+  blob(g, 73, 121, 9, 4, '#1b1b1b');
+  g.lineCap = 'round';
+  g.strokeStyle = shirt;
+  g.lineWidth = 9;
+  g.beginPath(); g.moveTo(47, 62); g.lineTo(38, 92); g.stroke();
+  g.beginPath(); g.moveTo(81, 62); g.lineTo(90, 92); g.stroke();
+  blob(g, 38, 95, 5, 5, skin);
+  blob(g, 90, 95, 5, 5, skin);
+  poly(g, [46, 56, 82, 56, 85, 98, 43, 98], shirt);
+  g.fillStyle = 'rgba(255,255,255,0.25)';
+  g.fillRect(45, 74, 39, 5);
+  g.fillStyle = skin;
+  g.fillRect(59, 46, 10, 12);
+  blob(g, 64, 36, 15, 16, skin);
+  blob(g, 64, 25, 16, 8, hair);
+  blob(g, 50, 31, 4, 8, hair);
+  blob(g, 78, 31, 4, 8, hair);
+  blob(g, 58, 37, 2, 2.5, '#1a1010');
+  blob(g, 70, 37, 2, 2.5, '#1a1010');
+  g.strokeStyle = '#8a3a2a';
+  g.lineWidth = 1.8;
+  g.beginPath(); g.arc(64, 42, 5, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+  if (has('sall')) {
+    g.fillStyle = '#ffeb3b'; g.fillRect(52, 52, 24, 7); g.fillRect(67, 58, 7, 16);
+    g.fillStyle = '#e53935';
+    for (let x = 52; x < 76; x += 6) g.fillRect(x, 52, 3, 7);
+  }
+  if (has('prillid')) {
+    g.fillStyle = '#111'; g.fillRect(52, 33, 10, 7); g.fillRect(66, 33, 10, 7); g.fillRect(61, 34, 6, 2);
+    g.fillStyle = 'rgba(255,255,255,0.5)'; g.fillRect(54, 34, 3, 2); g.fillRect(68, 34, 3, 2);
+  }
+  if (has('kubar')) {
+    g.fillStyle = '#111'; g.fillRect(44, 20, 40, 5); g.fillRect(52, 0, 24, 21);
+    g.fillStyle = '#d32f2f'; g.fillRect(52, 14, 24, 4);
+  } else if (has('myts')) {
+    blob(g, 64, 24, 16, 9, '#29b6f6'); g.fillStyle = '#29b6f6'; g.fillRect(48, 24, 32, 4);
+    blob(g, 78, 28, 12, 3, '#0277bd');
+  } else if (has('kroon')) {
+    poly(g, [48, 26, 48, 8, 56, 17, 64, 4, 72, 17, 80, 8, 80, 26], '#ffd23b');
+    blob(g, 64, 20, 3, 3, '#e53935'); blob(g, 55, 21, 2, 2, '#1e88e5'); blob(g, 73, 21, 2, 2, '#43a047');
+  } else if (has('lips')) {
+    poly(g, [64, 20, 52, 13, 52, 27], '#ff4fa0'); poly(g, [64, 20, 76, 13, 76, 27], '#ff4fa0');
+    blob(g, 64, 20, 3.5, 3.5, '#d81b78');
+  }
+}
+
 const gemSprites = GEM_COLORS.map((c) => shaded(64, (g, s) => drawGem(g, s, c), 0.45));
 const ballSprite = shaded(64, drawBall, 0.6);
 const monkeySprite = shaded(128, drawMonkey, 0, drawMonkeyEyes);
+const humanCache = new Map();
+function humanSprite(look) {
+  const key = `${look.s}-${look.k}-${look.w.join(',')}`;
+  if (!humanCache.has(key)) humanCache.set(key, shaded(128, (g) => drawHuman(g, look), 0.2));
+  return humanCache.get(key);
+}
+
+// ---------- My character and wallet (kept in this browser only) ----------
+
+function cleanLook(l) {
+  const o = l && typeof l === 'object' ? l : {};
+  const idx = (v, n) => (Number.isInteger(v) && v >= 0 && v < n ? v : 0);
+  const w = Array.isArray(o.w) ? o.w.filter((id) => SHOP.some((s) => s.id === id)).slice(0, 4) : [];
+  return { s: idx(o.s, SHIRTS.length), k: idx(o.k, SKINS.length), w };
+}
+const STORE = 'ahvihotell-mina';
+function loadProfile() {
+  let o = null;
+  try { o = JSON.parse(localStorage.getItem(STORE) || 'null'); } catch (e) { o = null; }
+  if (!o || typeof o !== 'object') o = {};
+  const owned = Array.isArray(o.owned) ? o.owned.filter((id) => SHOP.some((s) => s.id === id)) : [];
+  const look = cleanLook({ s: Number.isInteger(o.shirt) ? o.shirt : Math.floor(Math.random() * SHIRTS.length), k: o.skin, w: o.wear });
+  return { gems: Math.max(0, Math.floor(Number(o.gems) || 0)), owned, wear: look.w.filter((id) => owned.includes(id)), shirt: look.s, skin: look.k };
+}
+const me = loadProfile();
+function saveProfile() {
+  try { localStorage.setItem(STORE, JSON.stringify(me)); } catch (e) { /* private mode */ }
+}
+const myLook = () => ({ s: me.shirt, k: me.skin, w: me.wear.slice() });
 
 // ---------- Sound (Web Audio, starts after the first tap) ----------
 
@@ -374,16 +493,18 @@ function bfs(sx, sy) {
 
 // ---------- Game state ----------
 
-let state = 'menu';
-let player = { x: 1.5, y: 1.5, a: 0 };
+let state = 'menu'; // menu, rooms, wait, shop, play, scare, over, spec, lost, win
+let mode = 'solo';  // solo or team
+let player = { x: 1.5, y: 1.5, a: 0, walk: 0 };
 let items = [];
 let monkeys = [];
 let lives = LIVES;
+let dead = false;
 let gemsLeft = GEM_COUNT;
+let picked = 0;
 let power = 0;
 let invuln = 0;
 let time = 0;
-let walk = 0;
 let flick = 1;
 let flickT = 0;
 let beatT = 0;
@@ -391,16 +512,22 @@ let chatterT = 3;
 let danger = 0;
 let scareT = 0;
 let overT = 0;
+let netT = 0;
+let wasHost = false;
+let specId = null;
 let drips = [];
-let distField = new Int16Array(MW * MH);
 let miniBase = null;
+const peers = new Map(); // other players in the game: id -> { look, x, y, a, nx, ny, na, lives, dead, walk }
 const keys = { up: false, down: false, left: false, right: false, sleft: false, sright: false };
+const IN_GAME = ['play', 'scare', 'over', 'spec'];
+const inGame = () => IN_GAME.includes(state);
 
-function newGame() {
+function newGame(seed) {
+  rng = seeded(seed);
   makeMaze();
   const sx = (CW >> 1) * 2 + 1;
   const sy = (CH >> 1) * 2 + 1;
-  player = { x: sx + 0.5, y: sy + 0.5, a: 0 };
+  player = { x: sx + 0.5, y: sy + 0.5, a: 0, walk: 0 };
   for (const [dx, dy] of DIRS) if (!wall(sx + dx, sy + dy)) { player.a = Math.atan2(dy, dx); break; }
   const free = [];
   for (let y = 0; y < MH; y++) {
@@ -414,39 +541,62 @@ function newGame() {
   }
   gemsLeft = GEM_COUNT;
   monkeys = [];
-  for (let i = 0; i < MONKEY_COUNT; i++) monkeys.push({ x: 0, y: 0, tx: 0, ty: 0, px: 0, py: 0, wander: [0, 0.3, 0.5][i] || 0.3, step: Math.random() * 6 });
-  placeMonkeysFar();
+  for (let i = 0; i < MONKEY_COUNT; i++) monkeys.push({ x: 0, y: 0, nx: 0, ny: 0, tx: 0, ty: 0, px: 0, py: 0, wander: [0, 0.3, 0.5][i] || 0.3, step: Math.random() * 6 });
+  placeMonkeysFar([player]);
+  rng = Math.random;
   lives = LIVES;
+  dead = false;
+  picked = 0;
   power = 0;
   invuln = 2;
   time = 0;
-  walk = 0;
   danger = 0;
+  specId = null;
   buildMini();
   mini.hidden = true;
-  updateHud();
   state = 'play';
+  updateHud();
 }
 
-function placeMonkeysFar() {
-  const d = bfs(Math.floor(player.x), Math.floor(player.y));
+// Everyone the monkeys can chase: me (while alive) and every living friend.
+function targets() {
+  const t = [];
+  if (!dead) t.push(player);
+  for (const p of peers.values()) if (!p.dead) t.push(p);
+  return t;
+}
+
+function placeMonkeysFar(ts, list = monkeys) {
+  if (!ts.length || !list.length) return;
+  const fields = ts.map((t) => bfs(Math.floor(t.x), Math.floor(t.y)));
+  const d = new Int16Array(MW * MH).fill(-1);
+  for (let i = 0; i < d.length; i++) {
+    let v = -1;
+    for (const f of fields) if (f[i] >= 0 && (v < 0 || f[i] < v)) v = f[i];
+    d[i] = v;
+  }
   let max = 0;
   for (let i = 0; i < d.length; i++) max = Math.max(max, d[i]);
   const cand = [];
   for (let i = 0; i < d.length; i++) if (d[i] >= max * 0.55) cand.push(i);
   shuffle(cand);
-  const picked = [];
+  const picks = [];
   for (const i of cand) {
-    if (picked.length === monkeys.length) break;
+    if (picks.length === list.length) break;
     const x = i % MW;
     const y = (i / MW) | 0;
-    if (picked.every(([px, py]) => Math.abs(px - x) + Math.abs(py - y) >= 6)) picked.push([x, y]);
+    if (picks.every(([px, py]) => Math.abs(px - x) + Math.abs(py - y) >= 6)) picks.push([x, y]);
   }
-  while (picked.length < monkeys.length) { const i = cand[rand(cand.length)]; picked.push([i % MW, (i / MW) | 0]); }
-  monkeys.forEach((m, k) => {
-    const [x, y] = picked[k];
-    m.x = x + 0.5; m.y = y + 0.5; m.tx = x; m.ty = y; m.px = x; m.py = y;
+  while (picks.length < list.length) { const i = cand[rand(cand.length)]; picks.push([i % MW, (i / MW) | 0]); }
+  list.forEach((m, k) => {
+    const [x, y] = picks[k];
+    m.x = m.nx = x + 0.5; m.y = m.ny = y + 0.5; m.tx = x; m.ty = y; m.px = x; m.py = y;
   });
+}
+
+// Moves the monkeys that are next to a caught player far away from everybody.
+function relocateNear(x, y) {
+  placeMonkeysFar(targets(), monkeys.filter((m) => Math.hypot(m.x - x, m.y - y) < 2.5));
 }
 
 function blocked(x, y) {
@@ -455,8 +605,8 @@ function blocked(x, y) {
     wall(Math.floor(x - r), Math.floor(y + r)) || wall(Math.floor(x + r), Math.floor(y + r));
 }
 
-function chooseNext(m) {
-  const here = distField[m.ty * MW + m.tx];
+function chooseNext(m, field) {
+  const here = field[m.ty * MW + m.tx];
   const opts = [];
   for (const [dx, dy] of DIRS) if (!wall(m.tx + dx, m.ty + dy)) opts.push([m.tx + dx, m.ty + dy]);
   if (!opts.length) return;
@@ -469,7 +619,7 @@ function chooseNext(m) {
     let best = Infinity;
     let bests = [];
     for (const o of opts) {
-      const v = distField[o[1] * MW + o[0]];
+      const v = field[o[1] * MW + o[0]];
       if (v < 0) continue;
       if (v < best) { best = v; bests = [o]; } else if (v === best) bests.push(o);
     }
@@ -480,12 +630,14 @@ function chooseNext(m) {
   m.tx = next[0]; m.ty = next[1];
 }
 
-// Monkeys walk from tile centre to tile centre along the shortest way to the player.
-function stepMonkey(m, dt, ptx, pty) {
+// Monkeys walk from tile centre to tile centre along the shortest way to their target.
+function stepMonkey(m, dt, t, field) {
   let move = MONKEY_SPEED * dt;
+  const ptx = Math.floor(t.x);
+  const pty = Math.floor(t.y);
   if (Math.floor(m.x) === ptx && Math.floor(m.y) === pty) {
-    const dx = player.x - m.x;
-    const dy = player.y - m.y;
+    const dx = t.x - m.x;
+    const dy = t.y - m.y;
     const d = Math.hypot(dx, dy);
     if (d > 0.01) { const k = Math.min(move, d) / d; m.x += dx * k; m.y += dy * k; }
     m.tx = ptx; m.ty = pty;
@@ -498,12 +650,60 @@ function stepMonkey(m, dt, ptx, pty) {
     if (d > move) { m.x += (dx / d) * move; m.y += (dy / d) * move; return; }
     m.x = m.tx + 0.5; m.y = m.ty + 0.5;
     move -= d;
-    chooseNext(m);
+    chooseNext(m, field);
   }
 }
 
-function update(dt) {
+// Each monkey chases whichever living player is closest to it.
+function simMonkeys(dt) {
+  const ts = targets();
+  if (!ts.length) return;
+  const fields = ts.map((t) => bfs(Math.floor(t.x), Math.floor(t.y)));
+  for (const m of monkeys) {
+    const mi = Math.floor(m.y) * MW + Math.floor(m.x);
+    let k = 0;
+    for (let j = 1; j < ts.length; j++) {
+      const v = fields[j][mi];
+      if (v >= 0 && (fields[k][mi] < 0 || v < fields[k][mi])) k = j;
+    }
+    stepMonkey(m, dt, ts[k], fields[k]);
+    m.nx = m.x; m.ny = m.y;
+  }
+}
+
+// Glides something seen over the network towards where it really is.
+function follow(o, x, y, dt) {
+  const d = Math.hypot(x - o.x, y - o.y);
+  if (d > 2) { o.x = x; o.y = y; } else { const k = Math.min(1, dt * 12); o.x += (x - o.x) * k; o.y += (y - o.y) * k; }
+  return d > 0.02;
+}
+
+// The shared world: monkeys, friends and lights. In a team game it keeps running while I am scared or dead.
+function world(dt) {
   time += dt;
+  if (mode === 'team') {
+    const host = isHost();
+    if (host && !wasHost) for (const m of monkeys) { m.tx = m.px = Math.floor(m.x); m.ty = m.py = Math.floor(m.y); }
+    wasHost = host;
+    if (host) simMonkeys(dt);
+    else for (const m of monkeys) follow(m, m.nx, m.ny, dt);
+    for (const p of peers.values()) {
+      if (follow(p, p.nx, p.ny, dt)) p.walk += dt * 10;
+      const da = Math.atan2(Math.sin(p.na - p.a), Math.cos(p.na - p.a));
+      p.a += da * Math.min(1, dt * 12);
+    }
+    netT -= dt;
+    if (netT <= 0) { netT = NET_STEP; sendState(); }
+    if (gemsLeft <= 0) { win(); return; }
+  } else simMonkeys(dt);
+  for (const m of monkeys) m.step += dt * 8;
+  flickT -= dt;
+  if (flickT > 0) flick = 0.35 + Math.random() * 0.65;
+  else { flick = 1; if (Math.random() < dt * 0.15) flickT = 0.15 + Math.random() * 0.4; }
+}
+
+// My own moves, pickups and getting caught.
+function update(dt) {
   // With mouse look, A and D step sideways; without it they turn.
   const locked = document.pointerLockElement === canvas;
   const side = (keys.sright ? 1 : 0) - (keys.sleft ? 1 : 0);
@@ -519,17 +719,13 @@ function update(dt) {
     const ny = player.y + (Math.sin(player.a) * f + Math.cos(player.a) * s) * sp;
     if (!blocked(nx, player.y)) player.x = nx;
     if (!blocked(player.x, ny)) player.y = ny;
-    walk += dt * 10;
+    player.walk += dt * 10;
   }
-  const ptx = Math.floor(player.x);
-  const pty = Math.floor(player.y);
-  distField = bfs(ptx, pty);
+  const myField = bfs(Math.floor(player.x), Math.floor(player.y));
 
-  for (const it of items) {
-    if (!it.alive || Math.hypot(it.x - player.x, it.y - player.y) > 0.45) continue;
-    it.alive = false;
-    if (it.ball) { power = POWER_TIME; sfx.ball(); } else { gemsLeft--; sfx.gem(); }
-    updateHud();
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    if (it.alive && Math.hypot(it.x - player.x, it.y - player.y) < 0.45) takeItem(i, true);
   }
   if (gemsLeft <= 0) { win(); return; }
 
@@ -542,22 +738,28 @@ function update(dt) {
 
   let nearest = Infinity;
   for (const m of monkeys) {
-    stepMonkey(m, dt, ptx, pty);
-    m.step += dt * 8;
-    const pd = distField[Math.floor(m.y) * MW + Math.floor(m.x)];
+    const pd = myField[Math.floor(m.y) * MW + Math.floor(m.x)];
     if (pd >= 0) nearest = Math.min(nearest, pd);
     if (invuln <= 0 && Math.hypot(m.x - player.x, m.y - player.y) < 0.5) { caught(); return; }
   }
   danger = clamp(1 - nearest / 8, 0, 1);
 
-  flickT -= dt;
-  if (flickT > 0) flick = 0.35 + Math.random() * 0.65;
-  else { flick = 1; if (Math.random() < dt * 0.15) flickT = 0.15 + Math.random() * 0.4; }
-
   beatT -= dt;
   if (nearest < 12 && beatT <= 0) { sfx.beat(1 - nearest / 12); beatT = 0.32 + nearest * 0.07; }
   chatterT -= dt;
   if (chatterT <= 0) { if (nearest < 9) sfx.monkey(); chatterT = 2 + Math.random() * 4; }
+}
+
+function takeItem(i, mine) {
+  const it = items[i];
+  if (!it || !it.alive) return;
+  it.alive = false;
+  if (!it.ball) gemsLeft--;
+  if (mine) {
+    if (it.ball) { power = POWER_TIME; sfx.ball(); } else { picked++; me.gems++; saveProfile(); sfx.gem(); }
+    if (mode === 'team' && room) room.send({ t: 'take', i });
+  }
+  updateHud();
 }
 
 function caught() {
@@ -567,11 +769,16 @@ function caught() {
   scareT = 0;
   sfx.scare();
   if (navigator.vibrate) navigator.vibrate([200, 50, 300]);
+  if (mode === 'team') {
+    if (isHost()) relocateNear(player.x, player.y);
+    else if (room) room.send({ t: 'hit' });
+    sendState();
+  }
 }
 
 function afterScare() {
-  if (lives <= 0) { gameOver(); return; }
-  placeMonkeysFar();
+  if (lives <= 0) { die(); return; }
+  if (mode === 'solo') placeMonkeysFar([player]);
   invuln = 2.5;
   state = 'play';
 }
@@ -586,41 +793,101 @@ function showPlayUi(on) {
   updateHint();
 }
 
-function gameOver() {
-  state = 'over';
+function startDrips() {
   overT = 0;
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
   drips = [];
-  for (let x = 0; x < W; x += 2 + rand(4)) drips.push({ x, w: 2 + rand(5), y: -rand(40), v: 30 + Math.random() * 110 });
-  sfx.over();
+  for (let x = 0; x < W; x += 2 + Math.floor(Math.random() * 4)) {
+    drips.push({ x, w: 2 + Math.floor(Math.random() * 5), y: -Math.random() * 40, v: 30 + Math.random() * 110 });
+  }
+}
+
+// My last life is gone: blood, and then (in a team game) watching a friend.
+function die() {
+  dead = true;
+  power = 0;
+  danger = 0;
   showPlayUi(false);
-  $('overGems').textContent = GEM_COUNT - gemsLeft;
+  startDrips();
+  sfx.over();
+  state = 'over';
+  updateHud();
+  if (mode === 'team') sendState();
+}
+
+const alivePeers = () => [...peers.entries()].filter(([, p]) => !p.dead).map(([id]) => id);
+
+function startSpectate() {
+  state = 'spec';
+  specId = null;
+  nextSpec();
+  $('spec').hidden = false;
+  $('hud').hidden = false;
+}
+
+function nextSpec() {
+  const ids = alivePeers();
+  if (!ids.length) return;
+  specId = ids[(ids.indexOf(specId) + 1) % ids.length];
+  $('specWho').textContent = SHIRTS[peers.get(specId).look.s][1];
+}
+
+function spectate() {
+  const p = peers.get(specId);
+  if (p && !p.dead) { render(p); return; }
+  if (alivePeers().length) { nextSpec(); return; }
+  $('spec').hidden = true;
+  $('hud').hidden = true;
+  startDrips();
+  state = 'over';
+}
+
+function lose() {
+  state = 'lost';
+  $('spec').hidden = true;
+  $('hud').hidden = true;
+  const got = GEM_COUNT - gemsLeft;
+  $('overText').textContent = mode === 'team'
+    ? `Ahvid said kõik kätte. Koos korjasite ${got}/${GEM_COUNT} kalliskivi, sina ${picked}.`
+    : `Ahvid said sind kätte. Kalliskive: ${got}/${GEM_COUNT}`;
+  $('overBtn').hidden = mode === 'team';
+  showScreen('over');
 }
 
 function win() {
   state = 'win';
   sfx.win();
-  const secs = Math.round(time);
-  let best = 0;
-  try { best = Number(localStorage.getItem('ahvihotell-parim')) || 0; } catch (e) { best = 0; }
-  if (!best || secs < best) {
-    best = secs;
-    try { localStorage.setItem('ahvihotell-parim', String(best)); } catch (e) { /* private mode */ }
-  }
-  $('winTime').textContent = fmt(secs);
-  $('winBest').textContent = fmt(best);
   showPlayUi(false);
-  $('win').hidden = false;
+  $('spec').hidden = true;
+  const secs = Math.round(time);
+  if (mode === 'solo') {
+    let best = 0;
+    try { best = Number(localStorage.getItem('ahvihotell-parim')) || 0; } catch (e) { best = 0; }
+    if (!best || secs < best) {
+      best = secs;
+      try { localStorage.setItem('ahvihotell-parim', String(best)); } catch (e) { /* private mode */ }
+    }
+    $('winTitle').textContent = '🏆 Sa võitsid!';
+    $('winText').textContent = `Kõik ${GEM_COUNT} kalliskivi on korjatud! Aeg: ${fmt(secs)} · Parim: ${fmt(best)}`;
+  } else {
+    $('winTitle').textContent = '🏆 Te võitsite!';
+    $('winText').textContent = `Koos korjasite kõik ${GEM_COUNT} kalliskivi ajaga ${fmt(secs)}! Sina korjasid ${picked}.`;
+  }
+  $('winBtn').hidden = mode === 'team';
+  showScreen('win');
 }
 
 function updateHud() {
   const l = Math.max(0, lives);
-  $('lives').textContent = '❤️'.repeat(l) + '🖤'.repeat(LIVES - l);
+  $('lives').textContent = dead ? '💀' : '❤️'.repeat(l) + '🖤'.repeat(LIVES - l);
   $('gems').textContent = `💎 ${GEM_COUNT - gemsLeft}/${GEM_COUNT}`;
   const p = $('power');
   p.hidden = power <= 0;
   p.textContent = `👁️ ${Math.ceil(power)}`;
+  const t = $('team');
+  t.hidden = mode !== 'team' || !peers.size;
+  t.textContent = [...peers.values()].map((f) => SHIRTS[f.look.s][1] + (f.dead ? '💀' : `❤️${f.lives}`)).join(' ');
 }
 
 // ---------- Drawing ----------
@@ -640,6 +907,7 @@ function drawMini() {
   mctx.drawImage(miniBase, 0, 0);
   for (const it of items) if (it.alive && it.ball) blob(mctx, it.x * MINI, it.y * MINI, 2.6, 2.6, '#4fd2ff');
   for (const m of monkeys) blob(mctx, m.x * MINI, m.y * MINI, 3.3, 3.3, '#ff2a2a');
+  for (const p of peers.values()) if (!p.dead) blob(mctx, p.x * MINI, p.y * MINI, 2.6, 2.6, SHIRTS[p.look.s][0]);
   blob(mctx, player.x * MINI, player.y * MINI, 2.6, 2.6, '#ffffff');
   mctx.strokeStyle = '#ffffff';
   mctx.lineWidth = 1.5;
@@ -650,8 +918,8 @@ function drawMini() {
 }
 
 function drawSprite(lv, size, wx, wy, scale, lift, view) {
-  const sx = wx - player.x;
-  const sy = wy - player.y;
+  const sx = wx - view.x;
+  const sy = wy - view.y;
   const depth = sx * view.dx + sy * view.dy;
   if (depth < 0.15) return;
   const lat = (view.dx * sy - view.dy * sx) / FOV;
@@ -670,12 +938,13 @@ function drawSprite(lv, size, wx, wy, scale, lift, view) {
   }
 }
 
-function render() {
-  const dirX = Math.cos(player.a);
-  const dirY = Math.sin(player.a);
+// Draws the hotel through the eyes of cam: me, or the friend I am watching.
+function render(cam) {
+  const dirX = Math.cos(cam.a);
+  const dirY = Math.sin(cam.a);
   const planeX = -dirY * FOV;
   const planeY = dirX * FOV;
-  const horizon = H / 2 + Math.sin(walk) * 2.5;
+  const horizon = H / 2 + Math.sin(cam.walk) * 2.5;
   const light = (d) => clamp(1.2 - d / 5.5, 0, 1) * flick;
 
   let g = ctx.createLinearGradient(0, 0, 0, horizon);
@@ -690,26 +959,26 @@ function render() {
   ctx.fillRect(0, horizon, W, H - horizon);
 
   for (let x = 0; x < W; x++) {
-    const cam = (2 * x) / W - 1;
-    const rdx = dirX + planeX * cam;
-    const rdy = dirY + planeY * cam;
-    let mx = Math.floor(player.x);
-    let my = Math.floor(player.y);
+    const camX = (2 * x) / W - 1;
+    const rdx = dirX + planeX * camX;
+    const rdy = dirY + planeY * camX;
+    let mx = Math.floor(cam.x);
+    let my = Math.floor(cam.y);
     const ddx = rdx === 0 ? 1e30 : Math.abs(1 / rdx);
     const ddy = rdy === 0 ? 1e30 : Math.abs(1 / rdy);
     let stepX = 1;
     let stepY = 1;
     let sdx;
     let sdy;
-    if (rdx < 0) { stepX = -1; sdx = (player.x - mx) * ddx; } else sdx = (mx + 1 - player.x) * ddx;
-    if (rdy < 0) { stepY = -1; sdy = (player.y - my) * ddy; } else sdy = (my + 1 - player.y) * ddy;
+    if (rdx < 0) { stepX = -1; sdx = (cam.x - mx) * ddx; } else sdx = (mx + 1 - cam.x) * ddx;
+    if (rdy < 0) { stepY = -1; sdy = (cam.y - my) * ddy; } else sdy = (my + 1 - cam.y) * ddy;
     let side = 0;
     for (let i = 0; i < 80; i++) {
       if (sdx < sdy) { sdx += ddx; mx += stepX; side = 0; } else { sdy += ddy; my += stepY; side = 1; }
       if (wall(mx, my)) break;
     }
     const perp = Math.max(0.05, side === 0 ? sdx - ddx : sdy - ddy);
-    let wx = side === 0 ? player.y + perp * rdy : player.x + perp * rdx;
+    let wx = side === 0 ? cam.y + perp * rdy : cam.x + perp * rdx;
     wx -= Math.floor(wx);
     let tx = clamp(Math.floor(wx * TEX), 0, TEX - 1);
     if ((side === 0 && rdx > 0) || (side === 1 && rdy < 0)) tx = TEX - tx - 1;
@@ -721,16 +990,18 @@ function render() {
     zbuf[x] = perp;
   }
 
-  const view = { dx: dirX, dy: dirY, horizon, light };
+  const view = { x: cam.x, y: cam.y, dx: dirX, dy: dirY, horizon, light };
   const list = [];
   for (const it of items) if (it.alive) list.push({ e: it, kind: it.ball ? 'ball' : 'gem' });
   for (const m of monkeys) list.push({ e: m, kind: 'monkey' });
-  for (const s of list) s.d = (s.e.x - player.x) * dirX + (s.e.y - player.y) * dirY;
+  for (const p of peers.values()) if (!p.dead && p !== cam) list.push({ e: p, kind: 'human' });
+  for (const s of list) s.d = (s.e.x - cam.x) * dirX + (s.e.y - cam.y) * dirY;
   list.sort((a, b) => b.d - a.d);
   for (const s of list) {
     if (s.d < 0.15) continue;
     const e = s.e;
     if (s.kind === 'monkey') drawSprite(monkeySprite, 128, e.x, e.y, 0.95, Math.abs(Math.sin(e.step)) * 0.04, view);
+    else if (s.kind === 'human') drawSprite(humanSprite(e.look), 128, e.x, e.y, 0.9, Math.abs(Math.sin(e.walk)) * 0.03, view);
     else if (s.kind === 'ball') drawSprite(ballSprite, 64, e.x, e.y, 0.34, 0.22 + Math.sin(time * 3 + e.phase) * 0.05, view);
     else drawSprite(gemSprites[e.color], 64, e.x, e.y, 0.3, 0.2 + Math.sin(time * 3 + e.phase) * 0.05, view);
   }
@@ -741,7 +1012,7 @@ function render() {
   ctx.fillStyle = vg;
   ctx.fillRect(0, 0, W, H);
 
-  const showMini = power > 0;
+  const showMini = power > 0 && !dead;
   if (mini.hidden === showMini) mini.hidden = !showMini;
   if (showMini) drawMini();
 }
@@ -859,7 +1130,317 @@ function drawOver(dt) {
     ctx.fillRect(d.x, 0, d.w, d.y);
     blob(ctx, d.x + d.w / 2, d.y, d.w * 0.75, d.w * 0.9, '#a00000');
   }
-  if (overT > 1.3 && $('over').hidden) $('over').hidden = false;
+  if (state !== 'over' || overT < 1.3) return;
+  if (mode === 'team' && alivePeers().length) { if (overT > 3) startSpectate(); } else lose();
+}
+
+// ---------- Playing together (lab.js rooms) ----------
+// The menu visitors meet in the lobby room 'fuajee', where every waiting room advertises itself.
+// The game itself runs in room 'ah-<code>'. The player with the smallest id moves the monkeys.
+
+let labApi = null;
+try { labApi = lab(); } catch (e) { labApi = null; }
+let lobby = null;
+let room = null;
+let roomCode = '';
+let roomsKey = '';
+const members = new Map(); // waiting room: id -> look
+const ads = new Map();     // lobby: code -> { n, c, t }
+
+function openLobby() {
+  if (lobby || !labApi) return;
+  const l = labApi.join('fuajee');
+  lobby = l;
+  l.on('message', (d) => {
+    if (l !== lobby || !d || typeof d !== 'object') return;
+    const code = String(d.code || '');
+    if (!/^[0-9]{4}$/.test(code)) return;
+    if (d.t === 'ad') {
+      const c = Array.isArray(d.c) ? d.c.slice(0, MAX_PLAYERS).map((v) => (Number.isInteger(v) && v >= 0 && v < SHIRTS.length ? v : 0)) : [];
+      ads.set(code, { n: clamp(Math.floor(num(d.n, 1)), 1, MAX_PLAYERS), c, t: performance.now() });
+    } else if (d.t === 'gone') ads.delete(code);
+    drawRooms();
+  });
+  l.on('open', drawRooms);
+  l.on('close', drawRooms);
+}
+
+function closeLobby() {
+  if (lobby) lobby.close();
+  lobby = null;
+  ads.clear();
+}
+
+function isLeader() {
+  if (!room || room.id === null) return false;
+  const mine = String(room.id);
+  return [mine, ...members.keys()].sort()[0] === mine;
+}
+
+function hostId() {
+  if (!room || room.id === null) return null;
+  return [String(room.id), ...peers.keys()].sort()[0];
+}
+
+function isHost() {
+  if (mode === 'solo') return true;
+  const h = hostId();
+  return h !== null && h === String(room.id);
+}
+
+function sendState() {
+  if (mode !== 'team' || !room || !room.connected) return;
+  const msg = { t: 'p', x: r2(player.x), y: r2(player.y), a: r2(player.a), l: lives, d: dead ? 1 : 0, k: myLook() };
+  if (isHost()) msg.m = monkeys.map((m) => [r2(m.x), r2(m.y)]);
+  room.send(msg);
+}
+
+function joinRoom(code) {
+  leaveRoom();
+  openLobby();
+  roomCode = code;
+  const r = labApi.join('ah-' + code);
+  room = r;
+  state = 'wait';
+  showScreen('wait');
+  $('waitCode').textContent = code;
+  r.on('open', (id, others) => {
+    if (r !== room || state !== 'wait') return;
+    if (others.length >= MAX_PLAYERS) { roomRefused('See tuba on juba täis.'); return; }
+    r.send({ t: 'hi', k: myLook() });
+    drawWait();
+  });
+  r.on('join', (id) => {
+    if (r !== room) return;
+    if (state === 'wait') {
+      if (isLeader() && members.size + 1 >= MAX_PLAYERS) r.sendTo(id, { t: 'full' });
+      else r.sendTo(id, { t: 'hi', k: myLook() });
+    } else if (inGame() && isHost()) r.sendTo(id, { t: 'busy' });
+  });
+  r.on('leave', (id) => {
+    if (r !== room) return;
+    members.delete(String(id));
+    if (peers.delete(String(id))) updateHud();
+    drawWait();
+  });
+  r.on('close', () => { if (r === room) drawWait(); });
+  r.on('message', (data, from) => { if (r === room) onRoomMessage(data, String(from)); });
+  drawWait();
+}
+
+function leaveRoom() {
+  if (room) {
+    if (lobby && state === 'wait' && isLeader()) lobby.send({ t: 'gone', code: roomCode });
+    room.close();
+    room = null;
+  }
+  roomCode = '';
+  members.clear();
+  peers.clear();
+}
+
+function roomRefused(msg) {
+  leaveRoom();
+  openRooms();
+  $('roomNotice').textContent = msg;
+}
+
+function onRoomMessage(data, id) {
+  if (!data || typeof data !== 'object') return;
+  if (data.t === 'hi') {
+    if (state === 'wait') { members.set(id, cleanLook(data.k)); drawWait(); }
+  } else if (data.t === 'start') {
+    if (state === 'wait' && Array.isArray(data.ids)) startTeam(num(data.seed, 1) >>> 0, data.ids.slice(0, MAX_PLAYERS).map(String));
+  } else if (data.t === 'busy' || data.t === 'full') {
+    if (state === 'wait') roomRefused(data.t === 'busy' ? 'Selles toas käib mäng juba.' : 'See tuba on juba täis.');
+  } else if (inGame()) onGameMessage(data, id);
+}
+
+function onGameMessage(data, id) {
+  if (data.t === 'p') {
+    const x = clamp(num(data.x, NaN), 0, MW);
+    const y = clamp(num(data.y, NaN), 0, MH);
+    const a = num(data.a, 0);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    let p = peers.get(id);
+    if (!p) {
+      p = { look: cleanLook(data.k), x, y, a, nx: x, ny: y, na: a, lives: LIVES, dead: false, walk: 0 };
+      peers.set(id, p);
+    }
+    p.nx = x; p.ny = y; p.na = a;
+    p.look = cleanLook(data.k);
+    const lv = clamp(Math.floor(num(data.l, LIVES)), 0, LIVES);
+    const dd = Boolean(data.d);
+    if (lv !== p.lives || dd !== p.dead) { p.lives = lv; p.dead = dd; updateHud(); }
+    if (Array.isArray(data.m) && id === hostId()) {
+      data.m.forEach((v, i) => {
+        const m = monkeys[i];
+        if (m && Array.isArray(v)) { m.nx = clamp(num(v[0], m.nx), 0, MW); m.ny = clamp(num(v[1], m.ny), 0, MH); }
+      });
+    }
+  } else if (data.t === 'take') {
+    if (Number.isInteger(data.i)) takeItem(data.i, false);
+  } else if (data.t === 'hit') {
+    const p = peers.get(id);
+    if (p && isHost()) relocateNear(p.nx, p.ny);
+  }
+}
+
+function startTeam(seed, ids) {
+  if (lobby && isLeader()) lobby.send({ t: 'gone', code: roomCode });
+  closeLobby();
+  mode = 'team';
+  peers.clear();
+  const mine = String(room.id);
+  for (const id of ids) {
+    if (id !== mine) peers.set(id, { look: members.get(id) || cleanLook(null), x: 0, y: 0, a: 0, nx: 0, ny: 0, na: 0, lives: LIVES, dead: false, walk: 0 });
+  }
+  beginGame(seed);
+  for (const p of peers.values()) { p.x = p.nx = player.x; p.y = p.ny = player.y; p.a = p.na = player.a; }
+}
+
+// Every 1.5 s the room leader tells the lobby that the room still has free places.
+setInterval(() => {
+  if (state === 'wait' && lobby && lobby.connected && room && room.connected && isLeader()) {
+    const n = members.size + 1;
+    if (n < MAX_PLAYERS) lobby.send({ t: 'ad', code: roomCode, n, c: [me.shirt, ...[...members.values()].map((l) => l.s)] });
+    else lobby.send({ t: 'gone', code: roomCode });
+  }
+  drawRooms();
+}, 1500);
+
+// ---------- Menus ----------
+
+const SCREENS = ['start', 'rooms', 'wait', 'shop', 'win', 'over'];
+function showScreen(id) {
+  for (const s of SCREENS) $(s).hidden = s !== id;
+  for (const e of document.querySelectorAll('.walletNum')) e.textContent = me.gems;
+}
+
+function goMenu() {
+  leaveRoom();
+  closeLobby();
+  mode = 'solo';
+  state = 'menu';
+  showPlayUi(false);
+  $('spec').hidden = true;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+  showScreen('start');
+}
+
+function openRooms() {
+  leaveRoom();
+  state = 'rooms';
+  showScreen('rooms');
+  $('roomNotice').textContent = '';
+  roomsKey = '?';
+  openLobby();
+  drawRooms();
+}
+
+function drawRooms() {
+  if (state !== 'rooms') return;
+  const now = performance.now();
+  for (const [code, ad] of ads) if (now - ad.t > 4500) ads.delete(code);
+  const free = [...ads].filter(([, ad]) => ad.n < MAX_PLAYERS).sort((a, b) => a[0].localeCompare(b[0]));
+  const key = free.map(([code, ad]) => `${code}:${ad.n}:${ad.c.join('')}`).join('|');
+  if (key !== roomsKey) {
+    roomsKey = key;
+    const list = $('roomList');
+    list.textContent = '';
+    for (const [code, ad] of free) {
+      const b = el('button', '', `🚪 Tuba ${code}   ${ad.c.map((s) => SHIRTS[s][1]).join('')}   ${ad.n}/${MAX_PLAYERS}`);
+      b.addEventListener('click', () => joinRoom(code));
+      const li = el('li');
+      li.append(b);
+      list.append(li);
+    }
+  }
+  $('roomMsg').textContent = !lobby ? 'Koos mängimine ei tööta praegu. Proovi hiljem uuesti.'
+    : !lobby.connected ? 'Otsin tube…'
+    : free.length ? '' : 'Vabu tube praegu pole. Loo uus tuba ja kutsu sõbrad!';
+}
+
+function avatar(look) {
+  const c = makeCanvas(128, 128);
+  drawHuman(c.getContext('2d'), look);
+  return c;
+}
+
+function drawWait() {
+  if (state !== 'wait' || !room) return;
+  const list = $('waitList');
+  list.textContent = '';
+  const all = [[myLook(), 'Sina'], ...[...members.values()].map((l) => [l, ''])];
+  for (const [look, label] of all) {
+    const li = el('li');
+    li.append(avatar(look), el('span', '', `${SHIRTS[look.s][1]} ${label}`.trim()));
+    list.append(li);
+  }
+  $('waitCount').textContent = all.length;
+  const ok = room.connected;
+  const lead = ok && isLeader();
+  $('goBtn').hidden = !lead;
+  $('waitMsg').textContent = !ok ? 'Ühendan…'
+    : lead ? (all.length < 2 ? 'Sina oled toa juht. Oota sõpru või alusta kohe!' : 'Kõik valmis? Vajuta Alusta!')
+    : 'Ootame, kuni toa juht mängu alustab…';
+}
+
+function drawShop() {
+  const g = $('lookPreview').getContext('2d');
+  g.clearRect(0, 0, 128, 128);
+  drawHuman(g, myLook());
+  pickRow($('shirtPick'), SHIRTS.map(([, icon]) => icon), me.shirt, (i) => { me.shirt = i; });
+  pickRow($('skinPick'), SKINS.map(() => ''), me.skin, (i) => { me.skin = i; }, SKINS);
+  const box = $('shopItems');
+  box.textContent = '';
+  for (const item of SHOP) {
+    const div = el('div', 'item');
+    const b = el('button');
+    if (!me.owned.includes(item.id)) {
+      b.textContent = `Osta ${item.price} 💎`;
+      b.disabled = me.gems < item.price;
+      b.addEventListener('click', () => buy(item));
+    } else if (me.wear.includes(item.id)) {
+      b.textContent = 'Võta ära';
+      b.className = 'wearing';
+      b.addEventListener('click', () => wear(item, false));
+    } else {
+      b.textContent = 'Pane selga';
+      b.addEventListener('click', () => wear(item, true));
+    }
+    div.append(el('span', 'icon', item.icon), el('span', '', item.name), b);
+    box.append(div);
+  }
+  for (const e of document.querySelectorAll('.walletNum')) e.textContent = me.gems;
+}
+
+function pickRow(box, labels, current, set, colors) {
+  box.textContent = '';
+  labels.forEach((label, i) => {
+    const b = el('button', i === current ? 'on' : '', label);
+    if (colors) b.style.background = colors[i];
+    b.addEventListener('click', () => { set(i); saveProfile(); drawShop(); });
+    box.append(b);
+  });
+}
+
+// Only one thing per body part: a new hat replaces the old one.
+function wear(item, on) {
+  me.wear = me.wear.filter((id) => SHOP.find((s) => s.id === id).slot !== item.slot);
+  if (on) me.wear.push(item.id);
+  saveProfile();
+  drawShop();
+}
+
+function buy(item) {
+  if (me.gems < item.price || me.owned.includes(item.id)) return;
+  initAudio();
+  me.gems -= item.price;
+  me.owned.push(item.id);
+  sfx.ball();
+  wear(item, true);
 }
 
 // ---------- Input and main loop ----------
@@ -889,12 +1470,16 @@ for (const b of document.querySelectorAll('[data-key]')) {
 // Mouse look: click the picture to lock the mouse, Esc lets it go.
 const finePointer = window.matchMedia('(pointer: fine)').matches;
 function lockMouse() {
-  if (finePointer && state === 'play' && canvas.requestPointerLock) canvas.requestPointerLock();
+  if (!finePointer || state !== 'play' || !canvas.requestPointerLock) return;
+  try {
+    const r = canvas.requestPointerLock();
+    if (r && r.catch) r.catch(() => {});
+  } catch (e) { /* needs a click first */ }
 }
 function updateHint() {
   $('hint').hidden = !(finePointer && state === 'play' && document.pointerLockElement !== canvas);
 }
-canvas.addEventListener('click', lockMouse);
+canvas.addEventListener('click', () => { if (state === 'spec') nextSpec(); else lockMouse(); });
 document.addEventListener('pointerlockchange', updateHint);
 document.addEventListener('mousemove', (e) => {
   if (document.pointerLockElement === canvas && state === 'play') player.a += e.movementX * 0.0025;
@@ -918,33 +1503,66 @@ for (const ev of ['pointerup', 'pointercancel']) {
   canvas.addEventListener(ev, (e) => { if (e.pointerId === touchId) touchId = null; });
 }
 
-function start() {
+function beginGame(seed) {
   initAudio();
-  for (const id of ['start', 'win', 'over']) $(id).hidden = true;
+  showScreen(null);
+  $('spec').hidden = true;
+  wasHost = false;
+  netT = 0;
+  newGame(seed);
   showPlayUi(true);
-  newGame();
-  updateHint();
   lockMouse();
 }
-for (const id of ['startBtn', 'winBtn', 'overBtn']) $(id).addEventListener('click', start);
+
+function startSolo() {
+  leaveRoom();
+  closeLobby();
+  mode = 'solo';
+  beginGame((Math.random() * 4294967296) >>> 0);
+}
+
+$('startBtn').addEventListener('click', startSolo);
+$('winBtn').addEventListener('click', startSolo);
+$('overBtn').addEventListener('click', startSolo);
+$('winMenu').addEventListener('click', goMenu);
+$('overMenu').addEventListener('click', goMenu);
+$('teamBtn').addEventListener('click', () => { initAudio(); openRooms(); });
+$('roomsBack').addEventListener('click', goMenu);
+$('createBtn').addEventListener('click', () => {
+  if (labApi) joinRoom(String(1000 + Math.floor(Math.random() * 9000)));
+});
+$('waitBack').addEventListener('click', openRooms);
+$('goBtn').addEventListener('click', () => {
+  if (state !== 'wait' || !room || !room.connected || !isLeader()) return;
+  const seed = (Math.random() * 4294967296) >>> 0;
+  const ids = [String(room.id), ...members.keys()];
+  room.send({ t: 'start', seed, ids });
+  startTeam(seed, ids);
+});
+$('shopBtn').addEventListener('click', () => { state = 'shop'; showScreen('shop'); drawShop(); });
+$('shopBack').addEventListener('click', goMenu);
 
 let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
+  if (inGame() && (mode === 'team' || state === 'play')) world(dt);
   if (state === 'play') {
     update(dt);
-    if (state === 'play') render();
+    if (state === 'play') render(player);
   } else if (state === 'scare') {
     scareT += dt;
     drawScare(scareT);
     if (scareT >= SCARE_TIME) afterScare();
-  } else if (state === 'over') {
+  } else if (state === 'over' || state === 'lost') {
     drawOver(dt);
+  } else if (state === 'spec') {
+    spectate();
   }
   requestAnimationFrame(frame);
 }
 
 resize();
 window.addEventListener('resize', resize);
+showScreen('start');
 requestAnimationFrame(frame);

@@ -22,3 +22,31 @@ html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-
 @media (hover: none), (pointer: coarse) { #controls { display: flex; } }
 .pad { display: flex; gap: 12px; pointer-events: auto; }
 #controls button { width: 74px; height: 74px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, .5); background: rgba(255, 255, 255, .15); color: #fff; font-size: 30px; touch-action: none; }
+
+.menu { background: radial-gradient(circle at 50% 30%, #6b2fa3, #2a0f45 60%, #12051f); justify-content: flex-start; }
+.menu > :first-child { margin-top: auto; }
+.menu > :last-child { margin-bottom: auto; }
+.menu h1 { font-size: clamp(32px, 9vw, 56px); margin: 0 0 6px; color: #ffd23b; text-shadow: 3px 3px 0 #ff3b6b, 6px 6px 0 #3bd1ff; }
+#start h1 { font-size: clamp(40px, 11vw, 72px); }
+.row { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 12px; }
+.screen button.alt { background: #ffd23b; color: #3a2400; box-shadow: 0 5px 0 #b8901a; }
+.wallet { font-weight: 800; color: #ffe08a; }
+#win .wallet { color: #3a1a00; }
+.notice { color: #ffb0c0; font-weight: 700; }
+.list, .players { list-style: none; padding: 0; margin: 8px 0; display: flex; flex-direction: column; gap: 8px; width: min(100%, 420px); }
+.list button { width: 100%; margin: 0; font-size: 20px; padding: 10px 16px; background: #3bd1ff; color: #06283a; box-shadow: 0 4px 0 #1a7fa0; }
+.players { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+.players li { background: rgba(255, 255, 255, .12); border-radius: 16px; padding: 6px 12px; font-weight: 700; display: flex; flex-direction: column; align-items: center; }
+.players canvas { width: 72px; height: 72px; }
+#lookPreview { width: 128px; height: 128px; background: rgba(255, 255, 255, .12); border-radius: 20px; }
+.picks { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.picks button { margin: 0; width: 46px; height: 46px; padding: 0; font-size: 24px; border-radius: 50%; background: rgba(255, 255, 255, .15); box-shadow: none; border: 3px solid transparent; }
+.picks button.on { border-color: #fff; }
+.items { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; width: min(100%, 520px); margin: 12px 0 0; }
+.item { background: rgba(255, 255, 255, .12); border-radius: 16px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-weight: 700; }
+.item .icon { font-size: 34px; }
+.item button { margin: 4px 0 0; font-size: 16px; padding: 8px 14px; box-shadow: 0 3px 0 #2a9a3a; }
+.item button:disabled { background: #777; color: #ddd; box-shadow: none; cursor: default; }
+.item button.wearing { background: #ffd23b; color: #3a2400; box-shadow: 0 3px 0 #b8901a; }
+#team { font-size: 16px; }
+#spec { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: rgba(80, 0, 0, .75); padding: 8px 18px; border-radius: 18px; font-weight: 700; text-align: center; pointer-events: none; }

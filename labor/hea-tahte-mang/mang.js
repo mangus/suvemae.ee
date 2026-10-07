@@ -500,20 +500,20 @@
     { name: 'Sass', coat: '#6d8b4e', pattern: 'tapid', patColor: '#f4ecd9', hair: 'curly', hairColor: '#5a3a22', skin: '#8d5e3c' },
     { name: 'Iris', coat: '#eaa6a0', pattern: 'triibud', patColor: '#2a7f7a', hair: 'bun', hairColor: '#b5562f', skin: '#f5dcc6' },
     { name: 'Andri', coat: '#7a5c99', pattern: 'tapid', patColor: '#e0a631', hair: 'spiky', hairColor: '#2b2622', skin: '#e9c9a6', hat: '#c8553d' },
-    { name: 'Kaie', teacher: true, coat: '#2a7f7a', pattern: 'lilled', patColor: '#eaa6a0', hair: 'bun', hairColor: '#9a9a9a', skin: '#f0d2b6', glasses: true, book: '#c8553d' },
-    { name: 'Tõnu', teacher: true, coat: '#a8743a', pattern: 'ruudud', patColor: '#2b2622', hair: 'spiky', hairColor: '#3b2a20', skin: '#d9a77f', glasses: true },
-    { name: 'Liis', teacher: true, coat: '#c8553d', pattern: 'tapid', patColor: '#f4ecd9', hair: 'bob', hairColor: '#d9a441', skin: '#f3d9c2', scarf: '#e0a631', book: '#2a7f7a' },
-    { name: 'Jaan', teacher: true, coat: '#6d8b4e', pattern: 'triibud', patColor: '#f4ecd9', hair: 'short', hairColor: '#5a3a22', skin: '#e8c4a0', beard: true },
-    { name: 'Peeter', teacher: true, coat: '#8fb8c9', pattern: 'ruudud', patColor: '#c8553d', hair: 'curly', hairColor: '#2b2622', skin: '#8d5e3c', beard: true, book: '#e0a631' },
-    { name: 'Anu', teacher: true, coat: '#eaa6a0', pattern: 'lilled', patColor: '#2a7f7a', hair: 'bun', hairColor: '#3b2a20', skin: '#c99a72', scarf: '#7a5c99' },
-    { name: 'Maret', teacher: true, coat: '#e0a631', pattern: 'tapid', patColor: '#c8553d', hair: 'curly', hairColor: '#b5562f', skin: '#f5dcc6', glasses: true },
+    { name: 'Ruta', teacher: true, aine: 'inglise keel, ühiskonnaõpetuse ja kirjanduse teemad, saksa keel', coat: '#c8553d', pattern: 'tapid', patColor: '#f4ecd9', hair: 'bob', hairColor: '#e3c27a', skin: '#f3d9c2', scarf: '#e0a631', book: '#2a7f7a' },
+    { name: 'Teilo', teacher: true, aine: 'loodusõpetus, bioloogia, geograafia, inimeseõpetus', coat: '#6d8b4e', pattern: 'ruudud', patColor: '#f4ecd9', hair: 'spiky', hairColor: '#e0c07a', skin: '#efcfb0', glasses: true },
+    { name: 'Rabin', teacher: true, aine: 'inglise keel, matemaatika, füüsika', coat: '#8fb8c9', pattern: 'ruudud', patColor: '#c8553d', hair: 'short', hairColor: '#1f1a17', skin: '#a8714a', book: '#e0a631' },
+    { name: 'Natalja', teacher: true, aine: 'kunst, tehnoloogia, Eesti loodus', coat: '#eaa6a0', pattern: 'lilled', patColor: '#2a7f7a', hair: 'bun', hairColor: '#2b2622', skin: '#f0d2b6', scarf: '#7a5c99' },
+    { name: 'Säde', teacher: true, aine: 'inglise keel, kunst, algklassid', coat: '#2a7f7a', pattern: 'lilled', patColor: '#eaa6a0', hair: 'pats', hairColor: '#e8cc85', skin: '#f5dcc6', book: '#c8553d' },
+    { name: 'Marili', teacher: true, aine: 'algklassiõpetaja', coat: '#e0a631', pattern: 'tapid', patColor: '#c8553d', hair: 'curly', hairColor: '#3b2a20', skin: '#e8c4a0', glasses: true },
+    { name: 'Mihkel', teacher: true, aine: 'inglise keel, kunst, ajalugu, eesti keel', coat: '#a8743a', pattern: 'triibud', patColor: '#f4ecd9', hair: 'short', hairColor: '#2b2622', skin: '#e9c9a6' },
   ];
 
   const SPAWN = [[150, 230], [270, 200], [500, 250], [600, 120], [150, 520], [520, 520], [440, 180], [620, 380], [240, 640], [330, 330], [90, 400], [400, 620], [660, 600]];
 
   const npcs = TEGELASED.map((o, i) => ({
     ...o,
-    label: o.teacher ? 'Õpetaja ' + o.name : o.name,
+    label: o.teacher ? 'Õpetaja ' + o.name + (o.aine ? ' (' + o.aine + ')' : '') : o.name,
     sprite: makeSprite({ ...o, seed: 100 + i * 17 }),
     x: SPAWN[i][0], y: SPAWN[i][1],
     tx: SPAWN[i][0], ty: SPAWN[i][1],

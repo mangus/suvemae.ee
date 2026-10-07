@@ -915,7 +915,7 @@ function newGame(seed) {
   }
   gemsLeft = GEM_COUNT;
   monkeys = [];
-  for (let i = 0; i < MONKEY_COUNT; i++) monkeys.push({ x: 0, y: 0, nx: 0, ny: 0, tx: 0, ty: 0, px: 0, py: 0, wander: [0, 0.3, 0.5][i] || 0.3, step: Math.random() * 6 });
+  for (let i = 0; i < MONKEY_COUNT; i++) monkeys.push({ x: 0, y: 0, nx: 0, ny: 0, tx: 0, ty: 0, px: 0, py: 0, wander: [0, 0.15, 0.85][i] ?? 0.3, fast: 1, step: Math.random() * 6 });
   placeMonkeysFar([player]);
   rng = Math.random;
   lives = LIVES;
@@ -1006,7 +1006,7 @@ function chooseNext(m, field) {
 
 // Monkeys walk from tile centre to tile centre along the shortest way to their target.
 function stepMonkey(m, dt, t, field) {
-  let move = MONKEY_SPEED * dt;
+  let move = MONKEY_SPEED * (m.fast || 1) * dt;
   const ptx = Math.floor(t.x);
   const pty = Math.floor(t.y);
   if (Math.floor(m.x) === ptx && Math.floor(m.y) === pty) {
@@ -1028,21 +1028,49 @@ function stepMonkey(m, dt, t, field) {
   }
 }
 
-// Each monkey chases whichever living player is closest to it.
+// The tile a few steps ahead of where a player is looking, or null when a wall is right in front.
+function aheadOf(t, n = 4) {
+  const c = Math.cos(t.a || 0);
+  const sn = Math.sin(t.a || 0);
+  const dx = Math.abs(c) > Math.abs(sn) ? Math.sign(c) : 0;
+  const dy = dx ? 0 : Math.sign(sn);
+  let x = Math.floor(t.x);
+  let y = Math.floor(t.y);
+  let k = 0;
+  while (k < n && !wall(x + dx, y + dy)) { x += dx; y += dy; k++; }
+  return k ? { x: x + 0.5, y: y + 0.5 } : null;
+}
+
+// Each monkey goes for the closest living player, every one in its own way:
+// 0 the hunter runs straight at you, 1 the trapper cuts you off where you are heading,
+// 2 the sneaker roams slowly until it is close, then sprints.
+const MONKEY_TINT = ['#ff2a2a', '#ff9a1a', '#c04bff'];
 function simMonkeys(dt) {
   const ts = targets();
   if (!ts.length) return;
   const fields = ts.map((t) => bfs(Math.floor(t.x), Math.floor(t.y)));
-  for (const m of monkeys) {
+  monkeys.forEach((m, i) => {
     const mi = Math.floor(m.y) * MW + Math.floor(m.x);
     let k = 0;
     for (let j = 1; j < ts.length; j++) {
       const v = fields[j][mi];
       if (v >= 0 && (fields[k][mi] < 0 || v < fields[k][mi])) k = j;
     }
-    stepMonkey(m, dt, ts[k], fields[k]);
+    const near = fields[k][mi];
+    let t = ts[k];
+    let field = fields[k];
+    m.fast = 1;
+    if (i % 3 === 1 && near > 3) {
+      const a = aheadOf(t);
+      if (a) { t = a; field = bfs(Math.floor(a.x), Math.floor(a.y)); }
+    } else if (i % 3 === 2) {
+      const close = near >= 0 && near <= 8;
+      m.wander = close ? 0 : 0.85;
+      m.fast = close ? 1.25 : 0.8;
+    }
+    stepMonkey(m, dt, t, field);
     m.nx = m.x; m.ny = m.y;
-  }
+  });
 }
 
 // Glides something seen over the network towards where it really is.
@@ -1306,7 +1334,7 @@ function buildMini() {
 function drawMini() {
   mctx.drawImage(miniBase, 0, 0);
   for (const it of items) if (it.alive && it.ball) blob(mctx, it.x * MINI, it.y * MINI, 2.6, 2.6, '#4fd2ff');
-  for (const m of monkeys) blob(mctx, m.x * MINI, m.y * MINI, 3.3, 3.3, '#ff2a2a');
+  monkeys.forEach((m, i) => blob(mctx, m.x * MINI, m.y * MINI, 3.3, 3.3, MONKEY_TINT[i % 3]));
   for (const p of peers.values()) if (!p.dead) blob(mctx, p.x * MINI, p.y * MINI, 2.6, 2.6, SHIRTS[p.look.s][0]);
   blob(mctx, player.x * MINI, player.y * MINI, 2.6, 2.6, '#ffffff');
   mctx.strokeStyle = '#ffffff';

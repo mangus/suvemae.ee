@@ -1155,48 +1155,45 @@
     lahendatud = false;
     const box = $('valikud');
     box.textContent = '';
-    // The player writes their own answer; the ready-made choices are a helping hand
-    const vorm = document.createElement('form');
-    vorm.className = 'vastus';
-    const sisend = document.createElement('textarea');
-    sisend.rows = 2;
-    sisend.maxLength = 200;
-    sisend.placeholder = 'Kirjuta, mida sa ütled või teed…';
-    sisend.setAttribute('aria-label', 'Sinu vastus');
-    const vasta = document.createElement('button');
-    vasta.type = 'submit';
-    vasta.className = 'vasta';
-    vasta.textContent = 'Vasta';
-    vorm.append(sisend, vasta);
-    vorm.addEventListener('submit', (e) => { e.preventDefault(); kontrolli(sisend.value); });
-    sisend.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kontrolli(sisend.value); }
+    // Three ready-made choices, and a fourth one where the player writes their own answer
+    shuffle(s.valikud.slice()).forEach(([t, ok]) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = fill(t);
+      btn.dataset.ok = ok ? '1' : '';
+      btn.addEventListener('click', () => choose(ok));
+      box.appendChild(btn);
     });
-    const abi = document.createElement('button');
-    abi.type = 'button';
-    abi.className = 'abi';
-    abi.textContent = 'Ei tea? Näita valikuid';
-    abi.addEventListener('click', () => {
-      abi.remove();
-      const nupud = document.createElement('div');
-      nupud.className = 'valikud';
-      shuffle(s.valikud.slice()).forEach(([t, ok]) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.textContent = fill(t);
-        btn.dataset.ok = ok ? '1' : '';
-        btn.addEventListener('click', () => choose(ok));
-        nupud.appendChild(btn);
+    const ise = document.createElement('button');
+    ise.type = 'button';
+    ise.className = 'ise';
+    ise.textContent = '✏️ Kirjutan ise…';
+    ise.addEventListener('click', () => {
+      const vorm = document.createElement('form');
+      vorm.className = 'vastus';
+      const sisend = document.createElement('textarea');
+      sisend.rows = 2;
+      sisend.maxLength = 200;
+      sisend.placeholder = 'Kirjuta, mida sa ütled või teed…';
+      sisend.setAttribute('aria-label', 'Sinu vastus');
+      const vasta = document.createElement('button');
+      vasta.type = 'submit';
+      vasta.className = 'vasta';
+      vasta.textContent = 'Vasta';
+      vorm.append(sisend, vasta);
+      vorm.addEventListener('submit', (e) => { e.preventDefault(); kontrolli(sisend.value); });
+      sisend.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kontrolli(sisend.value); }
       });
-      box.appendChild(nupud);
+      ise.replaceWith(vorm);
+      sisend.focus();
     });
-    box.append(vorm, abi);
+    box.appendChild(ise);
     $('tagasiside').classList.add('peidus');
     $('reegel').classList.add('peidus');
     $('edasi').classList.add('peidus');
     $('dialoog').classList.remove('peidus');
     $('dialoog').scrollTop = 0;
-    if (window.matchMedia('(pointer: fine)').matches) sisend.focus();
   }
 
   function lukusta() {

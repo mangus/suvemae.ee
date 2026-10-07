@@ -133,6 +133,7 @@ button:active { transform: translate(2px, 2px); box-shadow: none; }
 .valikud button:nth-child(3) { background: #f6dcd9; }
 .valikud button:disabled { opacity: .4; cursor: default; }
 .valikud button.oige { opacity: 1; background: #bfe3c0; }
+.valikud button.ise { background: #fffdf7; border-style: dashed; }
 .vastus { display: flex; flex-direction: column; gap: 7px; }
 .vastus textarea {
   font: inherit;

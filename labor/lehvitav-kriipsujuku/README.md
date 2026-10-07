@@ -1,4 +1,4 @@
-# Lehvitav kriipsujuku
+# Brokoli püüdmine
 
 Rõõmus kriipsujuku hiiglaslikus brokolikostüümis, hoiab käes zombinuga, millelt tilgub rohelist zombilima. Taevast sajab brokoleid!
 

@@ -446,7 +446,8 @@
       }
     }
 
-    // House plan, laid out like the Suvemäe school plan
+    // House plan, traced from the Suvemäe school plan poster: one long corridor,
+    // the gym on the left, a row of rooms below it and a small wing on top
     const PORAND = '#f6e7bd';
     const tuba = (x, y, w, h, fill) => {
       const p = flat(b, rectPts(x, y, w, h), fill, r, 1.5);
@@ -454,153 +455,175 @@
       ink(b, p, true, r, 1.8, 0.8);
       return p;
     };
-    const nimi = (t, x, y, rot = 0) => label(b, t, x, y, rot, PUNANE, 16);
+    const nimi = (t, x, y, rot = 0, size = 16) => label(b, t, x, y, rot, PUNANE, size);
+    const sein = (pts) => ink(b, pts, false, r, 1.8, 0.6);
 
-    // Corridor between the top and the bottom rooms
-    const koridor = flat(b, rectPts(196, 270, 508, 80), PORAND, r, 1);
-    stipple(b, koridor, r, 90, 0.5);
+    // Yard in front of the house, where the chickens live
+    const ou = flat(b, rectPts(14, 112, 692, 284), '#e3ebcc', r, 2);
+    stipple(b, ou, r, 160, 0.5);
+    [[60, 170, PUNANE], [210, 140, SINEP], [330, 200, KORALL], [470, 150, PUNANE], [688, 200, SINEP],
+      [250, 330, KORALL], [40, 330, SINEP], [440, 350, PUNANE], [688, 360, KORALL]]
+      .forEach(([x, y, col]) => curlPlant(b, x, y, 16, col, r));
+    nimi('Õu', 290, 262, -0.05, 20);
 
-    tuba(16, 78, 180, 626, '#c6e0e4');      // Spordisaal
-    tuba(206, 78, 166, 192, '#f4b49d');     // Kohtumistuba
-    tuba(382, 78, 158, 192, '#f6dc95');     // Lõpuklass
-    tuba(550, 78, 154, 192, '#d9e6b8');     // Õpetajate tuba
-    tuba(206, 350, 120, 354, '#f7cdbd');    // Lastetuba
-    tuba(336, 350, 210, 354, '#f6dc95');    // Suur tuba
-    tuba(556, 350, 148, 250, '#c6e0e4');    // Loov tuba
-    tuba(556, 610, 148, 94, '#ece3f2');     // WC
+    // The long corridor and the entrance porch
+    const koridor = flat(b, rectPts(151, 400, 555, 84), PORAND, r, 1);
+    stipple(b, koridor, r, 110, 0.5);
+    ink(b, koridor, true, r, 1.8, 0.8);
+    const eeskoda = flat(b, rectPts(110, 306, 57, 94), PORAND, r, 1);
+    ink(b, eeskoda, true, r, 1.8, 0.6);
+
+    tuba(14, 400, 137, 306, '#c6e0e4');     // Spordisaal
+    tuba(151, 484, 124, 222, '#f7cdbd');    // Lastetuba
+    tuba(275, 484, 220, 222, '#f6dc95');    // Suur tuba
+    tuba(495, 484, 108, 222, '#c6e0e4');    // Loovtuba
+    tuba(603, 484, 103, 222, '#ece3f2');    // WC and washroom
+    tuba(532, 128, 71, 44, PORAND);         // small hall in the wing
+    tuba(532, 172, 71, 228, '#f4b49d');     // Kohtumistuba
+    tuba(603, 128, 60, 178, '#f6dc95');     // Lõpuklass
+    tuba(603, 306, 60, 94, '#d9e6b8');      // Õpetajate tuba
+    // Walls inside the WC block
+    sein([[630, 540], [630, 706]]);
+    sein([[630, 573], [667, 573]]);
+    sein([[667, 484], [667, 706]]);
 
     // Doorways: gaps in the walls
     b.fillStyle = PORAND;
-    [[289, 265], [461, 265], [627, 265], [266, 345], [441, 345], [630, 345]].forEach(([x, y]) => {
-      b.fillRect(x - 17, y - 1, 34, 12);
-      ink(b, [[x - 17, y - 3], [x - 17, y + 13]], false, r, 1.6, 0.3);
-      ink(b, [[x + 17, y - 3], [x + 17, y + 13]], false, r, 1.6, 0.3);
+    [[138, 306], [138, 400], [567, 400], [633, 400], [567, 172], [188, 484], [406, 484], [538, 484], [616, 484]].forEach(([x, y]) => {
+      b.fillRect(x - 12, y - 6, 24, 12);
+      ink(b, [[x - 12, y - 7], [x - 12, y + 7]], false, r, 1.6, 0.3);
+      ink(b, [[x + 12, y - 7], [x + 12, y + 7]], false, r, 1.6, 0.3);
     });
     b.fillStyle = PORAND;
-    b.fillRect(190, 292, 12, 38);
-    b.fillRect(612, 598, 36, 14);
+    [[151, 442], [603, 150], [667, 640]].forEach(([x, y]) => {
+      b.fillRect(x - 6, y - 12, 12, 24);
+      ink(b, [[x - 7, y - 12], [x + 7, y - 12]], false, r, 1.6, 0.3);
+      ink(b, [[x - 7, y + 12], [x + 7, y + 12]], false, r, 1.6, 0.3);
+    });
 
     // Spordisaal: court lines, balls and a hoop
-    ink(b, [[18, 390], [194, 392]], false, r, 1.2, 0.6);
-    ink(b, ellipsePts(106, 391, 46, 46, 18), true, r, 1.2, 0.8);
-    [[60, 190, PUNANE], [150, 560, SININE], [70, 470, SINEP]].forEach(([x, y, col]) => {
-      const p = flat(b, ellipsePts(x, y, 15, 15, 12), col, r, 0.8);
+    ink(b, [[16, 553], [149, 553]], false, r, 1.2, 0.6);
+    ink(b, ellipsePts(82, 553, 30, 30, 16), true, r, 1.2, 0.8);
+    [[44, 465, PUNANE], [122, 620, SININE], [46, 640, SINEP]].forEach(([x, y, col]) => {
+      const p = flat(b, ellipsePts(x, y, 12, 12, 12), col, r, 0.8);
       hatch(b, p, r, 3, 0.6, 0.5);
       ink(b, p, true, r, 1.4, 0.4);
-      spiral(b, x, y, 8, 2, r, 0.9);
+      spiral(b, x, y, 6, 2, r, 0.9);
     });
-    const korv = flat(b, rectPts(76, 664, 60, 8, 2), PUNANE, r, 0.5);
+    const korv = flat(b, rectPts(52, 690, 60, 8, 2), PUNANE, r, 0.5);
     ink(b, korv, true, r, 1.4, 0.3);
-    for (let i = 0; i < 4; i++) ink(b, [[80 + i * 17, 664], [86 + i * 13, 640]], false, r, 0.8, 0.3);
-    nimi('Spordisaal', 106, 120, -0.05);
+    for (let i = 0; i < 4; i++) ink(b, [[56 + i * 17, 690], [62 + i * 13, 668]], false, r, 0.8, 0.3);
+    nimi('Spordisaal', 82, 424, -0.05);
 
-    // Kohtumistuba: a round table with chairs
-    const kLaud = flat(b, ellipsePts(289, 185, 44, 28, 16), SINEP, r, 1.5);
+    // Kohtumistuba: an oval table with chairs
+    const kLaud = flat(b, ellipsePts(567, 305, 20, 34, 16), SINEP, r, 1.2);
     hatch(b, kLaud, r, 4, 0.55, 0.5);
     ink(b, kLaud, true, r, 1.6, 0.6);
-    spiral(b, 289, 185, 12, 2, r, 1);
+    spiral(b, 567, 305, 8, 2, r, 1);
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2;
-      const p = flat(b, ellipsePts(289 + Math.cos(a) * 64, 185 + Math.sin(a) * 44, 11, 9, 10), [PUNANE, SININE, VALGE][i % 3], r, 0.8);
+      const p = flat(b, ellipsePts(567 + Math.cos(a) * 30, 305 + Math.sin(a) * 48, 8, 7, 10), [PUNANE, SININE, VALGE][i % 3], r, 0.8);
       ink(b, p, true, r, 1.2, 0.4);
     }
-    nimi('Kohtumistuba', 289, 104, 0.03);
+    nimi('Kohtumis-', 567, 200, 0, 12);
+    nimi('tuba', 567, 215, 0, 12);
 
     // Lõpuklass: blackboard and desks
-    const tahvel = flat(b, rectPts(402, 92, 118, 30, 3), '#2f3b36', r, 1);
-    ink(b, tahvel, true, r, 1.6, 0.5);
+    const tahvel = flat(b, rectPts(611, 138, 44, 18, 3), '#2f3b36', r, 1);
+    ink(b, tahvel, true, r, 1.4, 0.4);
     b.save();
-    b.font = KIRI.replace('20px', '13px');
+    b.font = KIRI.replace('20px', '10px');
     b.fillStyle = 'rgba(255,255,255,.85)';
-    b.fillText('2 + 3 = 5', 430, 112);
+    b.fillText('2+3=5', 616, 151);
     b.restore();
+    nimi('Lõpu-', 633, 178, 0, 12);
+    nimi('klass', 633, 193, 0, 12);
     for (let i = 0; i < 2; i++) {
       for (let k = 0; k < 2; k++) {
-        const lauda = flat(b, rectPts(402 + k * 66, 138 + i * 48, 50, 26, 3), SINEP, r, 1);
-        hatch(b, lauda, r, 3.5, 0.6, 0.5);
-        ink(b, lauda, true, r, 1.4, 0.5);
-        const raamat = flat(b, rectPts(416 + k * 66, 143 + i * 48, 18, 13, 2), [PUNANE, SININE][(i + k) % 2], r, 0.6);
-        ink(b, raamat, true, r, 1, 0.3);
+        const lauda = flat(b, rectPts(610 + k * 26, 214 + i * 38, 20, 14, 2), SINEP, r, 0.8);
+        hatch(b, lauda, r, 3, 0.6, 0.5);
+        ink(b, lauda, true, r, 1.2, 0.4);
+        const raamat = flat(b, rectPts(616 + k * 26, 217 + i * 38, 8, 7, 2), [PUNANE, SININE][(i + k) % 2], r, 0.4);
+        ink(b, raamat, true, r, 0.9, 0.2);
       }
     }
-    nimi('Lõpuklass', 461, 250, -0.04);
 
-    // Õpetajate tuba: table with cups and a plant
-    const oLaud = flat(b, rectPts(572, 130, 110, 48, 3), VALGE, r, 1);
+    // Õpetajate tuba: table with cups
+    nimi('Õpetajate', 633, 326, 0, 10);
+    nimi('tuba', 633, 340, 0, 10);
+    const oLaud = flat(b, rectPts(610, 358, 46, 22, 3), VALGE, r, 1);
     hatch(b, oLaud, r, 4, 0.5, 0.4);
-    ink(b, oLaud, true, r, 1.5, 0.5);
-    [592, 627, 662].forEach((x, i) => {
-      const p = flat(b, rectPts(x - 7, 145, 14, 14, 2), [PUNANE, SINEP, SININE][i], r, 0.5);
-      ink(b, p, true, r, 1.1, 0.3);
-      ink(b, [[x, 141], [x - 3, 133], [x + 2, 126]], false, r, 0.9, 0.4);
+    ink(b, oLaud, true, r, 1.4, 0.5);
+    [620, 633, 646].forEach((x, i) => {
+      const p = flat(b, rectPts(x - 4, 363, 8, 8, 2), [PUNANE, SINEP, SININE][i], r, 0.4);
+      ink(b, p, true, r, 1, 0.2);
+      ink(b, [[x, 360], [x - 2, 355], [x + 1, 350]], false, r, 0.8, 0.3);
     });
-    curlPlant(b, 686, 248, 26, KORALL, r);
-    nimi('Õpetajate tuba', 627, 104, 0.03);
 
     // Corridor: the Suvemäe name in the house colours, and two potted plants
     const tahed = ['S', 'u', 'v', 'e', 'm', 'ä', 'e'];
     const varvid = [PUNANE, SININE, KORALL, ROHE, PUNANE, SININE, KORALL];
-    tahed.forEach((t, i) => label(b, t, 380 + i * 24, 308 + Math.sin(i) * 5, (r() - 0.5) * 0.4, varvid[i], i === 0 ? 30 : 24));
-    spiral(b, 360, 318, 6, 1.5, r, 1);
-    spiral(b, 552, 318, 6, 1.5, r, 1);
-    curlPlant(b, 222, 340, 20, PUNANE, r);
-    curlPlant(b, 690, 340, 20, SINEP, r);
+    tahed.forEach((t, i) => label(b, t, 332 + i * 22, 448 + Math.sin(i) * 4, (r() - 0.5) * 0.4, varvid[i], i === 0 ? 26 : 22));
+    spiral(b, 312, 452, 6, 1.5, r, 1);
+    spiral(b, 492, 452, 6, 1.5, r, 1);
+    curlPlant(b, 172, 478, 18, PUNANE, r);
+    curlPlant(b, 690, 478, 18, SINEP, r);
 
     // Lastetuba: toy blocks and a kite
     const klotsid = [PUNANE, SINEP, SININE, VALGE, ROHE, KORALL];
     for (let i = 0; i < 9; i++) {
-      const x = 222 + (i % 3) * 28 + (i > 5 ? 14 : 0);
-      const y = 640 - Math.floor(i / 3) * 22;
-      const p = flat(b, rectPts(x, y, 26, 20, 2), klotsid[i % 6], r, 0.8);
+      const x = 163 + (i % 3) * 26 + (i > 5 ? 13 : 0);
+      const y = 684 - Math.floor(i / 3) * 19;
+      const p = flat(b, rectPts(x, y, 24, 18, 2), klotsid[i % 6], r, 0.8);
       hatch(b, p, r, 2.5, 0.6, 0.5);
       ink(b, p, true, r, 1.2, 0.4);
     }
-    const tuulelohe = flat(b, [[266, 430], [292, 462], [266, 510], [240, 462]], KORALL, r, 1.5);
+    const tuulelohe = flat(b, [[240, 535], [262, 565], [240, 605], [218, 565]], KORALL, r, 1.5);
     hatch(b, tuulelohe, r, 3.5, 0.5, 0.5);
     ink(b, tuulelohe, true, r, 1.5, 0.5);
-    ink(b, [[266, 432], [266, 508]], false, r, 0.9, 0.3);
-    ink(b, [[242, 462], [290, 462]], false, r, 0.9, 0.3);
-    ink(b, [[266, 510], [255, 532], [274, 550], [262, 570]], false, r, 1.2, 1);
-    spiral(b, 262, 578, 7, 1.6, r, 1);
-    nimi('Lastetuba', 266, 378, -0.04);
+    ink(b, [[240, 537], [240, 603]], false, r, 0.9, 0.3);
+    ink(b, [[220, 565], [260, 565]], false, r, 0.9, 0.3);
+    ink(b, [[240, 605], [232, 617], [246, 627]], false, r, 1.2, 1);
+    spiral(b, 248, 632, 5, 1.6, r, 1);
+    nimi('Lastetuba', 213, 506, -0.04);
 
     // Suur tuba: the Suvemäe circle with cushions
-    const ring = flat(b, ellipsePts(441, 535, 86, 80, 22), '#f4b49d', r, 3);
+    const ring = flat(b, ellipsePts(385, 605, 80, 72, 22), '#f4b49d', r, 3);
     hatch(b, ring, r, 5, 0.65, 0.45);
     stipple(b, ring, r, 100, 0.7);
     ink(b, ring, true, r, 1.8, 1.2);
-    const paike = flat(b, ellipsePts(441, 535, 22, 22, 14), SINEP, r, 1);
+    const paike = flat(b, ellipsePts(385, 605, 22, 22, 14), SINEP, r, 1);
     ink(b, paike, true, r, 1.5, 0.5);
-    spiral(b, 441, 535, 15, 2.5, r, 1.2);
+    spiral(b, 385, 605, 15, 2.5, r, 1.2);
     const padjad = [PUNANE, SINEP, SININE, VALGE, ROHE, KORALL];
     for (let i = 0; i < 8; i++) {
       const a = (i / 8) * Math.PI * 2;
-      const p = flat(b, ellipsePts(441 + Math.cos(a) * 58, 535 + Math.sin(a) * 52, 12, 10, 10), padjad[i % 6], r, 1);
+      const p = flat(b, ellipsePts(385 + Math.cos(a) * 56, 605 + Math.sin(a) * 50, 12, 10, 10), padjad[i % 6], r, 1);
       hatch(b, p, r, 3, 0.55, 0.5);
       ink(b, p, true, r, 1.4, 0.5);
     }
-    nimi('Suur tuba', 441, 378, 0.03);
+    nimi('Suur tuba', 385, 506, 0.03);
 
-    // Loov tuba: an easel with a curly painting and a palette
-    ink(b, [[612, 520], [630, 410], [648, 520]], false, r, 1.6, 0.4);
-    const molbert = flat(b, rectPts(594, 420, 72, 62, 3), VALGE, r, 1);
+    // Loovtuba: an easel with a curly painting and a palette
+    ink(b, [[531, 640], [549, 540], [567, 640]], false, r, 1.6, 0.4);
+    const molbert = flat(b, rectPts(522, 548, 54, 48, 3), VALGE, r, 1);
     ink(b, molbert, true, r, 1.5, 0.5);
-    dot(b, 614, 440, 7, PUNANE);
-    dot(b, 640, 455, 9, SINEP);
-    dot(b, 620, 466, 5, SININE);
-    spiral(b, 640, 455, 7, 2, r, 0.9);
-    const palett = flat(b, ellipsePts(630, 560, 38, 20, 14), '#e7c79a', r, 1);
+    dot(b, 538, 564, 6, PUNANE);
+    dot(b, 558, 576, 8, SINEP);
+    dot(b, 542, 586, 4, SININE);
+    spiral(b, 558, 576, 6, 2, r, 0.9);
+    const palett = flat(b, ellipsePts(549, 672, 32, 16, 14), '#e7c79a', r, 1);
     ink(b, palett, true, r, 1.4, 0.5);
-    [[612, 555, PUNANE], [628, 550, SININE], [645, 556, SINEP], [636, 568, ROHE]].forEach(([x, y, col]) => dot(b, x, y, 4.5, col));
-    nimi('Loov tuba', 630, 378, -0.03);
+    [[535, 668, PUNANE], [548, 663, SININE], [562, 669, SINEP], [553, 680, ROHE]].forEach(([x, y, col]) => dot(b, x, y, 4, col));
+    nimi('Loovtuba', 549, 506, -0.03);
 
-    // WC: a sink and a toilet
-    label(b, 'WC', 584, 636, 0, PUNANE, 16);
-    const kraanikauss = flat(b, rectPts(646, 626, 44, 26, 3), '#b9c4c9', r, 1);
-    ink(b, kraanikauss, true, r, 1.4, 0.4);
-    dot(b, 668, 640, 6, SININE);
-    const pott = flat(b, ellipsePts(600, 676, 13, 16, 12), VALGE, r, 0.6);
+    // WC: a toilet and a sink
+    label(b, 'WC', 648, 600, 0, PUNANE, 16);
+    const pott = flat(b, ellipsePts(648, 668, 11, 14, 12), VALGE, r, 0.6);
     ink(b, pott, true, r, 1.4, 0.4);
+    const kraanikauss = flat(b, rectPts(674, 498, 26, 16, 3), '#b9c4c9', r, 0.8);
+    ink(b, kraanikauss, true, r, 1.3, 0.4);
+    dot(b, 687, 506, 4, SININE);
 
     // Crochet-lace border: a chain of small loops with dots, rosettes in the corners
     b.save();
@@ -811,7 +834,14 @@
     { name: 'Mihkel', teacher: true, aine: 'inglise keel, kunst, ajalugu, eesti keel', coat: VALGE, pattern: 'triibud', patColor: SININE, hair: 'short', hairColor: '#2b2622', skin: '#e9c9a6' },
   ];
 
-  const SPAWN = [[150, 230], [270, 200], [500, 250], [600, 120], [150, 520], [520, 520], [440, 180], [620, 380], [240, 640], [330, 330], [90, 400], [400, 620], [660, 600]];
+  const SPAWN = [[80, 470], [210, 600], [380, 560], [540, 640], [300, 440], [460, 440], [570, 330], [630, 250], [120, 650], [430, 670], [650, 440], [230, 520], [560, 560]];
+
+  // Floor areas inside the house where people walk around and litter shows up (x, y, w, h)
+  const ALAD = [[30, 430, 105, 260], [170, 415, 520, 55], [170, 520, 510, 170], [545, 230, 45, 150], [615, 205, 40, 90]];
+  function spot() {
+    const [x, y, w, h] = ALAD[Math.floor(Math.random() * ALAD.length)];
+    return [x + Math.random() * w, y + Math.random() * h];
+  }
 
   const npcs = TEGELASED.map((o, i) => ({
     ...o,
@@ -892,8 +922,8 @@
   const kanad = [VALGE, SINEP, VALGE, '#f3c9a0'].map((col, i) => ({
     kana: true,
     sprite: makeChicken(col, 300 + i * 7),
-    x: 80 + i * 170, y: 360 + (i % 2) * 40,
-    tx: 80 + i * 170, ty: 360,
+    x: 60 + i * 120, y: 220 + (i % 2) * 70,
+    tx: 60 + i * 120, ty: 220,
     wait: Math.random() * 2,
     moving: false, phase: 0, dir: 1, flee: 0,
   }));
@@ -904,16 +934,17 @@
       k.flee = Math.max(0, k.flee - dt);
       if (running && Math.hypot(k.x - player.x, k.y - player.y) < 55) {
         const a = Math.atan2(k.y - player.y, k.x - player.x);
-        k.tx = Math.max(30, Math.min(W - 30, k.x + Math.cos(a) * 90));
-        k.ty = Math.max(130, Math.min(W - 10, k.y + Math.sin(a) * 90));
+        // they stay in the yard in front of the house
+        k.tx = Math.max(30, Math.min(510, k.x + Math.cos(a) * 90));
+        k.ty = Math.max(150, Math.min(385, k.y + Math.sin(a) * 90));
         k.wait = 0;
         k.flee = 0.8;
       }
       if (k.wait > 0) { k.wait -= dt; k.moving = false; return; }
       if (stepToward(k, k.tx, k.ty, k.flee ? 130 : 45, dt)) {
         k.wait = 1 + Math.random() * 3;
-        k.tx = 30 + Math.random() * (W - 60);
-        k.ty = 130 + Math.random() * (W - 150);
+        k.tx = 30 + Math.random() * 480;
+        k.ty = 150 + Math.random() * 230;
       }
       if (k.moving) k.phase += dt * 14;
     });
@@ -1224,8 +1255,7 @@
       if (n.wait > 0) { n.wait -= dt; n.moving = false; return; }
       if (stepToward(n, n.tx, n.ty, 38, dt)) {
         n.wait = 1 + Math.random() * 3;
-        n.tx = 40 + Math.random() * (W - 80);
-        n.ty = 130 + Math.random() * (W - 150);
+        [n.tx, n.ty] = spot();
       }
       if (n.moving) n.phase += dt * 8;
     });
@@ -1259,7 +1289,8 @@
     if (litterTimer <= 0 && litterSpawned < MAX_PRAHT) {
       litterTimer = 7 + Math.random() * 6;
       litterSpawned++;
-      litter.push({ x: 40 + Math.random() * (W - 80), y: 140 + Math.random() * (W - 170), kind: Math.floor(Math.random() * 3), rot: Math.random() * 6 });
+      const [lx, ly] = spot();
+      litter.push({ x: lx, y: ly, kind: Math.floor(Math.random() * 3), rot: Math.random() * 6 });
     }
     for (let i = litter.length - 1; i >= 0; i--) {
       const l = litter[i];

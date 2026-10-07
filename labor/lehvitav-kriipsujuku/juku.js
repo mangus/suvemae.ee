@@ -52,11 +52,14 @@ const JL_X = -70; // canvas box inside the figure, matches .juuksed
 const JL_Y = -70;
 const JL_LAIUS = 370;
 const JL_KORGUS = 330;
-const KARVU = 125; // fewer, thicker strands keep slow computers smooth
+const KARVU = 165; // fewer, thicker strands keep slow computers smooth
 const TUKK = 26; // short fringe strands over the forehead
 const OSAD = 14; // segments per strand, enough for round curls
-const juuksevarvid = ['#8d4b1f', '#7a3f17', '#9c5826', '#a8632d'];
-const juuksepaksus = [2.6, 3.2, 2.9, 3.5]; // one width per colour, so a colour's strands are drawn together
+// Four browns, then black and pink streaks.
+const juuksevarvid = ['#8d4b1f', '#7a3f17', '#9c5826', '#a8632d', '#1f1a1c', '#ff6fb5'];
+const juuksepaksus = [2.6, 3.2, 2.9, 3.5, 3.1, 3.1]; // one width per colour, so a colour's strands are drawn together
+const MUST = 4;
+const ROOSA = 5;
 const vaikne = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const karvad = [];
 let juukseMoot = 0;
@@ -136,7 +139,7 @@ function teeJuuksed() {
       nihe: 0,
       kiirus: 0,
       faas: Math.random() * 6.3,
-      toon: i % juuksevarvid.length,
+      toon: i % 7 === 3 ? MUST : i % 7 === 5 ? ROOSA : i % 4, // some black and pink strands
       px: new Float32Array(OSAD + 1),
       py: new Float32Array(OSAD + 1),
     });

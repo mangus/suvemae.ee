@@ -142,8 +142,9 @@ footer .made-by a{color:var(--violet)}
 /* Ladybug keeps quiet until you point at her, then stops and cheers */
 .d-ladybug{cursor:pointer}
 .d-ladybug .say{opacity:0;transition:opacity .2s}
-.d-ladybug:hover .say{opacity:1}
-.d-ladybug:hover,.d-ladybug:hover svg{animation-play-state:paused}
+@media (hover:hover){.d-ladybug:hover .say{opacity:1}.d-ladybug:hover,.d-ladybug:hover :is(svg,.lb-leg,.lb-bob){animation-play-state:paused}}
+.d-ladybug:active .say{opacity:1}
+.d-ladybug:active,.d-ladybug:active :is(svg,.lb-leg,.lb-bob){animation-play-state:paused}
 /* Monkey's day in one 30s loop: waits at home waving, gallops left and leaps over the bear, stops to look around
    and scratch its head, leaps up to hang by one long arm from the sun and swing, then lets go and lands back home.
    It never mirrors or spins: it always faces us and only leans. Its track sits above the other doodles and the bubble

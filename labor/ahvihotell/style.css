@@ -38,7 +38,15 @@ html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-
 .players { flex-direction: row; flex-wrap: wrap; justify-content: center; }
 .players li { background: rgba(255, 255, 255, .12); border-radius: 16px; padding: 6px 12px; font-weight: 700; display: flex; flex-direction: column; align-items: center; }
 .players canvas { width: 72px; height: 72px; }
-#lookPreview { width: 128px; height: 128px; background: rgba(255, 255, 255, .12); border-radius: 20px; }
+#lookPreview { width: 128px; height: 128px; flex-shrink: 0; background: rgba(255, 255, 255, .12); border-radius: 20px; }
+#shop { touch-action: pan-y; }
+#shop > * { flex-shrink: 0; }
+.shop-filters { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 520px; margin: 12px 0; }
+.shop-filters button { margin: 0; padding: 9px 14px; min-height: 44px; font-size: 16px; background: #e7ddfa; box-shadow: none; color: #34204e; }
+.shop-filters button[aria-pressed="true"] { background: #ffd23b; outline: 2px solid white; }
+button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+#colorOptions { max-width: 520px; }
+#clothingHint { font-size: 14px; }
 .picks { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .picks button { margin: 0; width: 46px; height: 46px; padding: 0; font-size: 24px; border-radius: 50%; background: rgba(255, 255, 255, .15); box-shadow: none; border: 3px solid transparent; }
 .picks button.on { border-color: #fff; }

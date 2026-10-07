@@ -39,7 +39,7 @@ const SHIRTS = [['#e53935', '🔴'], ['#fb8c00', '🟠'], ['#fdd835', '🟡'], [
 const SKINS = ['#f6d3b3', '#e2b08a', '#b47b52', '#70472c'];
 // Robots, ghosts and aliens can be painted; colour 0 is each body's own colour.
 const BODY_COLORS = ['', '#e53935', '#ff9800', '#fdd835', '#43a047', '#00bcd4', '#1e88e5', '#8e24aa', '#f06292', '#37474f'];
-const BODY_BASE = { robot: '#c3ccd6', kummitus: '#ecf2ff', tulnukas: '#7ee06e' };
+const BODY_BASE = { robot: '#c3ccd6', kummitus: '#ecf2ff', tulnukas: '#7ee06e', kass: '#efa750', dinosaurus: '#64b867', konn: '#8aca4e', lumememm: '#edf6ff', volur: '#7953bd' };
 const bodyPaint = (c, id) => BODY_COLORS[c] || BODY_BASE[id];
 // The same colour made lighter (f > 1) or darker (f < 1).
 function shade(hex, f, a = 1) {
@@ -51,6 +51,12 @@ const BODIES = [
   { id: 'robot', name: 'Robot', icon: '🤖', price: 60 },
   { id: 'kummitus', name: 'Kummitus', icon: '👻', price: 60 },
   { id: 'tulnukas', name: 'Tulnukas', icon: '👽', price: 80 },
+  // Append only: saved profiles and secret codes use these indices.
+  { id: 'kass', name: 'Kass', icon: '🐱', price: 70 },
+  { id: 'dinosaurus', name: 'Dinosaurus', icon: '🦖', price: 100 },
+  { id: 'konn', name: 'Konn', icon: '🐸', price: 70 },
+  { id: 'lumememm', name: 'Lumememm', icon: '⛄', price: 80 },
+  { id: 'volur', name: 'Võlur', icon: '🧙', price: 120 },
 ];
 const SHOP = [
   { id: 'lips', slot: 'head', name: 'Juukselips', icon: '🎀', price: 20 },
@@ -80,6 +86,19 @@ const SHOP = [
   { id: 'kuldsedtossud', slot: 'feet', name: 'Kuldsed tossud', icon: '👟', price: 60, color: '#ffc107', stripe: '#fff59d' },
   { id: 'saapad', slot: 'feet', name: 'Saapad', icon: '🥾', price: 35 },
   { id: 'helkivad', slot: 'feet', name: 'Helkivad tossud', icon: '✨', price: 70 },
+  // Append only: each position is a bit in existing secret codes.
+  { id: 'janesekorvad', slot: 'head', name: 'Jänesekõrvad', icon: '🐰', price: 35 },
+  { id: 'korvaklapid', slot: 'head', name: 'Kõrvaklapid', icon: '🎧', price: 40 },
+  { id: 'lilleparg', slot: 'head', name: 'Lillepärg', icon: '🌸', price: 45 },
+  { id: 'ymmarprillid', slot: 'eyes', name: 'Ümmargused prillid', icon: '👓', price: 30 },
+  { id: 'ujumisprillid', slot: 'eyes', name: 'Ujumisprillid', icon: '🥽', price: 35 },
+  { id: 'kikilips', slot: 'neck', name: 'Kikilips', icon: '🎀', price: 25 },
+  { id: 'medal', slot: 'neck', name: 'Medal', icon: '🏅', price: 60 },
+  { id: 'seljakott', slot: 'back', name: 'Seljakott', icon: '🎒', price: 50 },
+  { id: 'tiivad', slot: 'back', name: 'Tiivad', icon: '🪽', price: 100 },
+  { id: 'taskulamp', slot: 'hand', name: 'Taskulamp', icon: '🔦', price: 35 },
+  { id: 'banaan', slot: 'hand', name: 'Banaan', icon: '🍌', price: 20 },
+  { id: 'ohupall', slot: 'hand', name: 'Õhupall', icon: '🎈', price: 30 },
 ];
 
 let W = 320;
@@ -410,10 +429,13 @@ function drawHuman(g, look) {
   const worn = (slot) => SHOP.find((s) => s.slot === slot && look.w.includes(s.id));
   const hat = !!worn('head');
   if (has('keep')) poly(g, [46, 54, 82, 54, 98, 118, 30, 118], '#d32f2f');
+  drawShopBack(g, worn('back'));
   const paint = bodyPaint(look.c, body);
   if (body === 'robot') drawRobot(g, shirt, hat, paint);
   else if (body === 'kummitus') drawGhost(g, shirt, paint);
+  else if (look.b >= 4) drawShopBody(g, body, shirt, paint, hat, worn);
   else drawPerson(g, shirt, body === 'tulnukas' ? paint : SKINS[look.k], body === 'tulnukas', hat, worn);
+  drawShopAccessories(g, look, body);
   if (has('sall')) {
     g.fillStyle = '#ffeb3b'; g.fillRect(52, 52, 24, 7); g.fillRect(67, 58, 7, 16);
     g.fillStyle = '#e53935';
@@ -436,6 +458,160 @@ function drawHuman(g, look) {
     poly(g, [64, 20, 52, 13, 52, 27], '#ff4fa0'); poly(g, [64, 20, 76, 13, 76, 27], '#ff4fa0');
     blob(g, 64, 20, 3.5, 3.5, '#d81b78');
   }
+}
+
+// New silhouettes share the same face and hand anchors as the old avatars.
+function drawShopBody(g, body, shirt, paint, hat, worn) {
+  g.lineCap = 'round';
+  if (body === 'lumememm') {
+    g.strokeStyle = '#795548'; g.lineWidth = 4;
+    g.beginPath(); g.moveTo(49, 66); g.lineTo(36, 94); g.moveTo(79, 66); g.lineTo(92, 94); g.stroke();
+    blob(g, 64, 98, 25, 26, shade(paint, 0.94));
+    blob(g, 64, 68, 20, 21, paint);
+    blob(g, 64, 35, 18, 19, shade(paint, 1.06));
+    for (const y of [65, 80, 99]) blob(g, 64, y, 3, 3, '#354052');
+    for (const x of [58, 70]) blob(g, x, 35, 2.5, 3, '#233044');
+    poly(g, [63, 40, 79, 44, 63, 46], '#f58b32');
+    for (const x of [56, 61, 66, 71]) blob(g, x, 49 - Math.abs(64 - x) / 4, 1.3, 1.3, '#354052');
+    g.fillStyle = shirt; g.fillRect(49, 53, 30, 5);
+    return;
+  }
+  if (body === 'kass') {
+    g.strokeStyle = shade(paint, 0.8); g.lineWidth = 8;
+    g.beginPath(); g.moveTo(77, 101); g.bezierCurveTo(114, 120, 117, 71, 102, 77); g.stroke();
+  } else if (body === 'dinosaurus') {
+    poly(g, [73, 85, 114, 107, 96, 80, 118, 103, 115, 116, 76, 113], shade(paint, 0.8));
+    for (let y = 48; y < 98; y += 12) poly(g, [43, y, 32, y + 6, 44, y + 12], '#eabb4a');
+  }
+  drawPerson(g, shirt, body === 'volur' ? '#f6d3b3' : paint, false, true, worn);
+  if (body === 'volur') {
+    poly(g, [46, 57, 82, 57, 91, 120, 37, 120], paint);
+    g.fillStyle = '#e7bd56'; g.fillRect(47, 87, 35, 4);
+    drawShopStar(g, 63, 75, 7, '#ffeb8a');
+    poly(g, [53, 44, 64, 50, 75, 44, 72, 65, 64, 78, 56, 65], '#f8f5ed');
+    if (!hat) {
+      poly(g, [43, 24, 85, 24, 68, 1, 61, 9, 57, 2], shade(paint, 0.85));
+      blob(g, 64, 24, 25, 4, paint);
+      drawShopStar(g, 66, 14, 4, '#ffeb8a');
+    }
+    return;
+  }
+  blob(g, 64, 35, body === 'konn' ? 23 : 21, 20, paint);
+  if (body === 'kass') {
+    poly(g, [45, 25, 44, 5, 60, 20, 68, 20, 84, 5, 83, 25], paint);
+    poly(g, [48, 19, 47, 10, 55, 19], '#f5a5a8');
+    poly(g, [73, 19, 81, 10, 80, 19], '#f5a5a8');
+    blob(g, 59, 44, 7, 5, '#fff0cd'); blob(g, 69, 44, 7, 5, '#fff0cd');
+    poly(g, [60, 40, 68, 40, 64, 44], '#b54c66');
+    g.strokeStyle = '#634331'; g.lineWidth = 1;
+    for (const s of [-1, 1]) for (const dy of [-3, 3]) {
+      g.beginPath(); g.moveTo(64 + s * 10, 44); g.lineTo(64 + s * 26, 44 + dy); g.stroke();
+    }
+  } else if (body === 'dinosaurus') {
+    blob(g, 65, 46, 23, 10, shade(paint, 1.1));
+    for (const x of [54, 76]) blob(g, x, 42, 1.5, 1.5, '#305439');
+    g.strokeStyle = '#305439'; g.lineWidth = 1.5;
+    g.beginPath(); g.moveTo(49, 49); g.quadraticCurveTo(65, 56, 81, 49); g.stroke();
+    poly(g, [57, 51, 61, 52, 59, 56], '#fff');
+  } else {
+    for (const x of [53, 75]) blob(g, x, 23, 10, 10, paint);
+    g.strokeStyle = '#416d26'; g.lineWidth = 2;
+    g.beginPath(); g.arc(64, 38, 12, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke();
+    blob(g, 46, 42, 4, 3, '#f3a6a0'); blob(g, 82, 42, 4, 3, '#f3a6a0');
+  }
+  for (const x of [57, 71]) {
+    blob(g, x, 34, 4, 5, '#fffbe8');
+    blob(g, x, 35, body === 'kass' ? 1.5 : 2.3, 3, '#20312a');
+  }
+}
+
+function drawShopStar(g, x, y, r, color) {
+  const pts = [];
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5, d = i % 2 ? r * 0.45 : r;
+    pts.push(x + Math.cos(a) * d, y + Math.sin(a) * d);
+  }
+  poly(g, pts, color);
+}
+
+function drawShopBack(g, item) {
+  if (item?.id === 'seljakott') {
+    blob(g, 64, 77, 31, 26, '#e28b34');
+    for (const x of [37, 91]) {
+      g.fillStyle = '#ae572d'; g.fillRect(x - 5, 72, 10, 22);
+      g.fillStyle = '#ffd16b'; g.fillRect(x - 3, 77, 6, 2);
+    }
+  } else if (item?.id === 'tiivad') {
+    for (const s of [-1, 1]) {
+      poly(g, [64, 65, 64 + s * 48, 42, 64 + s * 43, 80, 64 + s * 28, 100, 64, 88], '#c9daff');
+      for (let i = 0; i < 4; i++) {
+        g.strokeStyle = '#f8fbff'; g.lineWidth = 5; g.lineCap = 'round';
+        g.beginPath(); g.moveTo(64 + s * 22, 67); g.lineTo(64 + s * (45 - i * 6), 52 + i * 12); g.stroke();
+      }
+    }
+  }
+}
+
+function drawShopAccessories(g, look, body) {
+  const has = id => look.w.includes(id);
+  g.save();
+  g.lineCap = 'round';
+  if (has('seljakott')) {
+    g.strokeStyle = '#e7a548'; g.lineWidth = 4;
+    for (const x of [49, 79]) { g.beginPath(); g.moveTo(x, 58); g.lineTo(x, 83); g.stroke(); }
+  }
+  if (has('janesekorvad')) {
+    for (const x of [54, 74]) { blob(g, x, 12, 6, 12, '#fff3df'); blob(g, x, 12, 2.5, 9, '#f4a4bd'); }
+    blob(g, 64, 24, 17, 3, '#fff3df');
+  } else if (has('korvaklapid')) {
+    g.strokeStyle = '#35c8dd'; g.lineWidth = 5;
+    g.beginPath(); g.arc(64, 32, 20, Math.PI, 0); g.stroke();
+    for (const x of [44, 84]) { blob(g, x, 36, 5, 10, '#273d62'); blob(g, x, 36, 3, 6, '#35c8dd'); }
+  } else if (has('lilleparg')) {
+    g.strokeStyle = '#41954d'; g.lineWidth = 4;
+    g.beginPath(); g.ellipse(64, 22, 19, 5, 0, 0, Math.PI * 2); g.stroke();
+    for (let i = 0; i < 5; i++) {
+      const x = 48 + i * 8, y = 22 - Math.sin(i / 4 * Math.PI) * 3;
+      for (let j = 0; j < 5; j++) blob(g, x + Math.cos(j * 1.256) * 3, y + Math.sin(j * 1.256) * 3, 2.5, 2.5, i % 2 ? '#fff0e3' : '#f988b5');
+      blob(g, x, y, 2, 2, '#ffd34d');
+    }
+  }
+  if (has('ymmarprillid') || has('ujumisprillid')) {
+    const swim = has('ujumisprillid');
+    g.strokeStyle = swim ? '#43cbe8' : '#543c68'; g.lineWidth = swim ? 3 : 2;
+    g.beginPath(); g.moveTo(61, 35); g.lineTo(67, 35); g.moveTo(48, 35); g.lineTo(52, 35); g.moveTo(76, 35); g.lineTo(80, 35); g.stroke();
+    for (const x of [57, 71]) {
+      blob(g, x, 36, 6, swim ? 5 : 6, 'rgba(109,214,255,0.28)');
+      g.beginPath(); g.ellipse(x, 36, 6, swim ? 5 : 6, 0, 0, Math.PI * 2); g.stroke();
+    }
+  }
+  if (has('kikilips')) {
+    poly(g, [64, 56, 51, 50, 51, 63], '#ed5286'); poly(g, [64, 56, 77, 50, 77, 63], '#ed5286');
+    blob(g, 64, 56, 3, 3, '#a32c69');
+  } else if (has('medal')) {
+    g.strokeStyle = '#40bbee'; g.lineWidth = 3;
+    g.beginPath(); g.moveTo(54, 53); g.lineTo(64, 71); g.lineTo(74, 53); g.stroke();
+    blob(g, 64, 73, 7, 7, '#d89727'); blob(g, 64, 72, 5, 5, '#ffe37a');
+    drawShopStar(g, 64, 72, 3.5, '#cc8b20');
+  }
+  // Ghost hands are higher; props remain attached to their hand on every body.
+  const hx = body === 'kummitus' ? 89 : 91, hy = body === 'kummitus' ? 70 : 94;
+  g.translate(hx, hy);
+  if (has('taskulamp')) {
+    poly(g, [2, -10, 19, -29, 29, -10, 6, -1], 'rgba(255,237,145,0.24)');
+    poly(g, [-3, 6, 5, 7, 8, -10, -1, -12], '#405878');
+    poly(g, [-3, -13, 11, -10, 9, -17, 0, -19], '#ffc756');
+    g.fillStyle = '#fff3b2'; g.fillRect(0, -18, 8, 2);
+  } else if (has('banaan')) {
+    g.fillStyle = '#ffe258'; g.beginPath(); g.moveTo(-3, -15); g.bezierCurveTo(21, -6, 21, 8, -3, 11); g.bezierCurveTo(10, 1, 8, -6, -3, -15); g.fill();
+    g.strokeStyle = '#946628'; g.lineWidth = 3; g.beginPath(); g.moveTo(-3, -15); g.lineTo(-4, -18); g.stroke();
+  } else if (has('ohupall')) {
+    g.strokeStyle = '#fff0cf'; g.lineWidth = 1.2;
+    g.beginPath(); g.moveTo(0, 0); g.bezierCurveTo(18, -15, -2, -29, 17, -42); g.stroke();
+    poly(g, [17, -45, 13, -40, 20, -40], '#e55791');
+    blob(g, 17, -58, 12, 16, '#f867aa'); blob(g, 13, -63, 3, 6, '#ffbfdd');
+  }
+  g.restore();
 }
 
 // Trousers, a shirt style and shoes are worn by people and aliens.
@@ -655,7 +831,13 @@ function humanSprite(look) {
 function cleanLook(l) {
   const o = l && typeof l === 'object' ? l : {};
   const idx = (v, n) => (Number.isInteger(v) && v >= 0 && v < n ? v : 0);
-  const w = Array.isArray(o.w) ? o.w.filter((id) => SHOP.some((s) => s.id === id)).slice(0, 8) : [];
+  const slots = new Set();
+  const w = Array.isArray(o.w) ? o.w.filter((id) => {
+    const item = SHOP.find((s) => s.id === id);
+    if (!item || slots.has(item.slot)) return false;
+    slots.add(item.slot);
+    return true;
+  }) : [];
   return { s: idx(o.s, SHIRTS.length), k: idx(o.k, SKINS.length), b: idx(o.b, BODIES.length), c: idx(o.c, BODY_COLORS.length), w };
 }
 // A random nickname is made of preset words; players can also type their own.
@@ -2144,7 +2326,21 @@ function drawWait() {
     : 'Ootame, kuni toa juht mängu alustab…';
 }
 
+const SHOP_FILTERS = [['all', 'Kõik'], ['bodies', 'Tegelased'], ['head', 'Pea'], ['eyes', 'Silmad'], ['neck', 'Kael'], ['back', 'Selg'], ['top', 'Särgid'], ['legs', 'Püksid'], ['feet', 'Jalanõud'], ['hand', 'Käes'], ['colors', 'Värvid']];
+let shopFilter = 'all';
 function drawShop() {
+  const filters = $('shopFilters');
+  // Keep filter buttons mounted so keyboard focus survives a selection.
+  if (!filters.children.length) for (const [id, name] of SHOP_FILTERS) {
+    const b = el('button', '', name);
+    b.dataset.filter = id;
+    b.addEventListener('click', () => { shopFilter = id; drawShop(); });
+    filters.append(b);
+  }
+  for (const b of filters.children) b.setAttribute('aria-pressed', String(b.dataset.filter === shopFilter));
+  for (const id of ['bodyLabel', 'bodyItems']) $(id).hidden = !['all', 'bodies'].includes(shopFilter);
+  $('colorOptions').hidden = !['all', 'colors', 'top'].includes(shopFilter);
+  for (const id of ['accessoryLabel', 'clothingHint', 'shopItems']) $(id).hidden = ['bodies', 'colors'].includes(shopFilter);
   const g = $('lookPreview').getContext('2d');
   g.clearRect(0, 0, 128, 128);
   drawHuman(g, myLook());
@@ -2178,6 +2374,7 @@ function drawShop() {
   const box = $('shopItems');
   box.textContent = '';
   for (const item of SHOP) {
+    if (shopFilter !== 'all' && item.slot !== shopFilter) continue;
     const div = el('div', 'item');
     const b = el('button');
     if (!me.owned.includes(item.id)) {

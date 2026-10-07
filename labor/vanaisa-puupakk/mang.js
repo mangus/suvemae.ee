@@ -2,12 +2,14 @@
 // who jumps out from behind the corners of the houses.
 import { lab } from '../lab.js';
 
-const W = 400;
-const H = 560;
+// The yard is 400 × 560; inside a house the 3D view fills the whole screen.
+let W = 400;
+let H = 560;
 const SAMM = 60 / 128 / 2; // one eighth note at 128 bpm, in seconds
 
 const louend = document.getElementById('louend');
 let ctx = louend.getContext('2d'); // swapped briefly when grandpa is drawn for the 3D view
+const mangukast = louend.parentElement;
 const kate = document.getElementById('kate');
 const kateTekst = document.getElementById('kateTekst');
 const alustaNupp = document.getElementById('alusta');
@@ -19,9 +21,12 @@ const nimiEl = document.getElementById('nimi');
 const tabelEl = document.getElementById('edetabel');
 
 const dpr = Math.min(window.devicePixelRatio || 1, 2);
-louend.width = W * dpr;
-louend.height = H * dpr;
-ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+function louendiSuurus() {
+  louend.width = Math.round(W * dpr);
+  louend.height = Math.round(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+louendiSuurus();
 
 const minu = lab();
 
@@ -306,7 +311,9 @@ function punkt(e) {
 louend.addEventListener('pointerdown', (e) => {
   louend.setPointerCapture(e.pointerId);
   if (mang.sees) {
-    vajutused.set(e.pointerId, nuppPunktis(punkt(e)));
+    vajutused.set(e.pointerId, nuppPunktis(punkt(e)) || 'vaade');
+    viimaneX.set(e.pointerId, e.clientX);
+    lukusta(e);
     return;
   }
   vajutab = true;
@@ -314,7 +321,14 @@ louend.addEventListener('pointerdown', (e) => {
 });
 louend.addEventListener('pointermove', (e) => {
   if (mang.sees) {
-    if (vajutused.has(e.pointerId)) vajutused.set(e.pointerId, nuppPunktis(punkt(e)));
+    const nupp = vajutused.get(e.pointerId);
+    if (nupp === 'vaade') {
+      // Dragging on the 3D view turns you around.
+      if (mang.kaib) tuba.nurk += (e.clientX - viimaneX.get(e.pointerId)) * 0.006;
+      viimaneX.set(e.pointerId, e.clientX);
+    } else if (nupp !== undefined) {
+      vajutused.set(e.pointerId, nuppPunktis(punkt(e)));
+    }
     return;
   }
   if (vajutab) siht = punkt(e);
@@ -322,6 +336,26 @@ louend.addEventListener('pointermove', (e) => {
 function vabasta(e) {
   vajutab = false;
   vajutused.delete(e.pointerId);
+  viimaneX.delete(e.pointerId);
+  if (mang.sees && e.type === 'pointerup') lukusta(e);
+}
+const viimaneX = new Map(); // pointer id -> last x, for turning by dragging
+// With a locked mouse, moving it turns you around.
+document.addEventListener('mousemove', (e) => {
+  if (mang.sees && mang.kaib && document.pointerLockElement === louend) tuba.nurk += e.movementX * 0.0025;
+});
+// A click or tap in a house makes the view truly full screen; a mouse click also locks the mouse for looking around.
+function lukusta(e) {
+  if (!mang.kaib || !mangukast.classList.contains('taisekraan')) return;
+  if (!document.fullscreenElement && mangukast.requestFullscreen) mangukast.requestFullscreen().catch(() => {});
+  if (e.pointerType === 'mouse' && document.pointerLockElement !== louend && louend.requestPointerLock) {
+    try {
+      const p = louend.requestPointerLock();
+      if (p && p.catch) p.catch(() => {});
+    } catch {
+      // pointer lock is not available
+    }
+  }
 }
 louend.addEventListener('pointerup', vabasta);
 louend.addEventListener('pointercancel', vabasta);
@@ -476,6 +510,7 @@ function alusta() {
   klahvid.clear();
   const koht = peidukohad[Math.floor(Math.random() * 4)]; // behind one of the top houses
   Object.assign(vanaisa, { x: koht.x, y: koht.y, z: 0, olek: 'peidus', aeg: 0, hupe: null, hupeAeg: 0, kinni: 0 });
+  taisVaade(false);
   mang = { kaib: true, aeg: 0, sees: false };
   vajutused.clear();
   korjatud.clear();
@@ -487,6 +522,7 @@ function alusta() {
 
 function lopp() {
   mang.kaib = false;
+  if (mang.sees) taisVaade(false); // the end screen and high scores show in the normal page again
   heli.vaikus();
   heli.bonk();
   heli.kone('Sain kätte!', true);
@@ -936,8 +972,36 @@ function joonista() {
 
 // ---------- inside a house: a real 3D view drawn with raycasting ----------
 
-const VAATE_K = 440; // height of the 3D view; the buttons are below it
-const KIIRI = 200; // number of rays, one per 2-pixel column
+// These change when the 3D view goes full screen (see taisVaade).
+let VAATE_K = 440; // height of the 3D view; the touch buttons are below it
+let KIIRI = 200; // number of rays, one per 2-pixel column
+let TASAND = 0.5; // half the width of the view at distance 1: a wider screen shows more
+let SKAALA = 400; // height of a wall on screen at distance 1
+const PUUTE = navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
+
+// Inside a house the 3D view fills the whole screen; outside it is the 400 × 560 yard again.
+function taisVaade(sees) {
+  mangukast.classList.toggle('taisekraan', sees);
+  document.body.classList.toggle('lukus', sees);
+  if (sees) {
+    W = Math.max(320, window.innerWidth);
+    H = Math.max(320, window.innerHeight);
+  } else {
+    W = 400;
+    H = 560;
+    if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
+    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+  }
+  VAATE_K = !sees ? 440 : PUUTE ? H - clamp(Math.round(H * 0.17), 90, 130) : H;
+  KIIRI = Math.min(480, Math.round(W / 2));
+  zPuhver = new Float32Array(KIIRI);
+  TASAND = clamp(W / (2 * VAATE_K), 0.5, 1);
+  SKAALA = W / (2 * TASAND);
+  louendiSuurus();
+}
+window.addEventListener('resize', () => {
+  if (mangukast.classList.contains('taisekraan')) taisVaade(true);
+});
 // One map per house. Walls: 1 wallpaper, 2 bricks, 3 wood, 4 wallpaper with a painting,
 // 5 bookshelf, 6 window, 9 the way out. Floor: . empty, * star, P plant, L lamp,
 // V where grandpa hides around a corner.
@@ -1220,19 +1284,26 @@ const tuba = {
 const korjatud = new Set(); // stars picked up in this game, as 'house:x,y'
 const BOONUS = 3; // seconds a star adds to your time
 const HUPE_AEG = 0.7; // how long grandpa's jump out of hiding lasts
-const zPuhver = new Float32Array(KIIRI);
+let zPuhver = new Float32Array(KIIRI);
 const NUPUD = [
-  { id: 'vasak', x: 4, mark: '◀' },
-  { id: 'edasi', x: 103, mark: '▲' },
-  { id: 'tagasi', x: 202, mark: '▼' },
-  { id: 'parem', x: 301, mark: '▶' },
+  { id: 'vasak', mark: '◀' },
+  { id: 'edasi', mark: '▲' },
+  { id: 'tagasi', mark: '▼' },
+  { id: 'parem', mark: '▶' },
 ];
+function nupuKast(i) {
+  const w = (W - 20) / 4;
+  return { x: 4 + i * (w + 4), w };
+}
 const vajutused = new Map(); // pointer id -> button id, so two fingers work at once
 
 function nuppPunktis(p) {
   if (p.y < VAATE_K) return null;
-  const nupp = NUPUD.find((n) => p.x >= n.x && p.x < n.x + 95);
-  return nupp ? nupp.id : null;
+  const i = NUPUD.findIndex((n, j) => {
+    const k = nupuKast(j);
+    return p.x >= k.x && p.x < k.x + k.w;
+  });
+  return i >= 0 ? NUPUD[i].id : null;
 }
 
 function ruut(x, y) {
@@ -1276,6 +1347,7 @@ function sisene(m) {
   s.hoiatatud = false;
   s.raputus = 0;
   mang.sees = true;
+  taisVaade(true);
   siht = null;
   vajutab = false;
   vajutused.clear();
@@ -1286,6 +1358,7 @@ function sisene(m) {
 function lahku() {
   const m = tuba.maja;
   mang.sees = false;
+  taisVaade(false);
   vajutused.clear();
   siht = null;
   mangija.x = m.x + m.w / 2;
@@ -1465,7 +1538,7 @@ function joonistaSprait(kaamera, a) {
   const tx = inv * (dirY * sx - dirX * sy);
   const ty = inv * (-plY * sx + plX * sy);
   if (ty < 0.15) return;
-  const yks = VAATE_K / ty; // one wall height on screen at this distance
+  const yks = SKAALA / ty; // one wall height on screen at this distance
   const ekraanX = (W / 2) * (1 + tx / ty);
   const h = a.korgus * yks;
   const w = a.laius * yks;
@@ -1487,7 +1560,9 @@ function joonistaKaed(s) {
   const kiik = s.kondib ? Math.sin(kell * 11) * 7 : Math.sin(kell * 2) * 2;
   for (const p of [-1, 1]) {
     ctx.save();
-    ctx.translate(W / 2 + p * 110, VAATE_K + 18 + kiik * p);
+    const k = clamp(VAATE_K / 440, 0.8, 2); // bigger hands on a bigger screen
+    ctx.translate(W / 2 + p * 110 * k, VAATE_K + (18 + kiik * p) * k);
+    ctx.scale(k, k);
     ctx.rotate(-p * 0.3);
     ctx.fillStyle = '#ffc933';
     ctx.strokeStyle = '#2b2340';
@@ -1531,8 +1606,8 @@ function joonistaSees() {
 
   const dirX = Math.cos(s.nurk);
   const dirY = Math.sin(s.nurk);
-  const plX = -dirY * 0.66;
-  const plY = dirX * 0.66;
+  const plX = -dirY * TASAND;
+  const plY = dirX * TASAND;
   const lai = W / KIIRI;
   ctx.imageSmoothingEnabled = false;
   for (let i = 0; i < KIIRI; i++) {
@@ -1568,7 +1643,7 @@ function joonistaSees() {
     seinX -= Math.floor(seinX);
     let texX = Math.min(63, Math.floor(seinX * 64));
     if ((kylg === 0 && rx < 0) || (kylg === 1 && ry > 0)) texX = 63 - texX;
-    const korgus = VAATE_K / kaugus;
+    const korgus = SKAALA / kaugus;
     const y0 = pool - korgus / 2;
     ctx.drawImage(seinaTekstuur(tyyp), texX, 0, 1, 64, i * lai, y0, lai + 0.5, korgus);
     const tume = Math.min(0.75, kaugus / 10 + (kylg ? 0.15 : 0));
@@ -1605,7 +1680,7 @@ function joonistaSees() {
   ctx.fillText(`⭐ ${siin}/${s.kokku}   ⏱ ${Math.floor(mang.aeg)} s`, 18, 24);
 
   // small map in the corner
-  const r = 5;
+  const r = Math.max(5, Math.round(Math.min(W, H) / 90));
   const mx0 = W - 12 * r - 8;
   const my0 = 8;
   ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
@@ -1635,23 +1710,30 @@ function joonistaSees() {
     ctx.fill();
   }
 
-  // touch buttons
-  ctx.fillStyle = '#ffe0ec';
-  ctx.fillRect(0, VAATE_K, W, H - VAATE_K);
-  ctx.strokeStyle = '#2b2340';
-  ctx.lineWidth = 3;
-  joon(0, VAATE_K, W, VAATE_K);
-  const all = new Set(vajutused.values());
-  for (const n of NUPUD) {
-    ctx.fillStyle = all.has(n.id) ? '#ffc933' : '#8c6cf2';
-    kast(n.x, VAATE_K + 12, 95, H - VAATE_K - 24, 18);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 34px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(n.mark, n.x + 47.5, VAATE_K + (H - VAATE_K) / 2);
+  // touch buttons, only on touch screens
+  if (VAATE_K < H) {
+    ctx.fillStyle = '#ffe0ec';
+    ctx.fillRect(0, VAATE_K, W, H - VAATE_K);
+    ctx.strokeStyle = '#2b2340';
+    ctx.lineWidth = 3;
+    joon(0, VAATE_K, W, VAATE_K);
+    const all = new Set(vajutused.values());
+    NUPUD.forEach((n, i) => {
+      const k = nupuKast(i);
+      ctx.fillStyle = all.has(n.id) ? '#ffc933' : '#8c6cf2';
+      kast(k.x, VAATE_K + 12, k.w, H - VAATE_K - 24, 18);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 34px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(n.mark, k.x + k.w / 2, VAATE_K + (H - VAATE_K) / 2);
+    });
+  }
+
+  if (!PUUTE && mang.kaib && document.pointerLockElement !== louend) {
+    mull('🖱️ Klõpsa pildil ja vaata hiirega ringi', W / 2, VAATE_K - 30);
   }
 
   if (huue && kell < huue.kuni) {

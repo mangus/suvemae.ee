@@ -99,3 +99,21 @@ button {
 .tabel ol {
   padding-left: 1.6rem;
 }
+
+/* Inside a house the 3D view covers the whole screen. */
+.mangukast.taisekraan {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  border: 0;
+  border-radius: 0;
+  background: #2b2340;
+}
+
+.mangukast.taisekraan canvas {
+  height: 100%;
+}
+
+body.lukus {
+  overflow: hidden;
+}

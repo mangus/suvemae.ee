@@ -1599,58 +1599,38 @@ function drawScareFace(g, cx, cy, s, t) {
     const y = cy - s * (0.46 + i * 0.06);
     g.beginPath(); g.moveTo(cx - s * 0.3, y); g.quadraticCurveTo(cx, y + s * 0.07, cx + s * 0.3, y); g.stroke();
   }
-  const ey = cy - s * 0.18;
-  const ex = s * 0.3;
+  // Big wide-open eyes with tiny shaking pupils, like the monkeys in the hotel.
+  const ey = cy - s * 0.2;
+  const ex = s * 0.31;
   for (const side of [-1, 1]) {
     const x = cx + side * ex;
-    blob(g, x, ey, s * 0.21, s * 0.18, '#050000');
-    blob(g, x, ey, s * 0.15, s * 0.12, '#efe2c0');
-    g.strokeStyle = '#c00000';
-    g.lineWidth = Math.max(1, s * 0.01);
-    for (let v = 0; v < 8; v++) {
-      const a = v * 0.785 + side * 0.3;
-      g.beginPath();
-      g.moveTo(x + Math.cos(a) * s * 0.15, ey + Math.sin(a) * s * 0.12);
-      g.lineTo(x + Math.cos(a + 0.2) * s * 0.1, ey + Math.sin(a + 0.2) * s * 0.08);
-      g.lineTo(x + Math.cos(a) * s * 0.06, ey + Math.sin(a) * s * 0.05);
-      g.stroke();
-    }
+    blob(g, x, ey, s * 0.24, s * 0.28, '#1a0d06');
+    blob(g, x, ey, s * 0.22, s * 0.26, '#fffdf5');
     const jx = (Math.random() - 0.5) * s * 0.02;
-    const glow = g.createRadialGradient(x + jx, ey, 0, x + jx, ey, s * 0.08);
-    glow.addColorStop(0, '#ffff80');
-    glow.addColorStop(0.35, '#ff1a00');
-    glow.addColorStop(1, 'rgba(120,0,0,0.7)');
-    g.fillStyle = glow;
-    g.beginPath(); g.arc(x + jx, ey, s * 0.07, 0, Math.PI * 2); g.fill();
-    blob(g, x + jx, ey, s * 0.015, s * 0.03, '#000');
-    const inner = x - side * s * 0.2;
-    const outer = x + side * s * 0.24;
-    poly(g, [inner, ey - s * 0.06, outer, ey - s * 0.3, outer, ey - s * 0.21, inner, ey + s * 0.01], fur);
+    const jy = (Math.random() - 0.5) * s * 0.02;
+    blob(g, x + jx, ey + jy, s * 0.05, s * 0.055, '#120606');
   }
-  blob(g, cx - s * 0.07, cy + s * 0.12, s * 0.04, s * 0.06, '#1a0603');
-  blob(g, cx + s * 0.07, cy + s * 0.12, s * 0.04, s * 0.06, '#1a0603');
+  blob(g, cx - s * 0.07, cy + s * 0.14, s * 0.04, s * 0.06, '#1a0603');
+  blob(g, cx + s * 0.07, cy + s * 0.14, s * 0.04, s * 0.06, '#1a0603');
+  // A wide grin full of teeth that snaps open and shut.
   const open = 0.8 + 0.2 * Math.sin(t * 40);
-  const mw = s * 0.52;
-  const mh = s * 0.3 * open;
-  const my = cy + s * 0.5;
-  blob(g, cx, my, mw * 1.06, mh * 1.12, '#3a0000');
-  blob(g, cx, my, mw, mh, '#120000');
-  blob(g, cx, my + mh * 0.3, mw * 0.5, mh * 0.4, '#5a0008');
-  const n = 10;
-  const tw = (mw * 1.8) / n;
-  for (let i = 0; i < n; i++) {
-    const x0 = cx - mw * 0.9 + i * tw;
-    const xm = x0 + tw / 2;
-    const edge = mh * Math.sqrt(Math.max(0, 1 - ((xm - cx) / mw) ** 2));
-    const fang = i === 1 || i === n - 2 ? 1.9 : 1;
-    const len = mh * 0.42 * fang;
-    poly(g, [x0, my - edge, x0 + tw, my - edge, xm, my - edge + len], '#efe6cf');
-    poly(g, [x0, my + edge, x0 + tw, my + edge, xm, my + edge - len * 0.8], '#e2d6b8');
+  const u = s * 0.026;
+  const x0 = cx - 24 * u;
+  const x1 = cx + 24 * u;
+  const my = cy + s * 0.3;
+  g.save();
+  g.beginPath(); g.moveTo(x0, my); g.quadraticCurveTo(cx, my + 28 * u * open, x1, my); g.quadraticCurveTo(cx, my + 9 * u, x0, my);
+  g.fillStyle = '#2a0000'; g.fill(); g.clip();
+  g.fillStyle = '#f0e8d0';
+  for (let x = x0; x < x1; x += 5 * u) {
+    g.fillRect(x, my - u, 4 * u, 8 * u);
+    g.fillRect(x + 2 * u, my + (14 * open - 5) * u, 4 * u, 10 * u);
   }
+  g.restore();
   g.fillStyle = '#8a0000';
   for (let i = 0; i < 4; i++) {
-    const x = cx - mw * 0.6 + i * mw * 0.4;
-    g.fillRect(x, my + mh * 0.6, Math.max(1, s * 0.015), s * (0.1 + 0.05 * i) * Math.min(1, t * 2));
+    const x = cx - 10 * u + i * 6.5 * u;
+    g.fillRect(x, my + 11 * u * open, Math.max(1, s * 0.015), s * (0.1 + 0.05 * i) * Math.min(1, t * 2));
   }
 }
 

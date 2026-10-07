@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kollane agent</title>
+<meta name="description" content="Üliraske õudusmäng: agent kollases kaitseülikonnas hiilib pimedas rajatises, kogub läbipääsukaarte L1–L6 ja paneb rajatise õhku.">
+<link rel="stylesheet" href="stiil.css">
+<script src="mang.js" defer></script>
+</head>
+<body>
+<div id="hud">
+  <a class="tagasi" href="../">← labor</a>
+  <span>KAARDID <b id="hKaardid"></b></span>
+  <span>ELU <b class="punane">❤</b></span>
+  <span>NÄRVID <b id="hNarvid"></b></span>
+  <span>LAENGUD <b id="hSiht"></b></span>
+  <span id="hAeg" class="punane"></span>
+  <span id="hTeade" class="teade"></span>
+</div>
+<canvas id="mang"></canvas>
+
+<section id="menyy" class="ekraan">
+  <div class="terminal">
+    <p class="rida">&gt; RAJATIS 7 · TURVATERMINAL</p>
+    <h1>KOLLANE AGENT</h1>
+    <p>Sina oled agent kollases kaitseülikonnas. Sinu ülesanne: <b>hävita rajatis.</b></p>
+    <ul>
+      <li>Leia läbipääsukaardid <b>L1, L2, L3, L4, L5, L6</b>. Kaart avab sama numbriga ukse.</li>
+      <li>Pane laengud (pommid ja keemilised ained) nelja sihtmärgi juurde: seisa sihtmärgi kõrval, kuni ring saab täis.</li>
+      <li>Kui kõik laengud on paigas, jookse tagasi väljapääsu juurde enne plahvatust.</li>
+      <li>Sul on <b>1 elu</b> ja <b>3 närvi</b>. Iga äkkhirmutus võtab ühe närvi. Kui närvid otsas, on elu läinud.</li>
+    </ul>
+    <p class="juhis">Liigu: nooled või WASD · telefonis lohista sõrme</p>
+    <p class="hoiatus">⚠ ÜLIRASKE · siin on äkkhirmutused · heli sisse!</p>
+    <button id="sisene" type="button">SISENE RAJATISSE</button>
+    <p id="parim" class="rida"></p>
+  </div>
+</section>
+
+<section id="ligipaas" class="ekraan peidus">
+  <p class="suur">LIGIPÄÄS - ANTUD!</p>
+</section>
+
+<section id="labi" class="ekraan peidus">
+  <div class="terminal">
+    <p class="suur punane">MÄNG LÄBI!</p>
+    <div id="labiInfo" class="kast"></div>
+    <p class="staatus">Agendi staatus: Teadmata</p>
+    <button class="uuesti" type="button">PROOVI UUESTI</button>
+  </div>
+</section>
+
+<section id="voit" class="ekraan peidus">
+  <div class="terminal">
+    <p class="suur">MISSIOON TÄIDETUD!</p>
+    <div id="voitInfo" class="kast"></div>
+    <p class="staatus">Agendi staatus: Elus</p>
+    <button class="uuesti" type="button">MÄNGI UUESTI</button>
+  </div>
+</section>
+</body>
+</html>

@@ -1,0 +1,34 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #000; color: #39ff6a; font-family: "Courier New", ui-monospace, monospace; overflow: hidden; }
+body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+
+#hud { display: flex; flex-wrap: wrap; gap: .3em 1.1em; align-items: center; padding: .4em .7em; border-bottom: 2px solid #39ff6a; font-size: 14px; background: #020a04; }
+#hud b { color: #eaffee; letter-spacing: .05em; }
+.tagasi { color: #ffd400; text-decoration: none; font-weight: bold; }
+.punane { color: #ff4136 !important; }
+.teade { flex-basis: 100%; color: #ffd400; min-height: 1.2em; }
+.kaart { display: inline-block; padding: 0 .25em; margin-right: .15em; border-radius: 3px; color: #000; font-weight: bold; }
+.kaart.puudu { background: #222; color: #555; }
+
+#mang { flex: 1; width: 100%; min-height: 0; display: block; touch-action: none; }
+
+.ekraan { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, .93); padding: 1em; overflow: auto; z-index: 5; }
+.peidus { display: none; }
+.terminal { max-width: 34em; width: 100%; border: 2px solid #39ff6a; padding: 1.2em 1.4em; background: #000; box-shadow: 0 0 24px rgba(57, 255, 106, .35); }
+.terminal h1 { margin: .2em 0 .5em; font-size: clamp(28px, 8vw, 48px); color: #ffd400; text-shadow: 0 0 12px rgba(255, 212, 0, .6); letter-spacing: .08em; }
+.terminal ul { padding-left: 1.2em; line-height: 1.45; }
+.rida { opacity: .7; margin: 0; }
+.juhis { color: #eaffee; }
+.hoiatus { color: #ff4136; font-weight: bold; }
+button { font: inherit; font-weight: bold; font-size: 20px; color: #000; background: #ffd400; border: 0; padding: .7em 1.2em; margin: .6em 0; cursor: pointer; box-shadow: 0 0 16px rgba(255, 212, 0, .5); }
+button:hover, button:focus-visible { background: #fff066; }
+
+.suur { font-size: clamp(30px, 9vw, 64px); font-weight: bold; text-align: center; margin: .3em 0; text-shadow: 0 0 18px currentColor; }
+#ligipaas .suur { animation: vilgu .25s steps(2) infinite; }
+@keyframes vilgu { 50% { opacity: .55; } }
+.kast { border: 2px solid #39ff6a; padding: .8em 1em; white-space: pre-line; line-height: 1.6; }
+.staatus { font-size: 22px; font-weight: bold; text-align: center; color: #ffd400; margin: 1em 0 .3em; }
+#labi .terminal { border-color: #ff4136; box-shadow: 0 0 24px rgba(255, 65, 54, .4); text-align: center; }
+#labi .kast { border-color: #ff4136; color: #ffb3ae; text-align: left; }
+#voit .terminal { text-align: center; }
+#voit .kast { text-align: left; }

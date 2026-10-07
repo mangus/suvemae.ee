@@ -1,12 +1,19 @@
 'use strict';
 // Hea tahte mäng: walk around the Suvemäe house, help students and teachers
 // by choosing what the Good Will Agreement says, and pick up litter.
-// Drawn in a paper-collage style: ink lines, watercolour washes, stitches.
+// Drawn in a picture-book style: scratchy ink, hatching, spirals and a few bold printed colours.
 (() => {
   const W = 720;
   const EESMARK = 12;
   const MAX_PRAHT = 4;
-  const INK = '#2b2622';
+  const INK = '#1c1815';
+  const PUNANE = '#d9493a';
+  const SINEP = '#e3a83a';
+  const SININE = '#3fb0b0';
+  const ROHE = '#7d9a4f';
+  const KORALL = '#ef8a6c';
+  const PABER = '#f5ecd3';
+  const VALGE = '#fffaf0';
   const KIRI = '700 20px "Segoe Print", "Bradley Hand", "Chalkboard SE", "Comic Sans MS", cursive';
 
   const cv = document.getElementById('louend');
@@ -124,7 +131,7 @@
     for (let i = 0; i < 128 * 128; i++) {
       const v = Math.random() * 255;
       id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = v;
-      id.data[i * 4 + 3] = 45;
+      id.data[i * 4 + 3] = 30;
     }
     g.putImageData(id, 0, 0);
   })();
@@ -173,52 +180,41 @@
     return out;
   }
 
-  function wash(c, pts, color, r, layers = 4, j = 8, alpha = 0.2) {
-    c.save();
-    c.globalAlpha = alpha;
-    c.fillStyle = color;
-    for (let l = 0; l < layers; l++) {
-      smoothPath(c, jit(pts, j, r), true);
-      c.fill();
-    }
-    c.restore();
+  function bbox(pts) {
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+    pts.forEach(([x, y]) => {
+      x0 = Math.min(x0, x);
+      y0 = Math.min(y0, y);
+      x1 = Math.max(x1, x);
+      y1 = Math.max(y1, y);
+    });
+    return [x0, y0, x1, y1];
   }
 
-  function ink(c, pts, closed, r, w = 2, j = 1.4) {
+  // Scratchy pen line: one firm stroke and two thin, wandering ones
+  function ink(c, pts, closed, r, w = 2, j = 1.2) {
     c.save();
     c.strokeStyle = INK;
     c.lineCap = 'round';
     c.lineJoin = 'round';
     c.lineWidth = w;
-    smoothPath(c, jit(pts, j, r), closed);
+    smoothPath(c, jit(pts, j * 0.5, r), closed);
     c.stroke();
-    c.lineWidth = w * 0.5;
-    c.globalAlpha = 0.55;
-    smoothPath(c, jit(pts, j, r), closed);
-    c.stroke();
+    c.lineWidth = Math.max(0.6, w * 0.35);
+    c.globalAlpha = 0.8;
+    for (let k = 0; k < 2; k++) {
+      smoothPath(c, jit(pts, j * 1.5, r), closed);
+      c.stroke();
+    }
     c.restore();
   }
 
-  function stitch(c, pts, closed, color, r) {
-    c.save();
-    c.setLineDash([6, 5]);
-    c.strokeStyle = color;
-    c.lineWidth = 1.6;
-    c.lineCap = 'round';
-    smoothPath(c, jit(pts, 1, r), closed);
-    c.stroke();
-    c.restore();
-  }
-
-  // A cut paper piece glued on: soft shadow, flat colour, paper grain
-  function paperCut(c, pts, color, r, j = 2.5) {
+  // Flat printed colour with a little paper grain
+  function flat(c, pts, color, r, j = 1.5) {
     const p = jit(pts, j, r);
-    c.save();
-    c.fillStyle = 'rgba(43,38,34,.18)';
-    c.translate(2.5, 3.5);
-    smoothPath(c, p, true);
-    c.fill();
-    c.restore();
     c.save();
     c.fillStyle = color;
     smoothPath(c, p, true);
@@ -228,6 +224,57 @@
     c.fillRect(-1000, -1000, 3000, 3000);
     c.restore();
     return p;
+  }
+
+  // Diagonal pen hatching that fades in from `from` (0 = left edge, 1 = right edge)
+  function hatch(c, pts, r, gap = 4, from = 0.55, alpha = 0.6) {
+    const [x0, y0, x1, y1] = bbox(pts);
+    const h = y1 - y0;
+    const sx = x0 + (x1 - x0) * from;
+    c.save();
+    smoothPath(c, pts, true);
+    c.clip();
+    c.strokeStyle = INK;
+    c.lineWidth = 0.7;
+    c.lineCap = 'round';
+    for (let d = x0 - h; d < x1 + 2; d += gap) {
+      const f = (d + h / 2 - sx) / (x1 - sx + 1) + 0.3;
+      if (f <= 0) continue;
+      c.globalAlpha = alpha * Math.min(1, f);
+      const k = (r() - 0.5) * 1.4;
+      c.beginPath();
+      c.moveTo(d + k, y1 + 2);
+      c.lineTo(d + h + 4 + k, y0 - 2);
+      c.stroke();
+    }
+    c.restore();
+  }
+
+  // Tiny ink dots inside a shape
+  function stipple(c, pts, r, n, size = 0.8) {
+    const [x0, y0, x1, y1] = bbox(pts);
+    c.save();
+    smoothPath(c, pts, true);
+    c.clip();
+    c.fillStyle = INK;
+    c.globalAlpha = 0.5;
+    for (let i = 0; i < n; i++) {
+      c.beginPath();
+      c.arc(x0 + r() * (x1 - x0), y0 + r() * (y1 - y0), size * (0.5 + r()), 0, Math.PI * 2);
+      c.fill();
+    }
+    c.restore();
+  }
+
+  function spiral(c, x, y, rad, turns, r, w = 1.2) {
+    const n = Math.max(4, Math.round(turns * 12));
+    const pts = [];
+    for (let i = 0; i <= n; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      const d = rad * (i / n);
+      pts.push([x + Math.cos(a) * d, y + Math.sin(a) * d]);
+    }
+    ink(c, pts, false, r, w, 0.25);
   }
 
   function dot(c, x, y, rad, color) {
@@ -249,12 +296,14 @@
     c.restore();
   }
 
-  function flower(c, x, y, color, r) {
-    for (let i = 0; i < 5; i++) {
-      const a = (i / 5) * Math.PI * 2 + r();
-      wash(c, ellipsePts(x + Math.cos(a) * 5, y + Math.sin(a) * 5, 4, 4, 8), color, r, 2, 1, 0.5);
-    }
-    dot(c, x, y, 2.5, '#e0a631');
+  // Curly garden flower on a wiggly stem
+  function curlPlant(c, x, y, h, color, r) {
+    ink(c, [[x, y], [x + 4, y - h * 0.35], [x - 3, y - h * 0.7], [x, y - h]], false, r, 1.3, 0.5);
+    const leaf = flat(c, [[x, y - h * 0.4], [x + 10, y - h * 0.55], [x + 2, y - h * 0.3]], ROHE, r, 0.6);
+    ink(c, leaf, true, r, 0.9, 0.3);
+    const p = flat(c, ellipsePts(x, y - h - 6, 8, 8, 10), color, r, 1);
+    ink(c, p, true, r, 1.2, 0.4);
+    spiral(c, x, y - h - 6, 6, 2, r, 0.9);
   }
 
   // ---------- Background (drawn once) ----------
@@ -264,123 +313,194 @@
     const b = bg.getContext('2d');
     b.scale(S, S);
     const r = rng(11);
-    b.fillStyle = '#f4ecd9';
+    b.fillStyle = PABER;
     b.fillRect(0, 0, W, W);
-    wash(b, ellipsePts(360, 370, 300, 250, 18), '#eaa6a0', r, 3, 30, 0.08);
-    wash(b, ellipsePts(200, 600, 220, 120, 18), '#8fb8c9', r, 3, 30, 0.08);
+    b.fillStyle = INK;
+    for (let i = 0; i < 700; i++) {
+      b.globalAlpha = 0.06 + r() * 0.1;
+      b.beginPath();
+      b.arc(r() * W, r() * W, 0.4 + r() * 0.8, 0, Math.PI * 2);
+      b.fill();
+    }
+    b.globalAlpha = 1;
     b.fillStyle = b.createPattern(grain, 'repeat');
     b.fillRect(0, 0, W, W);
 
+    // Round hills along the top edge, like the rim of a small planet
+    for (let i = 0; i < 9; i++) {
+      const cx = -20 + i * 95 + r() * 20;
+      const hw = 50 + r() * 25;
+      const hh = 26 + r() * 30;
+      const hill = [];
+      for (let k = 0; k <= 12; k++) {
+        const a = Math.PI + (k / 12) * Math.PI;
+        hill.push([cx + Math.cos(a) * hw, 46 + Math.sin(a) * hh]);
+      }
+      const p = flat(b, hill, [PUNANE, KORALL, ROHE][i % 3], r, 1);
+      hatch(b, p, r, 4, 0.6, 0.5);
+      ink(b, p, true, r, 1.4, 0.6);
+      for (let s = 1; s <= 2; s++) {
+        const q = 1 - s * 0.3;
+        ink(b, hill.slice(2, 11).map(([hx, hy]) => [cx + (hx - cx) * q, 46 - (46 - hy) * q]), false, r, 0.8, 0.4);
+      }
+    }
+
+    // Garden path through the middle
+    const tee = [[-10, 380], [120, 350], [240, 395], [360, 365], [480, 400], [600, 360], [730, 385]];
+    b.save();
+    b.strokeStyle = '#f2d58c';
+    b.lineWidth = 34;
+    b.lineCap = 'round';
+    smoothPath(b, tee, false);
+    b.stroke();
+    b.restore();
+    ink(b, tee.map(([x, y]) => [x, y - 17]), false, r, 1, 0.8);
+    ink(b, tee.map(([x, y]) => [x, y + 17]), false, r, 1, 0.8);
+
     // Klass (top left): blackboard and desks
-    const klass = rectPts(28, 40, 300, 255);
-    paperCut(b, klass, '#cfe3df', r);
-    stitch(b, rectPts(38, 50, 280, 235), true, '#2a7f7a', r);
-    const tahvel = paperCut(b, rectPts(70, 62, 210, 44, 3), '#3f6b5a', r, 1.5);
+    const klass = flat(b, rectPts(28, 40, 300, 255), '#f6dc95', r, 2);
+    hatch(b, klass, r, 7, 0.8, 0.35);
+    ink(b, klass, true, r, 1.8, 1);
+    const tahvel = flat(b, rectPts(70, 62, 210, 44, 3), '#2f3b36', r, 1);
     ink(b, tahvel, true, r, 1.6, 0.5);
     b.save();
-    b.strokeStyle = 'rgba(255,255,255,.75)';
-    b.lineWidth = 1.5;
-    smoothPath(b, [[90, 90], [100, 76], [110, 92], [120, 78], [130, 90]], false);
+    b.strokeStyle = 'rgba(255,255,255,.8)';
+    b.lineWidth = 1.4;
+    smoothPath(b, [[90, 92], [98, 74], [108, 92], [116, 76], [126, 92]], false);
     b.stroke();
     b.font = KIRI.replace('20px', '15px');
     b.fillStyle = 'rgba(255,255,255,.85)';
     b.fillText('2 + 3 = 5', 160, 90);
     b.restore();
+    const lauaVarvid = [PUNANE, SININE, VALGE];
     for (let i = 0; i < 2; i++) {
       for (let k = 0; k < 3; k++) {
-        const lauda = paperCut(b, rectPts(62 + k * 88, 140 + i * 72, 62, 34, 3), '#e3b46a', r);
-        ink(b, lauda, true, r, 1.5, 0.6);
-        wash(b, ellipsePts(93 + k * 88, 190 + i * 72, 9, 7, 8), ['#c8553d', '#2a7f7a', '#eaa6a0'][(i + k) % 3], r, 2, 1, 0.6);
+        const lauda = flat(b, rectPts(62 + k * 88, 140 + i * 72, 62, 34, 3), SINEP, r, 1);
+        hatch(b, lauda, r, 3.5, 0.6, 0.5);
+        ink(b, lauda, true, r, 1.5, 0.5);
+        const raamat = flat(b, rectPts(80 + k * 88, 146 + i * 72, 22, 16, 2), lauaVarvid[(i + k) % 3], r, 0.6);
+        ink(b, raamat, true, r, 1, 0.3);
       }
     }
-    label(b, 'Klass', 280, 270, -0.06, '#2a7f7a');
+    label(b, 'Klass', 280, 270, -0.06, PUNANE);
 
-    // Suvemäe ring (top right): cushions in a circle
-    paperCut(b, ellipsePts(545, 172, 132, 122, 20), '#f6dfae', r, 4);
-    stitch(b, ellipsePts(545, 172, 120, 110, 20), true, '#c8553d', r);
-    wash(b, ellipsePts(545, 172, 40, 36, 12), '#c8553d', r, 3, 4, 0.18);
-    flower(b, 545, 172, '#eaa6a0', r);
-    const padjad = ['#c8553d', '#2a7f7a', '#eaa6a0', '#8fb8c9'];
+    // Suvemäe ring (top right): a round little planet with cushions
+    const ring = flat(b, ellipsePts(545, 172, 132, 122, 22), '#f4b49d', r, 3);
+    hatch(b, ring, r, 5, 0.65, 0.45);
+    stipple(b, ring, r, 140, 0.7);
+    ink(b, ring, true, r, 1.8, 1.2);
+    const paike = flat(b, ellipsePts(545, 172, 26, 26, 14), SINEP, r, 1);
+    ink(b, paike, true, r, 1.5, 0.5);
+    spiral(b, 545, 172, 18, 2.5, r, 1.2);
+    const padjad = [PUNANE, SINEP, SININE, VALGE, ROHE, KORALL];
     for (let i = 0; i < 9; i++) {
       const a = (i / 9) * Math.PI * 2;
       const px = 545 + Math.cos(a) * 82;
       const py = 172 + Math.sin(a) * 74;
-      const p = paperCut(b, ellipsePts(px, py, 14, 12, 10), padjad[i % 4], r, 1.5);
+      const p = flat(b, ellipsePts(px, py, 14, 12, 10), padjad[i % 6], r, 1);
+      hatch(b, p, r, 3, 0.55, 0.5);
       ink(b, p, true, r, 1.4, 0.5);
     }
-    label(b, 'Suvemäe ring', 545, 312, 0.04, '#c8553d');
+    label(b, 'Suvemäe ring', 545, 312, 0.04, PUNANE);
 
     // Mänguala (bottom left): toy blocks and a kite
-    const mang = rectPts(32, 430, 292, 255);
-    paperCut(b, mang, '#f7d6d2', r);
-    stitch(b, rectPts(42, 440, 272, 235), true, '#c8553d', r);
-    const klotsid = ['#c8553d', '#2a7f7a', '#e0a631', '#8fb8c9', '#7a5c99'];
+    const mang = flat(b, rectPts(32, 430, 292, 255), '#c6e0e4', r, 2);
+    hatch(b, mang, r, 7, 0.8, 0.35);
+    ink(b, mang, true, r, 1.8, 1);
+    const klotsid = [PUNANE, SINEP, SININE, VALGE, ROHE, KORALL];
     for (let i = 0; i < 9; i++) {
       const x = 70 + (i % 3) * 30 + (i > 5 ? 15 : 0);
       const y = 600 - Math.floor(i / 3) * 22;
-      const p = paperCut(b, rectPts(x, y, 28, 20, 2), klotsid[i % 5], r, 1);
+      const p = flat(b, rectPts(x, y, 28, 20, 2), klotsid[i % 6], r, 0.8);
+      hatch(b, p, r, 2.5, 0.6, 0.5);
       ink(b, p, true, r, 1.2, 0.4);
-      dot(b, x + 8, y + 7, 2.5, 'rgba(255,255,255,.6)');
-      dot(b, x + 20, y + 7, 2.5, 'rgba(255,255,255,.6)');
+      dot(b, x + 8, y + 7, 2.5, 'rgba(255,250,240,.7)');
+      dot(b, x + 20, y + 7, 2.5, 'rgba(255,250,240,.7)');
     }
-    const tuulelohe = paperCut(b, [[240, 470], [272, 505], [240, 560], [208, 505]], '#e0a631', r, 1.5);
+    const tuulelohe = flat(b, [[240, 470], [272, 505], [240, 560], [208, 505]], KORALL, r, 1.5);
+    hatch(b, tuulelohe, r, 3.5, 0.5, 0.5);
     ink(b, tuulelohe, true, r, 1.5, 0.5);
-    ink(b, [[240, 560], [230, 590], [250, 610], [238, 640]], false, r, 1.2, 1);
-    wash(b, ellipsePts(240, 505, 10, 20, 8), '#c8553d', r, 2, 2, 0.4);
-    label(b, 'Mänguala', 120, 462, -0.05, '#c8553d');
+    ink(b, [[240, 472], [240, 558]], false, r, 0.9, 0.3);
+    ink(b, [[210, 505], [270, 505]], false, r, 0.9, 0.3);
+    ink(b, [[240, 560], [228, 585], [250, 605], [236, 628]], false, r, 1.2, 1);
+    dot(b, 229, 586, 4, PUNANE);
+    dot(b, 249, 606, 4, SININE);
+    spiral(b, 236, 636, 7, 1.6, r, 1);
+    label(b, 'Mänguala', 120, 462, -0.05, PUNANE);
 
-    // Köök (bottom right): table with plates and a sink
-    const kook = rectPts(394, 440, 296, 248);
-    paperCut(b, kook, '#d6e6ee', r);
-    stitch(b, rectPts(404, 450, 276, 228), true, '#2a7f7a', r);
-    const laud = paperCut(b, ellipsePts(530, 590, 82, 46, 16), '#e3b46a', r, 2);
+    // Köök (bottom right): table with plates, a sink and a steaming pot
+    const kook = flat(b, rectPts(394, 440, 296, 248), '#d9e6b8', r, 2);
+    hatch(b, kook, r, 7, 0.8, 0.35);
+    ink(b, kook, true, r, 1.8, 1);
+    const laud = flat(b, ellipsePts(530, 590, 82, 46, 16), SINEP, r, 2);
+    hatch(b, laud, r, 4, 0.55, 0.5);
     ink(b, laud, true, r, 1.6, 0.6);
     for (let i = 0; i < 4; i++) {
       const a = (i / 4) * Math.PI * 2 + 0.4;
       const px = 530 + Math.cos(a) * 52;
       const py = 590 + Math.sin(a) * 26;
-      const p = paperCut(b, ellipsePts(px, py, 12, 9, 10), '#fffaf0', r, 0.8);
+      const p = flat(b, ellipsePts(px, py, 12, 9, 10), VALGE, r, 0.8);
       ink(b, p, true, r, 1, 0.3);
-      wash(b, ellipsePts(px, py, 5, 4, 8), '#eaa6a0', r, 1, 1, 0.6);
+      dot(b, px, py, 4, i % 2 ? PUNANE : ROHE);
     }
-    const kraanikauss = paperCut(b, rectPts(600, 465, 70, 40, 3), '#b9c4c9', r, 1);
+    const kraanikauss = flat(b, rectPts(600, 465, 70, 40, 3), '#b9c4c9', r, 1);
+    hatch(b, kraanikauss, r, 3, 0.5, 0.5);
     ink(b, kraanikauss, true, r, 1.5, 0.5);
     ink(b, [[636, 468], [636, 458], [646, 458]], false, r, 2, 0.3);
-    wash(b, ellipsePts(636, 488, 18, 9, 10), '#8fb8c9', r, 2, 2, 0.6);
-    label(b, 'Köök', 450, 470, 0.05, '#2a7f7a');
+    const vesi = flat(b, ellipsePts(636, 488, 18, 9, 10), SININE, r, 1);
+    ink(b, vesi, true, r, 0.9, 0.3);
+    const pott = flat(b, rectPts(625, 610, 40, 30, 3), PUNANE, r, 1);
+    hatch(b, pott, r, 3, 0.5, 0.5);
+    ink(b, pott, true, r, 1.5, 0.5);
+    ink(b, [[625, 616], [617, 616]], false, r, 1.6, 0.3);
+    ink(b, [[665, 616], [673, 616]], false, r, 1.6, 0.3);
+    for (let i = 0; i < 3; i++) {
+      const sx = 634 + i * 11;
+      ink(b, [[sx, 605], [sx - 4, 596], [sx + 3, 588], [sx - 2, 580]], false, r, 1, 0.5);
+    }
+    label(b, 'Köök', 450, 470, 0.05, PUNANE);
 
-    // Hallway: the Suvemäe name in mixed colours like the logo
+    // Hallway: the Suvemäe name in the house colours
     const tahed = ['S', 'u', 'v', 'e', 'm', 'ä', 'e'];
-    const varvid = ['#2a7f7a', '#c8553d', '#e0a631', '#8fb8c9', '#7a5c99', '#eaa6a0', '#6d8b4e'];
+    const varvid = [PUNANE, SININE, KORALL, ROHE, PUNANE, SININE, KORALL];
     tahed.forEach((t, i) => label(b, t, 288 + i * 24, 372 + Math.sin(i) * 5, (r() - 0.5) * 0.4, varvid[i], i === 0 ? 34 : 28));
     ink(b, [[296, 396], [340, 404], [390, 404], [440, 394]], false, r, 1.6, 0.8);
+    spiral(b, 288, 392, 6, 1.5, r, 1);
+    spiral(b, 448, 390, 6, 1.5, r, 1);
 
-    // Little doodles around the hallway
-    for (let i = 0; i < 14; i++) {
+    // Curly flowers along the garden path
+    const lilleVarvid = [PUNANE, SINEP, SININE, KORALL];
+    for (let i = 0; i < 12; i++) {
       const x = 30 + r() * 660;
-      const y = 315 + r() * 105;
+      const y = 330 + r() * 95;
       if (x > 260 && x < 470) continue;
-      flower(b, x, y, varvid[i % varvid.length], r);
+      curlPlant(b, x, y, 14 + r() * 12, lilleVarvid[i % 4], r);
     }
   })();
 
   // ---------- Characters ----------
+  // Round, pear-shaped people with big eyes and long noses, drawn in scratchy ink
   function drawPattern(c, kind, color) {
     c.save();
     c.strokeStyle = color;
     c.fillStyle = color;
-    c.lineWidth = 2;
+    c.lineWidth = 2.2;
     if (kind === 'triibud') {
-      for (let y = -70; y < 0; y += 6) { c.beginPath(); c.moveTo(-30, y); c.lineTo(30, y + 1); c.stroke(); }
+      for (let y = -64; y < -8; y += 7) {
+        c.beginPath();
+        c.moveTo(-26, y);
+        c.quadraticCurveTo(0, y + 3, 26, y);
+        c.stroke();
+      }
     } else if (kind === 'tapid') {
-      for (let y = -66; y < 0; y += 7) for (let x = -24; x < 24; x += 7) dot(c, x + (y % 14 ? 3 : 0), y, 1.6, color);
+      for (let y = -60; y < -10; y += 8) for (let x = -24; x < 26; x += 8) dot(c, x + (y % 16 ? 4 : 0), y, 2, color);
     } else if (kind === 'ruudud') {
-      c.lineWidth = 1.2;
-      for (let x = -30; x < 30; x += 7) { c.beginPath(); c.moveTo(x, -80); c.lineTo(x, 0); c.stroke(); }
-      for (let y = -80; y < 0; y += 7) { c.beginPath(); c.moveTo(-30, y); c.lineTo(30, y); c.stroke(); }
+      c.lineWidth = 1.4;
+      for (let x = -26; x < 26; x += 8) { c.beginPath(); c.moveTo(x, -66); c.lineTo(x, -8); c.stroke(); }
+      for (let y = -64; y < -8; y += 8) { c.beginPath(); c.moveTo(-26, y); c.lineTo(26, y); c.stroke(); }
     } else if (kind === 'lilled') {
-      for (let y = -60; y < 0; y += 13) for (let x = -20; x < 24; x += 12) {
-        for (let i = 0; i < 4; i++) dot(c, x + Math.cos(i * 1.57) * 2.4, y + Math.sin(i * 1.57) * 2.4, 1.6, color);
+      for (let y = -56; y < -12; y += 13) for (let x = -20; x < 24; x += 12) {
+        for (let i = 0; i < 4; i++) dot(c, x + Math.cos(i * 1.57) * 2.6, y + Math.sin(i * 1.57) * 2.6, 1.8, color);
       }
     }
     c.restore();
@@ -390,23 +510,33 @@
     const h = o.hair;
     const col = o.hairColor;
     let pts;
-    if (h === 'bob') pts = [[-15, -68], [-16, -84], [-8, -93], [5, -93], [15, -85], [16, -68], [11, -79], [-11, -79]];
-    else if (h === 'spiky') pts = [[-14, -78], [-15, -88], [-10, -86], [-8, -96], [-3, -89], [1, -98], [5, -89], [10, -95], [11, -86], [15, -87], [14, -78], [0, -84]];
-    else pts = [[-14, -76], [-12, -89], [-3, -94], [7, -93], [13, -87], [14, -76], [3, -84], [-6, -83]];
-    const p = paperCut(c, pts, col, r, 0.8);
-    ink(c, p, true, r, 1.3, 0.4);
+    if (h === 'bob') pts = [[-16, -68], [-17, -86], [-9, -95], [6, -95], [16, -87], [17, -68], [12, -80], [-12, -80]];
+    else if (h === 'spiky') pts = [[-15, -80], [-17, -91], [-11, -89], [-9, -100], [-3, -92], [1, -103], [5, -92], [11, -99], [12, -89], [17, -90], [15, -80], [0, -86]];
+    else pts = [[-15, -78], [-13, -91], [-3, -96], [8, -95], [14, -89], [15, -78], [3, -86], [-6, -85]];
+    const p = flat(c, pts, col, r, 0.6);
+    hatch(c, p, r, 2.6, 0.3, 0.5);
+    ink(c, p, true, r, 1.3, 0.35);
     if (h === 'pats') {
-      [-17, 17].forEach((x) => { const q = paperCut(c, ellipsePts(x, -70, 5, 6, 8), col, r, 0.6); ink(c, q, true, r, 1.2, 0.3); });
+      [-18, 18].forEach((x) => {
+        const q = flat(c, ellipsePts(x, -72, 5, 7, 8), col, r, 0.5);
+        ink(c, q, true, r, 1.1, 0.3);
+      });
     } else if (h === 'bun') {
-      const q = paperCut(c, ellipsePts(0, -97, 7, 6, 8), col, r, 0.6);
-      ink(c, q, true, r, 1.2, 0.3);
+      const q = flat(c, ellipsePts(0, -98, 8, 6, 10), col, r, 0.5);
+      ink(c, q, true, r, 1.1, 0.3);
+      spiral(c, 0, -98, 5, 2, r, 0.8);
     } else if (h === 'curly') {
       for (let i = 0; i < 7; i++) {
         const a = Math.PI + (i / 6) * Math.PI;
-        const q = paperCut(c, ellipsePts(Math.cos(a) * 13, -78 + Math.sin(a) * 14, 5.5, 5.5, 8), col, r, 0.5);
+        const cx = Math.cos(a) * 13;
+        const cy = -80 + Math.sin(a) * 13;
+        const q = flat(c, ellipsePts(cx, cy, 5.5, 5.5, 8), col, r, 0.4);
         ink(c, q, true, r, 1, 0.3);
+        spiral(c, cx, cy, 3.5, 1.5, r, 0.6);
       }
     }
+    // one curl sticking up
+    if (h !== 'bun') ink(c, [[2, -94], [0, -100], [5, -103], [8, -100], [5, -98]], false, r, 1.2, 0.3);
   }
 
   function makeSprite(o) {
@@ -420,93 +550,111 @@
     const r = rng(o.seed);
     x.translate(w / 2, h - 6);
     if (o.teacher) x.scale(1.18, 1.18);
-    const coatBottom = o.teacher ? -16 : -27;
 
-    // legs and shoes
-    ink(x, [[-7, coatBottom - 3], [-8, -3]], false, r, 2.2, 0.6);
-    ink(x, [[7, coatBottom - 3], [8, -3]], false, r, 2.2, 0.6);
+    // thin legs and small black shoes
+    ink(x, [[-7, -14], [-7, -3]], false, r, 1.8, 0.4);
+    ink(x, [[7, -14], [7, -3]], false, r, 1.8, 0.4);
     x.fillStyle = INK;
-    x.beginPath(); x.ellipse(-10, -2, 6, 3, 0, 0, Math.PI * 2); x.fill();
+    x.beginPath(); x.ellipse(-9, -2, 6, 3, 0, 0, Math.PI * 2); x.fill();
     x.beginPath(); x.ellipse(10, -2, 6, 3, 0, 0, Math.PI * 2); x.fill();
 
-    // arms behind the coat
-    ink(x, [[-10, -58], [-19, -44], [-18, -33]], false, r, 2, 0.6);
-    ink(x, [[10, -58], [19, -44], [18, -33]], false, r, 2, 0.6);
-    dot(x, -18, -32, 3, o.skin);
-    dot(x, 18, -32, 3, o.skin);
-
-    // coat with a pattern
-    const coat = [[-10, -63], [0, -64], [10, -63], [15, -45], [20, coatBottom], [0, coatBottom + 1], [-20, coatBottom], [-15, -45]];
-    const cp = paperCut(x, coat, o.coat, r, 0.8);
+    // round, pear-shaped body with a pattern and hatched shade
+    const body = [[0, -63], [11, -60], [19, -48], [23, -32], [21, -18], [12, -11], [0, -10], [-12, -11], [-21, -18], [-23, -32], [-19, -48], [-11, -60]];
+    const bp = flat(x, body, o.coat, r, 0.6);
     x.save();
-    smoothPath(x, cp, true);
+    smoothPath(x, bp, true);
     x.clip();
-    x.globalAlpha = 0.7;
+    x.globalAlpha = 0.85;
     drawPattern(x, o.pattern, o.patColor);
     x.restore();
-    ink(x, cp, true, r, 1.7, 0.4);
+    hatch(x, bp, r, 3, 0.55, 0.55);
+    ink(x, bp, true, r, 1.8, 0.4);
+
+    // short arms with round hands
+    ink(x, [[-20, -42], [-27, -33], [-27, -26]], false, r, 1.8, 0.4);
+    ink(x, [[20, -42], [27, -33], [27, -26]], false, r, 1.8, 0.4);
+    [-27, 27].forEach((hx) => {
+      const p = flat(x, ellipsePts(hx, -24, 3.6, 3.6, 8), o.skin, r, 0.3);
+      ink(x, p, true, r, 1, 0.2);
+    });
 
     if (o.scarf) {
-      const s = paperCut(x, [[-11, -66], [11, -66], [12, -59], [-12, -59]], o.scarf, r, 0.6);
+      const s = flat(x, [[-12, -66], [12, -66], [13, -59], [-13, -59]], o.scarf, r, 0.5);
       ink(x, s, true, r, 1.1, 0.3);
-      const t = paperCut(x, [[4, -60], [10, -60], [11, -46], [5, -47]], o.scarf, r, 0.6);
+      const t = flat(x, [[5, -60], [11, -60], [13, -44], [7, -45]], o.scarf, r, 0.5);
+      hatch(x, t, r, 2.5, 0.3, 0.5);
       ink(x, t, true, r, 1.1, 0.3);
     }
     if (o.book) {
-      const k = paperCut(x, [[12, -44], [24, -46], [25, -32], [13, -30]], o.book, r, 0.5);
+      const k = flat(x, [[14, -36], [27, -38], [28, -23], [15, -21]], o.book, r, 0.5);
+      hatch(x, k, r, 2.5, 0.5, 0.5);
       ink(x, k, true, r, 1.2, 0.3);
     }
 
     // head
-    const head = paperCut(x, ellipsePts(0, -77, 13, 15, 12), o.skin, r, 0.6);
-    ink(x, head, true, r, 1.5, 0.4);
+    const head = flat(x, ellipsePts(0, -78, 14, 15, 14), o.skin, r, 0.5);
+    hatch(x, head, r, 2.8, 0.7, 0.35);
+    ink(x, head, true, r, 1.5, 0.35);
     drawHair(x, o, r);
     if (o.beard) {
-      const b = paperCut(x, [[-12, -73], [-10, -65], [-4, -61], [0, -60], [4, -61], [10, -65], [12, -73], [6, -68], [-6, -68]], o.hairColor, r, 0.6);
-      ink(x, b, true, r, 1.1, 0.3);
+      const bd = flat(x, [[-13, -76], [-11, -66], [-4, -61], [2, -60], [8, -62], [13, -68], [13, -76], [7, -70], [-6, -70]], o.hairColor, r, 0.5);
+      hatch(x, bd, r, 2.4, 0.2, 0.5);
+      ink(x, bd, true, r, 1.1, 0.3);
+    } else {
+      x.save();
+      x.strokeStyle = INK;
+      x.lineWidth = 1.2;
+      x.beginPath();
+      x.arc(-3, -70, 3.2, 0.3, Math.PI - 0.3);
+      x.stroke();
+      x.restore();
+      dot(x, -9, -72, 3, 'rgba(216,49,43,.35)');
     }
-    dot(x, -5, -76, 1.7, INK);
-    dot(x, 5, -76, 1.7, INK);
-    dot(x, -8.5, -70.5, 3.2, 'rgba(214,90,80,.45)');
-    dot(x, 8.5, -70.5, 3.2, 'rgba(214,90,80,.45)');
-    x.save();
-    x.strokeStyle = INK;
-    x.lineWidth = 1.2;
-    x.beginPath();
-    x.arc(0, -71, 3, 0.2, Math.PI - 0.2);
-    x.stroke();
-    x.restore();
+    // big round eyes looking forward
+    [[-4, -81], [5, -81]].forEach(([ex, ey]) => {
+      const e = flat(x, ellipsePts(ex, ey, 3.8, 4.6, 10), VALGE, r, 0.2);
+      ink(x, e, true, r, 1, 0.15);
+      dot(x, ex + 1.3, ey + 0.8, 1.6, INK);
+    });
+    // long nose
+    const nose = flat(x, [[2, -78], [7, -77], [15, -71], [13, -68], [5, -71]], o.skin, r, 0.3);
+    ink(x, nose, true, r, 1.2, 0.2);
+    dot(x, 13, -69.5, 1.6, 'rgba(216,49,43,.5)');
     if (o.glasses) {
       x.save();
       x.strokeStyle = INK;
       x.lineWidth = 1.2;
-      x.beginPath(); x.arc(-5, -76, 4, 0, Math.PI * 2); x.stroke();
-      x.beginPath(); x.arc(5, -76, 4, 0, Math.PI * 2); x.stroke();
-      x.beginPath(); x.moveTo(-1, -76); x.lineTo(1, -76); x.stroke();
+      x.beginPath(); x.arc(-4, -81, 5.5, 0, Math.PI * 2); x.stroke();
+      x.beginPath(); x.arc(5, -81, 5.5, 0, Math.PI * 2); x.stroke();
       x.restore();
     }
     if (o.hat) {
-      const p = paperCut(x, ellipsePts(2, -90, 15, 5, 10), o.hat, r, 0.6);
-      ink(x, p, true, r, 1.2, 0.3);
-      dot(x, 2, -96, 2.2, INK);
+      // tall wavy hat with a pompom
+      const p = flat(x, [[-14, -86], [14, -86], [9, -92], [11, -100], [5, -106], [8, -112], [1, -118], [-2, -111], [-6, -104], [-5, -96], [-10, -92]], o.hat, r, 0.5);
+      hatch(x, p, r, 2.6, 0.5, 0.55);
+      ink(x, p, true, r, 1.3, 0.3);
+      const brim = flat(x, ellipsePts(0, -87, 17, 4, 12), o.hat, r, 0.3);
+      ink(x, brim, true, r, 1.2, 0.2);
+      const pom = flat(x, ellipsePts(1, -118, 3.5, 3.5, 8), SINEP, r, 0.2);
+      ink(x, pom, true, r, 1, 0.2);
     }
     return c;
   }
 
   const TEGELASED = [
-    { name: 'Mia', coat: '#c8553d', pattern: 'triibud', patColor: '#f4ecd9', hair: 'pats', hairColor: '#3b2a20', skin: '#f2d3b8' },
-    { name: 'Uku', coat: '#2a7f7a', pattern: 'ruudud', patColor: '#e0a631', hair: 'spiky', hairColor: '#d9a441', skin: '#e8c4a0' },
-    { name: 'Lumi', coat: '#8fb8c9', pattern: 'lilled', patColor: '#c8553d', hair: 'bob', hairColor: '#1f1a17', skin: '#c99a72' },
-    { name: 'Sass', coat: '#6d8b4e', pattern: 'tapid', patColor: '#f4ecd9', hair: 'curly', hairColor: '#5a3a22', skin: '#8d5e3c' },
-    { name: 'Iris', coat: '#eaa6a0', pattern: 'triibud', patColor: '#2a7f7a', hair: 'bun', hairColor: '#b5562f', skin: '#f5dcc6' },
-    { name: 'Andri', coat: '#7a5c99', pattern: 'tapid', patColor: '#e0a631', hair: 'spiky', hairColor: '#2b2622', skin: '#e9c9a6', hat: '#c8553d' },
-    { name: 'Ruta', teacher: true, aine: 'inglise keel, ühiskonnaõpetuse ja kirjanduse teemad, saksa keel', coat: '#c8553d', pattern: 'tapid', patColor: '#f4ecd9', hair: 'bob', hairColor: '#e3c27a', skin: '#f3d9c2', scarf: '#e0a631', book: '#2a7f7a' },
-    { name: 'Teilo', teacher: true, aine: 'loodusõpetus, bioloogia, geograafia, inimeseõpetus', coat: '#6d8b4e', pattern: 'ruudud', patColor: '#f4ecd9', hair: 'spiky', hairColor: '#e0c07a', skin: '#efcfb0', glasses: true },
-    { name: 'Rabin', teacher: true, aine: 'inglise keel, matemaatika, füüsika', coat: '#8fb8c9', pattern: 'ruudud', patColor: '#c8553d', hair: 'short', hairColor: '#1f1a17', skin: '#a8714a', book: '#e0a631' },
-    { name: 'Natalja', teacher: true, aine: 'kunst, tehnoloogia, Eesti loodus', coat: '#eaa6a0', pattern: 'lilled', patColor: '#2a7f7a', hair: 'bun', hairColor: '#2b2622', skin: '#f0d2b6', scarf: '#7a5c99' },
-    { name: 'Säde', teacher: true, aine: 'inglise keel, kunst, algklassid', coat: '#2a7f7a', pattern: 'lilled', patColor: '#eaa6a0', hair: 'pats', hairColor: '#e8cc85', skin: '#f5dcc6', book: '#c8553d' },
-    { name: 'Marili', teacher: true, aine: 'algklassiõpetaja', coat: '#e0a631', pattern: 'tapid', patColor: '#c8553d', hair: 'curly', hairColor: '#3b2a20', skin: '#e8c4a0', glasses: true },
-    { name: 'Mihkel', teacher: true, aine: 'inglise keel, kunst, ajalugu, eesti keel', coat: '#a8743a', pattern: 'triibud', patColor: '#f4ecd9', hair: 'short', hairColor: '#2b2622', skin: '#e9c9a6' },
+    { name: 'Mia', coat: PUNANE, pattern: 'triibud', patColor: VALGE, hair: 'pats', hairColor: '#3b2a20', skin: '#f2d3b8' },
+    { name: 'Uku', coat: SININE, pattern: 'ruudud', patColor: SINEP, hair: 'spiky', hairColor: '#d99a2b', skin: '#e8c4a0' },
+    { name: 'Lumi', coat: VALGE, pattern: 'tapid', patColor: PUNANE, hair: 'bob', hairColor: INK, skin: '#c99a72' },
+    { name: 'Sass', coat: ROHE, pattern: 'triibud', patColor: SINEP, hair: 'curly', hairColor: '#5a3a22', skin: '#8d5e3c' },
+    { name: 'Iris', coat: KORALL, pattern: 'tapid', patColor: VALGE, hair: 'bun', hairColor: '#b5562f', skin: '#f5dcc6' },
+    { name: 'Andri', coat: SINEP, pattern: 'triibud', patColor: PUNANE, hair: 'spiky', hairColor: INK, skin: '#e9c9a6', hat: PUNANE },
+    { name: 'Ruta', teacher: true, aine: 'inglise keel, ühiskonnaõpetuse ja kirjanduse teemad, saksa keel', coat: PUNANE, pattern: 'tapid', patColor: VALGE, hair: 'bob', hairColor: '#e3c27a', skin: '#f3d9c2', scarf: SINEP, book: SININE },
+    { name: 'Teilo', teacher: true, aine: 'loodusõpetus, bioloogia, geograafia, inimeseõpetus', coat: ROHE, pattern: 'ruudud', patColor: VALGE, hair: 'spiky', hairColor: '#e0c07a', skin: '#efcfb0', glasses: true },
+    { name: 'Rabin', teacher: true, aine: 'inglise keel, matemaatika, füüsika', coat: SININE, pattern: 'ruudud', patColor: SINEP, hair: 'short', hairColor: '#1f1a17', skin: '#a8714a', book: SINEP },
+    { name: 'Natalja', teacher: true, aine: 'kunst, tehnoloogia, Eesti loodus', coat: KORALL, pattern: 'lilled', patColor: VALGE, hair: 'bun', hairColor: '#2b2622', skin: '#f0d2b6', scarf: SININE },
+    { name: 'Säde', teacher: true, aine: 'inglise keel, kunst, algklassid', coat: SININE, pattern: 'lilled', patColor: KORALL, hair: 'pats', hairColor: '#e8cc85', skin: '#f5dcc6', book: PUNANE },
+    { name: 'Marili', teacher: true, aine: 'algklassiõpetaja', coat: SINEP, pattern: 'tapid', patColor: PUNANE, hair: 'curly', hairColor: '#3b2a20', skin: '#e8c4a0', glasses: true },
+    { name: 'Mihkel', teacher: true, aine: 'inglise keel, kunst, ajalugu, eesti keel', coat: VALGE, pattern: 'triibud', patColor: SININE, hair: 'short', hairColor: '#2b2622', skin: '#e9c9a6' },
   ];
 
   const SPAWN = [[150, 230], [270, 200], [500, 250], [600, 120], [150, 520], [520, 520], [440, 180], [620, 380], [240, 640], [330, 330], [90, 400], [400, 620], [660, 600]];
@@ -526,7 +674,7 @@
 
   const player = {
     name: 'sina', isPlayer: true,
-    sprite: makeSprite({ seed: 999, coat: '#e0a631', pattern: 'tapid', patColor: '#c8553d', hair: 'curly', hairColor: '#3b2a20', skin: '#f0cfae', scarf: '#2a7f7a' }),
+    sprite: makeSprite({ seed: 999, coat: PUNANE, pattern: 'tapid', patColor: VALGE, hair: 'curly', hairColor: '#3b2a20', skin: '#f0cfae', scarf: SINEP }),
     x: 360, y: 450, moving: false, phase: 0,
   };
 
@@ -539,22 +687,83 @@
     x.translate(15, 15);
     const r = rng(seed);
     if (kind === 0) {
-      const p = paperCut(x, ellipsePts(0, 0, 9, 8, 9), '#fffaf0', r, 2);
+      const p = flat(x, ellipsePts(0, 0, 9, 8, 9), VALGE, r, 2);
+      hatch(x, p, r, 2.5, 0.5, 0.6);
       ink(x, p, true, r, 1.2, 0.5);
       ink(x, [[-5, -2], [0, 3], [4, -3], [2, 4]], false, r, 0.8, 0.5);
     } else if (kind === 1) {
-      const p = paperCut(x, [[-11, -6], [-3, -1], [3, -1], [11, -6], [11, 6], [3, 1], [-3, 1], [-11, 6]], '#c8553d', r, 0.8);
+      const p = flat(x, [[-11, -6], [-3, -1], [3, -1], [11, -6], [11, 6], [3, 1], [-3, 1], [-11, 6]], PUNANE, r, 0.8);
       ink(x, p, true, r, 1, 0.3);
-      dot(x, 0, 0, 3, '#e0a631');
+      dot(x, 0, 0, 3, SINEP);
     } else {
-      const p = paperCut(x, [[-4, -10], [4, -10], [2, -4], [5, 4], [4, 10], [-4, 10], [-5, 4], [-2, -4]], '#f2e7b8', r, 0.6);
+      const p = flat(x, rectPts(-5, -10, 10, 20, 2), SININE, r, 0.4);
+      hatch(x, p, r, 2.2, 0.5, 0.6);
       ink(x, p, true, r, 1, 0.3);
-      wash(x, ellipsePts(0, -10, 6, 3, 8), '#c8553d', r, 2, 1, 0.7);
-      wash(x, ellipsePts(0, 10, 6, 3, 8), '#c8553d', r, 2, 1, 0.7);
+      ink(x, [[-5, -6], [5, -6]], false, r, 0.8, 0.2);
+      ink(x, [[-5, 6], [5, 6]], false, r, 0.8, 0.2);
     }
     return c;
   }
   const litterSprites = [0, 1, 2].map((k) => makeLitter(k, 50 + k));
+
+  // ---------- Chickens in the garden ----------
+  function makeChicken(body, seed) {
+    const c = document.createElement('canvas');
+    c.width = 44 * S;
+    c.height = 40 * S;
+    const x = c.getContext('2d');
+    x.scale(S, S);
+    x.translate(20, 37);
+    const r = rng(seed);
+    ink(x, [[-3, -7], [-4, -1]], false, r, 1.3, 0.2);
+    ink(x, [[4, -7], [5, -1]], false, r, 1.3, 0.2);
+    ink(x, [[-8, 0], [-4, -1], [-1, 0]], false, r, 1, 0.2);
+    ink(x, [[1, 0], [5, -1], [8, 0]], false, r, 1, 0.2);
+    const tail = flat(x, [[-11, -16], [-19, -30], [-14, -27], [-16, -34], [-8, -22]], PUNANE, r, 0.5);
+    ink(x, tail, true, r, 1, 0.2);
+    const bodyP = flat(x, ellipsePts(0, -16, 14, 10, 14), body, r, 0.6);
+    hatch(x, bodyP, r, 3, 0.5, 0.5);
+    ink(x, bodyP, true, r, 1.4, 0.3);
+    spiral(x, -1, -16, 5, 1.8, r, 0.9);
+    const head = flat(x, ellipsePts(11, -26, 6.5, 6.5, 10), body, r, 0.3);
+    ink(x, head, true, r, 1.2, 0.2);
+    const comb = flat(x, [[7, -31], [8, -36], [10, -33], [12, -37], [14, -32], [15, -31]], PUNANE, r, 0.3);
+    ink(x, comb, true, r, 0.9, 0.2);
+    const beak = flat(x, [[17, -27], [23, -25], [17, -23]], SINEP, r, 0.2);
+    ink(x, beak, true, r, 0.9, 0.1);
+    dot(x, 12.5, -27, 1.4, INK);
+    return c;
+  }
+
+  const kanad = [VALGE, SINEP, VALGE, '#f3c9a0'].map((col, i) => ({
+    kana: true,
+    sprite: makeChicken(col, 300 + i * 7),
+    x: 80 + i * 170, y: 360 + (i % 2) * 40,
+    tx: 80 + i * 170, ty: 360,
+    wait: Math.random() * 2,
+    moving: false, phase: 0, dir: 1, flee: 0,
+  }));
+
+  // Chickens peck around and run off when you come too close
+  function updateKanad(dt) {
+    kanad.forEach((k) => {
+      k.flee = Math.max(0, k.flee - dt);
+      if (running && Math.hypot(k.x - player.x, k.y - player.y) < 55) {
+        const a = Math.atan2(k.y - player.y, k.x - player.x);
+        k.tx = Math.max(30, Math.min(W - 30, k.x + Math.cos(a) * 90));
+        k.ty = Math.max(130, Math.min(W - 10, k.y + Math.sin(a) * 90));
+        k.wait = 0;
+        k.flee = 0.8;
+      }
+      if (k.wait > 0) { k.wait -= dt; k.moving = false; return; }
+      if (stepToward(k, k.tx, k.ty, k.flee ? 130 : 45, dt)) {
+        k.wait = 1 + Math.random() * 3;
+        k.tx = 30 + Math.random() * (W - 60);
+        k.ty = 130 + Math.random() * (W - 150);
+      }
+      if (k.moving) k.phase += dt * 14;
+    });
+  }
 
   // ---------- State ----------
   let running = false;
@@ -840,10 +1049,23 @@
 
   // ---------- Draw ----------
   function drawChar(o, t) {
+    if (o.kana) {
+      const hop = o.moving ? -Math.abs(Math.sin(o.phase)) * 3 : 0;
+      ctx.save();
+      ctx.fillStyle = 'rgba(28,24,21,.16)';
+      ctx.beginPath();
+      ctx.ellipse(o.x, o.y - 1, 12, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.translate(o.x, o.y + hop);
+      if (o.dir === -1) ctx.scale(-1, 1);
+      ctx.drawImage(o.sprite, -20, -37, 44, 40);
+      ctx.restore();
+      return;
+    }
     const bob = o.moving ? -Math.abs(Math.sin(o.phase)) * 4 : Math.sin(t * 2 + (o.phase || 0)) * 0.6;
     const tilt = o.moving ? Math.sin(o.phase) * 0.06 : 0;
     ctx.save();
-    ctx.fillStyle = 'rgba(43,38,34,.16)';
+    ctx.fillStyle = 'rgba(28,24,21,.16)';
     ctx.beginPath();
     ctx.ellipse(o.x, o.y - 2, 18, 5, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -856,7 +1078,7 @@
     ctx.save();
     ctx.font = KIRI.replace('20px', o.isPlayer ? '15px' : '12px');
     ctx.textAlign = 'center';
-    ctx.fillStyle = o.isPlayer ? '#c8553d' : 'rgba(43,38,34,.75)';
+    ctx.fillStyle = o.isPlayer ? PUNANE : 'rgba(28,24,21,.8)';
     ctx.fillText(o.isPlayer ? '★ sina' : o.name, o.x, o.y + 14);
     ctx.restore();
 
@@ -865,9 +1087,9 @@
       ctx.save();
       ctx.translate(o.x + 14, hy);
       ctx.rotate(Math.sin(t * 3) * 0.12);
-      ctx.fillStyle = 'rgba(43,38,34,.25)';
+      ctx.fillStyle = 'rgba(28,24,21,.25)';
       ctx.beginPath(); ctx.arc(2, 3, 14, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#c8553d';
+      ctx.fillStyle = PUNANE;
       ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = INK; ctx.lineWidth = 1.6; ctx.stroke();
       ctx.setLineDash([3, 3]);
@@ -898,7 +1120,7 @@
 
     if (target && running && !paused) {
       ctx.save();
-      ctx.strokeStyle = 'rgba(200,85,61,.7)';
+      ctx.strokeStyle = 'rgba(216,49,43,.7)';
       ctx.setLineDash([4, 4]);
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -907,7 +1129,7 @@
       ctx.restore();
     }
 
-    const all = npcs.concat([player]).sort((a, b) => a.y - b.y);
+    const all = npcs.concat([player], kanad).sort((a, b) => a.y - b.y);
     all.forEach((o) => drawChar(o, t));
   }
 
@@ -921,6 +1143,7 @@
       toastTimer -= dt;
       if (toastTimer <= 0) $('teade').textContent = '';
     }
+    updateKanad(dt);
     draw(now / 1000);
     requestAnimationFrame(frame);
   }

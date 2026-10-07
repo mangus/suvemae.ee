@@ -475,7 +475,8 @@
 
     tuba(14, 400, 137, 306, '#c6e0e4');     // Spordisaal
     tuba(151, 484, 124, 222, '#f7cdbd');    // Lastetuba
-    tuba(275, 484, 220, 222, '#f6dc95');    // Suur tuba
+    tuba(275, 484, 55, 222, '#d7e4ee');     // Vaikne tuba: a quarter of the big room, next to Lastetuba
+    tuba(330, 484, 165, 222, '#f6dc95');    // Suur tuba
     tuba(495, 484, 108, 222, '#c6e0e4');    // Loovtuba
     tuba(603, 484, 103, 222, '#ece3f2');    // WC and washroom
     tuba(532, 128, 71, 44, PORAND);         // small hall in the wing
@@ -489,7 +490,7 @@
 
     // Doorways: gaps in the walls
     b.fillStyle = PORAND;
-    [[138, 306], [138, 400], [567, 400], [633, 400], [567, 172], [188, 484], [406, 484], [538, 484], [616, 484]].forEach(([x, y]) => {
+    [[138, 306], [138, 400], [567, 400], [633, 400], [567, 172], [188, 484], [302, 484], [412, 484], [538, 484], [616, 484]].forEach(([x, y]) => {
       b.fillRect(x - 12, y - 6, 24, 12);
       ink(b, [[x - 12, y - 7], [x - 12, y + 7]], false, r, 1.6, 0.3);
       ink(b, [[x + 12, y - 7], [x + 12, y + 7]], false, r, 1.6, 0.3);
@@ -588,21 +589,34 @@
     nimi('Lastetuba', 213, 506, -0.04);
 
     // Suur tuba: the Suvemäe circle with cushions
-    const ring = flat(b, ellipsePts(385, 605, 80, 72, 22), '#f4b49d', r, 3);
+    const ring = flat(b, ellipsePts(412, 610, 66, 62, 22), '#f4b49d', r, 3);
     hatch(b, ring, r, 5, 0.65, 0.45);
-    stipple(b, ring, r, 100, 0.7);
+    stipple(b, ring, r, 80, 0.7);
     ink(b, ring, true, r, 1.8, 1.2);
-    const paike = flat(b, ellipsePts(385, 605, 22, 22, 14), SINEP, r, 1);
+    const paike = flat(b, ellipsePts(412, 610, 18, 18, 14), SINEP, r, 1);
     ink(b, paike, true, r, 1.5, 0.5);
-    spiral(b, 385, 605, 15, 2.5, r, 1.2);
+    spiral(b, 412, 610, 12, 2.5, r, 1.2);
     const padjad = [PUNANE, SINEP, SININE, VALGE, ROHE, KORALL];
     for (let i = 0; i < 8; i++) {
       const a = (i / 8) * Math.PI * 2;
-      const p = flat(b, ellipsePts(385 + Math.cos(a) * 56, 605 + Math.sin(a) * 50, 12, 10, 10), padjad[i % 6], r, 1);
+      const p = flat(b, ellipsePts(412 + Math.cos(a) * 45, 610 + Math.sin(a) * 42, 11, 9, 10), padjad[i % 6], r, 1);
       hatch(b, p, r, 3, 0.55, 0.5);
       ink(b, p, true, r, 1.4, 0.5);
     }
-    nimi('Suur tuba', 385, 506, 0.03);
+    nimi('Suur tuba', 412, 506, 0.03);
+
+    // Vaikne tuba: a soft bean bag, a lamp and a hush sign
+    nimi('Vaikne', 302, 506, 0, 11);
+    nimi('tuba', 302, 520, 0, 11);
+    label(b, 'šš…', 302, 548, 0, SININE, 13);
+    const kott = flat(b, ellipsePts(302, 640, 20, 24, 14), SININE, r, 1.5);
+    hatch(b, kott, r, 3.5, 0.55, 0.5);
+    ink(b, kott, true, r, 1.5, 0.6);
+    spiral(b, 302, 640, 7, 2, r, 0.9);
+    const lamp = flat(b, ellipsePts(302, 585, 11, 11, 12), SINEP, r, 0.8);
+    ink(b, lamp, true, r, 1.3, 0.4);
+    ink(b, [[302, 596], [302, 612]], false, r, 1.2, 0.3);
+    curlPlant(b, 290, 692, 10, ROHE, r);
 
     // Loovtuba: an easel with a curly painting and a palette
     ink(b, [[531, 640], [549, 540], [567, 640]], false, r, 1.6, 0.4);

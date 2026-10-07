@@ -13,7 +13,7 @@ Pime hotell, mille koridorid on labürint. Korja kõik 100 kalliskivi, enne kui 
 - Labürint on iga kord uus ja selles pole ühtegi tupikut, ainult koridorid.
 - **Mängi koos:** loo tuba või vali menüüst vaba tuba. Ühes toas on 2–4 mängijat, kes korjavad koos samu kalliskive. Kui sinu elud saavad otsa, vaatad edasi teiste mängimist. Toa juht saab ootetoas mängijaid välja visata.
 - Iga korjatud kalliskivi läheb sinu kotti. **Poest** saad nende eest osta oma tegelasele aksessuaare: lips, müts, sall, prillid, kübar, supermantel ja kroon.
-- Poest saad osta ka riideid: püksid 👖, särgid 👕 ja tossud 👟.
+- Poest saad osta ka riideid: püksid 👖, särgid 👕 ja tossud 👟. Pükse ja tosse on mitut värvi ning särgile saab valida 12 värvi vahel.
 - Poest saad osta ka uue tegelase: robot 🤖, kummitus 👻 või tulnukas 👽.
 
 ## Tegijad

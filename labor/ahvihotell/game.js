@@ -30,7 +30,8 @@ const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 const GEM_COLORS = ['#ff3b6b', '#3bd1ff', '#5dff6e', '#ffd23b', '#c77bff'];
 const MAX_PLAYERS = 4;
 const NET_STEP = 1 / 15; // send our position 15 times a second
-const SHIRTS = [['#e53935', '🔴'], ['#fb8c00', '🟠'], ['#fdd835', '🟡'], ['#43a047', '🟢'], ['#1e88e5', '🔵'], ['#8e24aa', '🟣']];
+const SHIRTS = [['#e53935', '🔴'], ['#fb8c00', '🟠'], ['#fdd835', '🟡'], ['#43a047', '🟢'], ['#1e88e5', '🔵'], ['#8e24aa', '🟣'],
+  ['#ec407a', '🌸'], ['#26c6da', '🌊'], ['#c0ca33', '🍋'], ['#8d6e63', '🟤'], ['#fafafa', '⚪'], ['#37474f', '⚫']];
 const SKINS = ['#f6d3b3', '#e2b08a', '#b47b52', '#70472c'];
 const BODIES = [
   { id: 'inimene', name: 'Inimene', icon: '🧍', price: 0 },
@@ -47,12 +48,23 @@ const SHOP = [
   { id: 'keep', slot: 'back', name: 'Supermantel', icon: '🦸', price: 100 },
   { id: 'kroon', slot: 'head', name: 'Kroon', icon: '👑', price: 150 },
   { id: 'teksad', slot: 'legs', name: 'Teksapüksid', icon: '👖', price: 15, color: '#3f6fb5' },
-  { id: 'lyhikesed', slot: 'legs', name: 'Lühikesed püksid', icon: '🩳', price: 20, color: '#43a047' },
+  { id: 'lyhikesed', slot: 'legs', name: 'Lühikesed püksid', icon: '🩳', price: 20, color: '#43a047', short: true },
+  { id: 'sinisedlyhikesed', slot: 'legs', name: 'Sinised lühikesed püksid', icon: '🩳', price: 20, color: '#1e88e5', short: true },
+  { id: 'roosadlyhikesed', slot: 'legs', name: 'Roosad lühikesed püksid', icon: '🩳', price: 20, color: '#f06292', short: true },
   { id: 'punased', slot: 'legs', name: 'Punased püksid', icon: '👖', price: 25, color: '#d32f2f' },
+  { id: 'mustad', slot: 'legs', name: 'Mustad püksid', icon: '👖', price: 25, color: '#263238' },
+  { id: 'roosad', slot: 'legs', name: 'Roosad püksid', icon: '👖', price: 25, color: '#f06292' },
+  { id: 'lillad', slot: 'legs', name: 'Lillad püksid', icon: '👖', price: 25, color: '#7e57c2' },
+  { id: 'kollased', slot: 'legs', name: 'Kollased püksid', icon: '👖', price: 25, color: '#fbc02d' },
   { id: 'triibuline', slot: 'top', name: 'Triibuline särk', icon: '👕', price: 30 },
   { id: 'tahesark', slot: 'top', name: 'Tähega särk', icon: '⭐', price: 40 },
   { id: 'pusa', slot: 'top', name: 'Kapuutsiga pusa', icon: '🧥', price: 50 },
-  { id: 'tossud', slot: 'feet', name: 'Valged tossud', icon: '👟', price: 20 },
+  { id: 'tossud', slot: 'feet', name: 'Valged tossud', icon: '👟', price: 20, color: '#ffffff', stripe: '#e53935' },
+  { id: 'punasedtossud', slot: 'feet', name: 'Punased tossud', icon: '👟', price: 20, color: '#e53935', stripe: '#ffffff' },
+  { id: 'sinisedtossud', slot: 'feet', name: 'Sinised tossud', icon: '👟', price: 20, color: '#1e88e5', stripe: '#ffffff' },
+  { id: 'rohelisedtossud', slot: 'feet', name: 'Rohelised tossud', icon: '👟', price: 20, color: '#43a047', stripe: '#ffffff' },
+  { id: 'roosadtossud', slot: 'feet', name: 'Roosad tossud', icon: '👟', price: 20, color: '#f06292', stripe: '#ffffff' },
+  { id: 'kuldsedtossud', slot: 'feet', name: 'Kuldsed tossud', icon: '👟', price: 60, color: '#ffc107', stripe: '#fff59d' },
   { id: 'saapad', slot: 'feet', name: 'Saapad', icon: '🥾', price: 35 },
   { id: 'helkivad', slot: 'feet', name: 'Helkivad tossud', icon: '✨', price: 70 },
 ];
@@ -299,7 +311,7 @@ function drawHuman(g, look) {
 // Trousers, a shirt style and shoes are worn by people and aliens.
 function drawPerson(g, shirt, skin, alien, hat, worn) {
   const legs = worn('legs');
-  const short = legs && legs.id === 'lyhikesed';
+  const short = legs && legs.short;
   g.fillStyle = legs ? legs.color : '#2b3a67';
   g.fillRect(50, 94, 12, short ? 12 : 26);
   g.fillRect(66, 94, 12, short ? 12 : 26);
@@ -361,9 +373,10 @@ function drawShoes(g, shoe) {
       g.fillStyle = '#6d4c41';
       g.fillRect(x - 6, 110, 12, 10);
       blob(g, x, 121, 9, 4, '#5d4037');
-    } else if (id === 'tossud') {
-      blob(g, x, 121, 9, 4, '#ffffff');
-      g.fillStyle = '#e53935';
+    } else if (shoe && shoe.stripe) {
+      // Sneakers come in many colours with a stripe on the side.
+      blob(g, x, 121, 9, 4, shoe.color);
+      g.fillStyle = shoe.stripe;
       g.fillRect(x - 5, 120, 10, 2);
     } else if (id === 'helkivad') {
       blob(g, x, 121, 9, 4, '#ff4fa0');

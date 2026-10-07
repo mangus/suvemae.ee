@@ -54,22 +54,21 @@ tagaLouend.className = 'juuksed juuksed-taga';
 tagaLouend.setAttribute('aria-hidden', 'true');
 juku.prepend(tagaLouend);
 const jlTaga = tagaLouend.getContext('2d');
-const TAGA = 70; // strands behind the head
+const TAGA = 90; // strands behind the head
 const JL_X = -70; // canvas box inside the figure, matches .juuksed
 const JL_Y = -70;
 const JL_LAIUS = 370;
 const JL_KORGUS = 330;
 const KARVU = 200; // fewer, thicker strands keep slow computers smooth
 const TUKK = 26; // short fringe strands over the forehead
-const OSAD = 18; // segments per strand, enough for tight frizzy curls
-// Four browns, then black, pink, dark red and blond streaks.
-const juuksevarvid = ['#8d4b1f', '#7a3f17', '#9c5826', '#a8632d', '#1f1a1c', '#ff6fb5', '#7a1424', '#f2cf6b'];
-const juuksepaksus = [2.6, 3.2, 2.9, 3.5, 3.1, 3.1, 3.1, 3.1]; // one width per colour, so a colour's strands are drawn together
-const MUST = 4;
-const ROOSA = 5;
-const PUNANE = 6;
-const BLOND = 7;
-const salguToon = (i) => [i % 4, PUNANE, i % 4, MUST, i % 4, ROOSA, BLOND][i % 7];
+const OSAD = 20; // segments per strand, enough for very tight frizzy curls
+// Four dark browns, then pink streaks.
+const juuksevarvid = ['#4a2511', '#3b1d0c', '#57301a', '#633820', '#ff6fb5'];
+const juuksepaksus = [2.6, 3.2, 2.9, 3.5, 3.1]; // one width per colour, so a colour's strands are drawn together
+const ROOSA = 4;
+const TAUSTAVARV = '#3b1d0c'; // the thick hair mass behind the face
+const salguToon = (i) => (i % 5 === 2 ? ROOSA : i % 4); // every fifth strand is pink
+let juukseTaust = null;
 const vaikne = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const karvad = [];
 let juukseMoot = 0;
@@ -79,6 +78,7 @@ function teeJuuksed() {
   const r = pea.offsetWidth / 2;
   const kx = pea.offsetLeft + r - JL_X;
   const ky = pea.offsetTop + r - JL_Y;
+  juukseTaust = { x: kx, y: ky, r };
   // Fringe first, so it survives when slow computers drop half of the hair.
   for (let j = 0; j < TUKK; j++) {
     const fii = -42 + (84 * (j + 0.5)) / TUKK + (Math.random() - 0.5) * 4;
@@ -105,7 +105,7 @@ function teeJuuksed() {
       nihe: 0,
       kiirus: 0,
       faas: Math.random() * 6.3,
-      toon: j % juuksevarvid.length,
+      toon: j % 4, // dark brown fringe
       px: new Float32Array(OSAD + 1),
       py: new Float32Array(OSAD + 1),
     });
@@ -128,7 +128,7 @@ function teeJuuksed() {
     const kaar = (lyhike ? 35 : 20) * -pool; // soft outward flip at the ends
     // Curls: each strand bends back and forth, looser near the roots, rounder at the ends.
     const lokiFaas = Math.random() * 6.3;
-    const lokiSamm = 1.8 + Math.random() * 0.6; // bigger step = tighter, frizzier curls
+    const lokiSamm = 2.7 + Math.random() * 0.5; // bigger step = tighter, frizzier curls
     const lokiSuurus = 55 + Math.random() * 25;
     const puhke = [];
     for (let k = 0; k < OSAD; k++) {
@@ -164,7 +164,7 @@ function teeJuuksed() {
     const alla = -pool * (8 + Math.random() * 10); // then down the back
     const pikkus = (150 + Math.random() * 80) * (0.85 + Math.random() * 0.3);
     const lokiFaas = Math.random() * 6.3;
-    const lokiSamm = 1.8 + Math.random() * 0.6;
+    const lokiSamm = 2.7 + Math.random() * 0.5;
     const lokiSuurus = 55 + Math.random() * 25;
     const puhke = [];
     for (let k = 0; k < OSAD; k++) {
@@ -246,10 +246,29 @@ function liigutaJuukseid(dt, aeg) {
   joonistaJuuksed(jlTaga, moot, true);
 }
 
+// A solid curly mass behind the head, so no sky shows between the strands.
+function joonistaJuukseTaust(c) {
+  const { x, y, r } = juukseTaust;
+  const laius = r + 22;
+  const alla = y + 105;
+  const LOKKE = 8;
+  const samm = (2 * laius) / LOKKE;
+  c.fillStyle = TAUSTAVARV;
+  c.beginPath();
+  c.arc(x, y, r + 12, Math.PI, 0); // over the top of the head
+  c.lineTo(x + laius, alla);
+  for (let j = 0; j < LOKKE; j++) {
+    c.arc(x + laius - samm * (j + 0.5), alla, samm / 2, 0, Math.PI); // curly bottom edge
+  }
+  c.closePath();
+  c.fill();
+}
+
 function joonistaJuuksed(c, moot, taga) {
   c.setTransform(moot, 0, 0, moot, 0, 0);
   c.clearRect(0, 0, JL_LAIUS, JL_KORGUS);
   c.lineCap = 'round';
+  if (taga && juukseTaust) joonistaJuukseTaust(c);
   // One path per colour and segment: a few dozen strokes a frame instead of thousands.
   for (let v = 0; v < juuksevarvid.length; v++) {
     c.strokeStyle = juuksevarvid[v];

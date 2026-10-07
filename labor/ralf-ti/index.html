@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ralf TI</title>
+<meta name="description" content="Ralf TI aitab Suvemäe õpilastel õppida lühikeste videote, mälukaartide ja lihtsa tekstiga.">
+<link rel="stylesheet" href="stiil.css">
+<script src="ralf.js" defer></script>
+</head>
+<body>
+<a class="tagasi" href="../">← labor</a>
+
+<header class="pea">
+  <svg id="ralf" class="ralf" viewBox="0 0 120 130" role="img" aria-label="Robot Ralf">
+    <line x1="60" y1="8" x2="60" y2="24" stroke="#2b2340" stroke-width="4"/>
+    <circle class="tuli" cx="60" cy="8" r="7" fill="#ff5d8f" stroke="#2b2340" stroke-width="3"/>
+    <rect x="14" y="24" width="92" height="70" rx="22" fill="#5ec8f2" stroke="#2b2340" stroke-width="4"/>
+    <rect x="4" y="48" width="12" height="22" rx="5" fill="#ffc933" stroke="#2b2340" stroke-width="3"/>
+    <rect x="104" y="48" width="12" height="22" rx="5" fill="#ffc933" stroke="#2b2340" stroke-width="3"/>
+    <g class="silmad">
+      <circle cx="42" cy="52" r="10" fill="#fff" stroke="#2b2340" stroke-width="3"/>
+      <circle cx="78" cy="52" r="10" fill="#fff" stroke="#2b2340" stroke-width="3"/>
+      <circle cx="44" cy="53" r="4" fill="#2b2340"/>
+      <circle cx="80" cy="53" r="4" fill="#2b2340"/>
+    </g>
+    <rect class="suu" x="44" y="72" width="32" height="8" rx="4" fill="#2b2340"/>
+    <rect x="34" y="98" width="52" height="28" rx="10" fill="#8c6cf2" stroke="#2b2340" stroke-width="4"/>
+    <text x="60" y="117" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">TI</text>
+  </svg>
+  <div>
+    <h1>Ralf TI</h1>
+    <p id="jutt" class="mull">Tere! Mina olen Ralf. Aitan sul õppida. Vali teema!</p>
+  </div>
+</header>
+
+<section>
+  <h2>1. Mida tahad õppida?</h2>
+  <form id="kusi" class="kusi">
+    <input id="kysimus" maxlength="60" placeholder="Kirjuta teema, nt planeedid" aria-label="Teema">
+    <button type="submit">Küsi Ralfilt</button>
+  </form>
+  <div id="teemad" class="nupud"></div>
+</section>
+
+<section id="viisid" hidden>
+  <h2>2. Kuidas tahad õppida?</h2>
+  <div class="nupud">
+    <button type="button" data-viis="video">🎬 Lühike video</button>
+    <button type="button" data-viis="kaardid">🃏 Mälukaardid</button>
+    <button type="button" data-viis="tekst">📖 Lihtne tekst</button>
+  </div>
+</section>
+
+<section id="video" class="osa" hidden>
+  <div class="ekraan">
+    <div id="stseen-emoji" class="stseen-emoji" aria-hidden="true"></div>
+    <p id="stseen-tekst" class="stseen-tekst"></p>
+    <div class="riba"><div id="riba-sees"></div></div>
+  </div>
+  <p class="nupud"><button id="video-nupp" type="button">▶ Mängi</button></p>
+</section>
+
+<section id="kaardid" class="osa" hidden>
+  <button id="kaart" class="kaart" type="button" aria-live="polite">
+    <span id="kaart-silt" class="kaart-silt">Küsimus</span>
+    <span id="kaart-tekst"></span>
+  </button>
+  <p class="vihje">Puuduta kaarti, et näha vastust.</p>
+  <p class="nupud">
+    <button id="eelmine" type="button">←</button>
+    <span id="kaart-nr"></span>
+    <button id="jargmine" type="button">→</button>
+  </p>
+</section>
+
+<section id="tekst" class="osa leht" hidden></section>
+</body>
+</html>

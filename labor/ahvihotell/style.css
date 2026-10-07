@@ -1,0 +1,23 @@
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; font-family: system-ui, sans-serif; color: #fff; }
+#game { position: fixed; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+#hud { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 14px; font-size: 20px; font-weight: 700; background: rgba(0, 0, 0, .5); padding: 6px 14px; border-radius: 999px; white-space: nowrap; }
+#power { color: #6fe0ff; }
+#minimap { position: fixed; top: 58px; right: 10px; width: min(38vw, 200px); height: auto; image-rendering: pixelated; border: 3px solid #4fd2ff; border-radius: 8px; box-shadow: 0 0 16px #4fd2ff; }
+.back { position: fixed; top: 10px; left: 10px; z-index: 5; color: #ffe08a; background: rgba(0, 0, 0, .5); padding: 6px 10px; border-radius: 10px; text-decoration: none; font-weight: 700; }
+.screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 50px 20px 24px; gap: 4px; overflow-y: auto; }
+.screen p { max-width: 34em; margin: 4px 0; font-size: 18px; line-height: 1.4; }
+.screen button { margin-top: 14px; font: inherit; font-size: 26px; font-weight: 800; padding: 12px 34px; border: 0; border-radius: 999px; background: #5dff6e; color: #12301a; cursor: pointer; box-shadow: 0 5px 0 #2a9a3a; }
+#start { background: radial-gradient(circle at 50% 30%, #6b2fa3, #2a0f45 60%, #12051f); }
+#start h1 { font-size: clamp(40px, 11vw, 72px); margin: 0 0 6px; color: #ffd23b; text-shadow: 3px 3px 0 #ff3b6b, 6px 6px 0 #3bd1ff; }
+.warn { background: #ff3b6b; font-weight: 800; padding: 6px 14px; border-radius: 999px; }
+#win { background: radial-gradient(circle, #ffe680, #ff9f3b); color: #3a1a00; }
+#win h1 { font-size: clamp(40px, 11vw, 80px); margin: 0; }
+#over { background: transparent; }
+#over h1 { font-size: clamp(48px, 13vw, 110px); margin: 0; color: #e00000; text-shadow: 0 4px 0 #500, 0 0 30px #f00; letter-spacing: 2px; }
+#over p { color: #ffd0d0; }
+#controls { position: fixed; bottom: 16px; left: 0; right: 0; display: none; justify-content: space-between; padding: 0 14px; pointer-events: none; }
+@media (hover: none), (pointer: coarse) { #controls { display: flex; } }
+.pad { display: flex; gap: 12px; pointer-events: auto; }
+#controls button { width: 74px; height: 74px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, .5); background: rgba(255, 255, 255, .15); color: #fff; font-size: 30px; touch-action: none; }

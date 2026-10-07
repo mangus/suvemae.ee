@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="et">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Ahvihotell</title>
+  <meta name="description" content="Pimedas hotellis on 100 kalliskivi ja kolm hirmsat ahvi: korja kõik kivid ja ära lase end kätte saada!">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="hud" hidden><span id="lives"></span><span id="gems"></span><span id="power" hidden></span></div>
+  <canvas id="minimap" hidden></canvas>
+  <div id="controls" hidden>
+    <div class="pad"><button data-key="left" aria-label="Pööra vasakule">◀</button><button data-key="right" aria-label="Pööra paremale">▶</button></div>
+    <div class="pad"><button data-key="down" aria-label="Tagasi">▼</button><button data-key="up" aria-label="Edasi">▲</button></div>
+  </div>
+  <section id="start" class="screen">
+    <h1>🐒 Ahvihotell</h1>
+    <p class="warn">⚠️ Hirmus mäng! Siin on jumpscare.</p>
+    <p>Sa oled pimedas hotellis. Korja kõik 100 kalliskivi 💎</p>
+    <p>Kolm hirmsat ahvi teavad alati, kus sa oled!</p>
+    <p>Sinine pall 🔵 näitab 30 sekundit kaardil, kus ahvid ja pallid on.</p>
+    <p>Sul on 3 elu ❤️❤️❤️</p>
+    <p><b>W</b> edasi, <b>S</b> tagasi, <b>A</b> ja <b>D</b> pööravad. Telefonis on nupud.</p>
+    <button id="startBtn">Alusta</button>
+  </section>
+  <section id="win" class="screen" hidden>
+    <h1>🏆 Sa võitsid!</h1>
+    <p>Kõik 100 kalliskivi on korjatud ja ahvid jäid ilma!</p>
+    <p>Aeg: <b id="winTime"></b> · Parim: <b id="winBest"></b></p>
+    <button id="winBtn">Mängi uuesti</button>
+  </section>
+  <section id="over" class="screen" hidden>
+    <h1>MÄNG LÄBI</h1>
+    <p>Ahvid said sind kätte. Kalliskive: <b id="overGems"></b>/100</p>
+    <button id="overBtn">Proovi uuesti</button>
+  </section>
+  <a class="back" href="../">← Labor</a>
+  <script src="game.js"></script>
+</body>
+</html>

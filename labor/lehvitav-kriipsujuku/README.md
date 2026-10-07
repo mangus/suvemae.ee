@@ -1,6 +1,6 @@
 # Lehvitav kriipsujuku
 
-Rõõmus kriipsujuku lehvitab ühe käega. Teises käes hoiab ta zombinuga, millelt tilgub rohelist zombilima. Taevast sajab brokoleid!
+Rõõmus kriipsujuku hoiab käes zombinuga, millelt tilgub rohelist zombilima. Taevast sajab brokoleid!
 
 ## Kuidas mängida
 

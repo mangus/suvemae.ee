@@ -286,9 +286,8 @@ p {
 .kasi-lehvitab {
   top: 128px;
   left: 116px;
-  height: 116px;
-  rotate: -118deg;
-  animation: lehvita .72s ease-in-out infinite alternate;
+  height: 104px;
+  rotate: -30deg;
 }
 
 .kabal {
@@ -417,11 +416,6 @@ p {
   100% { translate: 0 26px; opacity: 0; }
 }
 
-@keyframes lehvita {
-  from { rotate: -128deg; }
-  to { rotate: -88deg; }
-}
-
 @keyframes loo {
   0% { rotate: 58deg; }
   40% { rotate: 150deg; }
@@ -461,7 +455,6 @@ p {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .kasi-lehvitab { animation-duration: 2s; }
   .tilk { animation: none; }
   .juku.huppab { animation: none; }
 }

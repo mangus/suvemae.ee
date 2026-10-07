@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beebi maja</title>
+<meta name="description" content="Pääse välja Beebi majast: leia võti, haamer ja mutrivõti, hiili vaikselt ja peitu voodi alla või kappi!">
+<link rel="stylesheet" href="stiil.css">
+<script type="module" src="mang.js"></script>
+</head>
+<body>
+<a class="tagasi" href="../">← labor</a>
+<h1>👶 Beebi maja</h1>
+<p class="juhend">Ärkad Beebi majas ja uks on lukus! Beebi roomab ja vaarub ringi, kõristi käes, ja tahab sinuga peitust mängida. Leia 🔑 võti, 🔨 haamer ja 🔧 mutrivõti, ava VÄLJA-uks ja jookse üles väravasse. Kõndimine teeb müra ja mõni põrandalaud kriuksub: hiili Shift- või C-klahviga või 🤫 nupuga. Peitu voodi alla või kappi! Kui beebi su kätte saab, kallistab ta sind ja algab uus päev. Päevi on 5. Ringi saad vaadata hiire või sõrmega, liikuda nooleklahvide, WASD või nuppudega.</p>
+<div class="mangukast">
+<canvas id="louend" width="400" height="560"></canvas>
+<div id="kate" class="kate">
+<p id="kateTekst">Ärkad Beebi majas ja uks on lukus. Kas pääsed 5 päevaga välja?</p>
+<button id="alusta" type="button">Alusta ▶</button>
+</div>
+</div>
+<p class="info"><span>Aeg: <b id="aeg">0</b> s</span><span>Parim: <b id="parim">0</b> s</span><button id="heliNupp" type="button">🔊 Heli sees</button></p>
+<section class="tabel">
+<h2>Kõige kiiremad põgenejad</h2>
+<form id="vorm" hidden>
+<input id="nimi" maxlength="16" placeholder="Hüüdnimi" aria-label="Hüüdnimi edetabelisse"> <button type="submit">Salvesta</button>
+</form>
+<ol id="edetabel"></ol>
+</section>
+</body>
+</html>

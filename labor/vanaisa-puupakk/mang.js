@@ -1,5 +1,5 @@
-// Vanaisa Puupakk: run away from a singing, dancing grandpa in a log costume
-// who jumps out from behind the corners of the houses.
+// Vanaisa Puupakk: escape from the house of a singing, limping grandpa in a log costume.
+// Find the key, the hammer and the wrench, sneak, hide, and run to the garden gate.
 import { lab } from '../lab.js';
 
 // The yard is 400 × 560; inside a house the 3D view fills the whole screen.
@@ -46,8 +46,8 @@ function kirjuta(voti, vaartus) {
   }
 }
 
-let parim = Number(loe('vanaisa-puupakk-parim')) || 0;
-parimEl.textContent = parim;
+let parim = Number(loe('vanaisa-puupakk-kiireim')) || 0; // fastest escape in seconds
+parimEl.textContent = parim || '–';
 nimiEl.value = loe('vanaisa-puupakk-nimi') || '';
 
 // Our own song. Notes are [step, midi note, length in steps]; one line is 16 eighth notes.
@@ -230,6 +230,30 @@ const heli = {
     vib.stop(t + kestus + 0.05);
   },
 
+  // A creaky floorboard: a squeaky slide through a narrow filter.
+  kriuks() {
+    if (!this.ac) return;
+    const t = this.ac.currentTime;
+    const o = this.ac.createOscillator();
+    const f = this.ac.createBiquadFilter();
+    const g = this.ac.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(320, t);
+    o.frequency.linearRampToValueAtTime(190, t + 0.18);
+    o.frequency.linearRampToValueAtTime(260, t + 0.4);
+    f.type = 'bandpass';
+    f.frequency.value = 900;
+    f.Q.value = 4;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.35, t + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.42);
+    o.connect(f);
+    f.connect(g);
+    g.connect(this.valjund);
+    o.start(t);
+    o.stop(t + 0.45);
+  },
+
   boing() {
     if (!this.ac) return;
     const t = this.ac.currentTime;
@@ -284,7 +308,6 @@ const heli = {
 // ---------- controls ----------
 
 const klahvid = new Set();
-let uksePaus = 0; // right after leaving a house you can't walk straight back in
 let siht = null;
 let vajutab = false;
 const SUUNAD = {
@@ -298,7 +321,11 @@ function klahv(e) {
 window.addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLInputElement) return;
   const k = klahv(e);
-  if (!SUUNAD[k]) return;
+  if (k === 'c' && mang.sees) {
+    tuba.hiilib = !tuba.hiilib; // C turns sneaking on and off
+    return;
+  }
+  if (!SUUNAD[k] && k !== 'Shift') return;
   klahvid.add(k);
   siht = null;
   if (mang.kaib) e.preventDefault();
@@ -312,7 +339,12 @@ function punkt(e) {
 louend.addEventListener('pointerdown', (e) => {
   louend.setPointerCapture(e.pointerId);
   if (mang.sees) {
-    vajutused.set(e.pointerId, nuppPunktis(punkt(e)) || 'vaade');
+    const nupp = nuppPunktis(punkt(e));
+    if (nupp === 'hiili') {
+      tuba.hiilib = !tuba.hiilib; // the sneak button stays on until it is tapped again
+      return;
+    }
+    vajutused.set(e.pointerId, nupp || 'vaade');
     viimaneX.set(e.pointerId, e.clientX);
     lukusta(e);
     return;
@@ -418,6 +450,7 @@ function uuenda(dt) {
   let dx = 0;
   let dy = 0;
   for (const kl of klahvid) {
+    if (!SUUNAD[kl]) continue;
     dx += SUUNAD[kl][0];
     dy += SUUNAD[kl][1];
   }
@@ -433,15 +466,10 @@ function uuenda(dt) {
     if (dx) mangija.suund = Math.sign(dx);
   }
 
-  // Walking up into a door takes you inside the house.
-  if (dy < 0) {
-    for (const m of majad) {
-      const ux = m.x + m.w / 2;
-      if (kell > uksePaus && Math.abs(mangija.x - ux) < 13 && mangija.y > m.y + m.h && mangija.y < m.y + m.h + 12) {
-        sisene(m);
-        return;
-      }
-    }
+  // Reaching the garden gate at the top means you escaped.
+  if (mangija.y < 30 && Math.abs(mangija.x - 200) < 36) {
+    voit();
+    return;
   }
 
   const g = vanaisa;
@@ -495,7 +523,7 @@ function uuenda(dt) {
     }
   }
 
-  if (g.olek === 'jaht' && g.z < 12 && Math.hypot(mangija.x - g.x, mangija.y - g.y) < 24) lopp();
+  if (g.olek === 'jaht' && g.z < 12 && Math.hypot(mangija.x - g.x, mangija.y - g.y) < 24) kinni();
 }
 
 function alusta() {
@@ -513,35 +541,55 @@ function alusta() {
   const koht = peidukohad[Math.floor(Math.random() * 4)]; // behind one of the top houses
   Object.assign(vanaisa, { x: koht.x, y: koht.y, z: 0, olek: 'peidus', aeg: 0, hupe: null, hupeAeg: 0, kinni: 0 });
   taisVaade(false);
-  mang = { kaib: true, aeg: 0, sees: false };
+  mang = {
+    kaib: true, aeg: 0, sees: false, valjas: false, paev: 1, tooriistad: new Set(),
+    kodu: majad[2], jarjekord: [0, 1, 2].sort(() => Math.random() - 0.5),
+  };
   vajutused.clear();
   korjatud.clear();
   huue = null;
   heli.vaikus();
   kate.hidden = true;
   vorm.hidden = true;
+  sisene(mang.kodu); // you wake up inside grandpa's house
 }
 
+// All the days are used up: grandpa wins this time.
 function lopp() {
   mang.kaib = false;
   if (mang.sees) taisVaade(false); // the end screen and high scores show in the normal page again
   heli.vaikus();
   heli.bonk();
   heli.kone('Sain kätte!', true);
-  const sek = Math.floor(mang.aeg);
-  const rekord = sek > parim;
+  viimane = 0;
+  kateTekst.textContent = `${PAEVI} päeva said läbi ja Vanaisa Puupakk jäi seekord võitjaks. Proovi uuesti!`;
+  alustaNupp.textContent = 'Proovi uuesti ▶';
+  kate.hidden = false;
+  vorm.hidden = true;
+  huua('Sain kätte! Tung!', 3);
+}
+
+// You got out through the garden gate: the fewer seconds, the better.
+function voit() {
+  mang.kaib = false;
+  if (mang.sees) taisVaade(false);
+  heli.vaikus();
+  pling();
+  heli.kone('Oi! Sa pääsesid minema!', true);
+  const sek = Math.max(1, Math.floor(mang.aeg));
+  const rekord = !parim || sek < parim;
   if (rekord) {
     parim = sek;
-    kirjuta('vanaisa-puupakk-parim', String(parim));
+    kirjuta('vanaisa-puupakk-kiireim', String(parim));
     parimEl.textContent = parim;
   }
   viimane = sek;
   aegEl.textContent = sek;
-  kateTekst.textContent = `Vanaisa Puupakk sai su kätte! Pidasid vastu ${sek} sekundit.` + (rekord ? ' Uus rekord! 🎉' : '');
-  alustaNupp.textContent = 'Proovi uuesti ▶';
+  kateTekst.textContent = `🎉 Sa pääsesid Vanaisa Puupaku majast! Päev ${mang.paev}/${PAEVI}, aega kulus ${sek} sekundit.` + (rekord ? ' Uus rekord!' : '');
+  alustaNupp.textContent = 'Mängi uuesti ▶';
   kate.hidden = false;
-  vorm.hidden = sek < 1;
-  huua('Sain kätte! Tung!', 3);
+  vorm.hidden = false;
+  huua('Oi-oi, ta pääses!', 3);
 }
 
 vorm.addEventListener('submit', async (e) => {
@@ -551,7 +599,7 @@ vorm.addEventListener('submit', async (e) => {
   vorm.hidden = true;
   kirjuta('vanaisa-puupakk-nimi', nimi);
   try {
-    await minu.addScore(nimi, viimane);
+    await minu.addScore(nimi, viimane, 'pogenemine');
     await naitaTabel();
   } catch (err) {
     const li = document.createElement('li');
@@ -562,7 +610,7 @@ vorm.addEventListener('submit', async (e) => {
 
 async function naitaTabel() {
   try {
-    const parimad = await minu.topScores(10);
+    const parimad = await minu.topScores(10, { board: 'pogenemine', order: 'asc' });
     tabelEl.replaceChildren(
       ...parimad.map((r) => {
         const li = document.createElement('li');
@@ -570,7 +618,7 @@ async function naitaTabel() {
         return li;
       }),
     );
-    if (!parimad.length) tabelEl.innerHTML = '<li>Keegi pole veel mänginud. Ole esimene!</li>';
+    if (!parimad.length) tabelEl.innerHTML = '<li>Keegi pole veel põgenenud. Ole esimene!</li>';
   } catch {
     tabelEl.innerHTML = '<li>Edetabelit ei saanud praegu laadida.</li>';
   }
@@ -1033,6 +1081,16 @@ function joonista() {
     ctx.fill();
   }
 
+  // The garden gate at the top: after escaping from the house, run there.
+  ctx.fillStyle = '#6b4423';
+  ctx.fillRect(166, 0, 7, 32);
+  ctx.fillRect(227, 0, 7, 32);
+  ctx.fillStyle = mang.valjas ? '#2fa84f' : '#b98a5a';
+  for (let x = 177; x < 226; x += 10) ctx.fillRect(x, 4, 6, 24);
+  ctx.fillRect(173, 9, 54, 5);
+  ctx.fillRect(173, 19, 54, 5);
+  if (mang.kaib && mang.valjas) mull('🏁 Värav! Jookse siia!', 200, 66);
+
   const asjad = [
     ...majad.map((m) => ({ y: m.y + m.h, joonista: () => joonistaMaja(m) })),
     { y: mangija.y, joonista: joonistaMangija },
@@ -1082,15 +1140,15 @@ window.addEventListener('resize', () => {
   if (mangukast.classList.contains('taisekraan')) taisVaade(true);
 });
 // One map per house. Walls: 1 wallpaper, 2 bricks, 3 wood, 4 wallpaper with a painting,
-// 5 bookshelf, 6 window, 9 the way out. Floor: . empty, * star, P plant, L lamp,
-// V where grandpa hides around a corner, B a bed you can hide under.
+// 5 bookshelf, 6 window, 9 the locked way out. Floor: . empty, * a tool, P plant, L lamp,
+// V where grandpa hides around a corner, B a bed you can hide under, K a wardrobe to hide in.
 const KAARDID = [
   [
     '111146111111',
     '1*...1....*1',
     '1....5..3B.1',
     '1..P.......1',
-    '1....1...L.1',
+    '1.K..1...L.1',
     '111.1141.111',
     '1V....1....1',
     '1.....1B.*.1',
@@ -1104,7 +1162,7 @@ const KAARDID = [
     '1...1......1',
     '1.*.5..33.B1',
     '1...5..33.*1',
-    '1..........1',
+    '1....K.....1',
     '11.1111.1111',
     '1V....1....1',
     '1..B..1..P.1',
@@ -1118,7 +1176,7 @@ const KAARDID = [
     '1..*1.....*1',
     '1...1...B.L1',
     '1...11.11111',
-    '1..........1',
+    '1......K...1',
     '1.P..2.....1',
     '1....2..V..1',
     '11.111111.11',
@@ -1132,7 +1190,7 @@ const KAARDID = [
     '1*.......*.1',
     '1.11.55.11B1',
     '1.1......1.1',
-    '1.1..P...1.1',
+    '1.1K.P...1.1',
     '1....33....1',
     '1.1..33..1.1',
     '1.1.....B1V1',
@@ -1146,7 +1204,7 @@ const KAARDID = [
     '1....1....*1',
     '1.*..5....B1',
     '1....5..P..1',
-    '1L...1.....1',
+    '1L..K1.....1',
     '11.111111.11',
     '1......1V..1',
     '1..3..B1...1',
@@ -1374,6 +1432,40 @@ const TAHT = tekstuur((t) => {
   t.stroke();
 });
 
+const KAPP = tekstuur((t) => {
+  t.fillStyle = '#5a381c';
+  t.fillRect(2, 0, 60, 6);
+  t.fillStyle = '#7a4a26';
+  t.fillRect(4, 4, 56, 90);
+  t.fillStyle = '#9a6a3c';
+  t.fillRect(8, 10, 23, 80);
+  t.fillRect(33, 10, 23, 80);
+  t.strokeStyle = '#4e2e14';
+  t.lineWidth = 2;
+  t.strokeRect(8, 10, 23, 80);
+  t.strokeRect(33, 10, 23, 80);
+  t.fillStyle = '#ffd166';
+  ring(t, 27, 50, 2.5);
+  ring(t, 37, 50, 2.5);
+}, 64, 96);
+// The three things that open the locked door, drawn from emoji.
+const TOORIISTAD = [
+  { mark: '🔑', nimi: 'Võti' },
+  { mark: '🔨', nimi: 'Haamer' },
+  { mark: '🔧', nimi: 'Mutrivõti' },
+].map((t) => ({
+  ...t,
+  pilt: tekstuur((c) => {
+    c.fillStyle = 'rgba(255, 220, 90, 0.5)';
+    ring(c, 32, 32, 30);
+    c.font = '40px system-ui, sans-serif';
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillText(t.mark, 32, 34);
+  }),
+}));
+const PAEVI = 5; // how many times grandpa may catch you
+
 const tuba = {
   maja: null, kaart: null, x: 0, y: 0, nurk: 0, kondib: false, asjad: [], kokku: 0,
   vx: 0, vy: 0, vz: 0, vOlek: 'peidus', vHupe: 0, ootab: 0, hoiatatud: false, raputus: 0,
@@ -1387,9 +1479,10 @@ const NUPUD = [
   { id: 'edasi', mark: '▲' },
   { id: 'tagasi', mark: '▼' },
   { id: 'parem', mark: '▶' },
+  { id: 'hiili', mark: '🤫' }, // sneak: slow but silent
 ];
 function nupuKast(i) {
-  const w = (W - 20) / 4;
+  const w = (W - 4 * (NUPUD.length + 1)) / NUPUD.length;
   return { x: 4 + i * (w + 4), w };
 }
 const vajutused = new Map(); // pointer id -> button id, so two fingers work at once
@@ -1408,20 +1501,22 @@ function ruut(x, y) {
   return (rida && rida[Math.floor(x)]) || '1';
 }
 
+// Waking up in grandpa's house, under the bed farthest from his corner.
 function sisene(m) {
-  const k = Math.min(1, mang.aeg / 90);
+  const k = Math.min(1, mang.aeg / 120);
   const nr = majad.indexOf(m);
   const s = tuba;
   s.maja = m;
   s.kaart = KAARDID[nr % KAARDID.length];
   s.asjad = [];
   s.kokku = 0;
+  s.porand = [];
+  const voodid = [];
   s.kaart.forEach((rida, y) => {
     [...rida].forEach((c, x) => {
       const voti = `${nr}:${x},${y}`;
+      if (!kinnine(c) && c !== '9') s.porand.push({ x, y });
       if (c === '9') {
-        s.x = x + 0.5;
-        s.y = y - 0.5;
         s.uks = { x: x + 0.5, y };
       } else if (c === 'V') {
         s.vx = x + 0.5;
@@ -1429,51 +1524,83 @@ function sisene(m) {
         s.koduX = x;
         s.koduY = y;
       } else if (c === 'B') {
-        s.asjad.push({ x: x + 0.5, y: y + 0.5, pilt: VOODI, laius: 1, korgus: 0.62, z: 0, voodi: true });
+        voodid.push({ x, y });
+        s.asjad.push({ x: x + 0.5, y: y + 0.5, pilt: VOODI, laius: 1, korgus: 0.62, z: 0, peidik: true });
+      } else if (c === 'K') {
+        s.asjad.push({ x: x + 0.5, y: y + 0.5, pilt: KAPP, laius: 0.95, korgus: 0.95, z: 0, peidik: true });
       } else if (c === 'P') {
         s.asjad.push({ x: x + 0.5, y: y + 0.5, pilt: TAIM, laius: 0.7, korgus: 0.7, z: 0, blokk: true });
       } else if (c === 'L') {
         s.asjad.push({ x: x + 0.5, y: y + 0.5, pilt: LAMP, laius: 0.45, korgus: 0.9, z: 0, blokk: true });
       } else if (c === '*') {
+        const i = mang.jarjekord[s.kokku % TOORIISTAD.length];
         s.kokku++;
-        if (!korjatud.has(voti)) s.asjad.push({ x: x + 0.5, y: y + 0.5, pilt: TAHT, laius: 0.35, korgus: 0.35, z: 0.22, taht: voti });
+        if (!korjatud.has(voti)) {
+          s.asjad.push({ x: x + 0.5, y: y + 0.5, pilt: TOORIISTAD[i].pilt, laius: 0.45, korgus: 0.45, z: 0.12, taht: voti, tooriist: i });
+        }
       }
     });
   });
+  const kaugusKodust = (p) => Math.hypot(p.x - s.koduX, p.y - s.koduY);
+  const voodi = voodid.sort((a, b) => kaugusKodust(b) - kaugusKodust(a))[0] || { x: Math.floor(s.uks.x), y: s.uks.y - 1 };
+  s.x = voodi.x + 0.5;
+  s.y = voodi.y + 0.5;
+  // A few creaky floorboards; stepping on them without sneaking is loud.
+  const lauad = s.porand.filter((p) => s.kaart[p.y][p.x] === '.');
+  s.kriuksud = new Set();
+  while (s.kriuksud.size < Math.min(8, lauad.length)) {
+    const p = lauad[Math.floor(Math.random() * lauad.length)];
+    s.kriuksud.add(p.y * 100 + p.x);
+  }
   s.nurk = -Math.PI / 2;
   s.kondib = false;
-  s.voodis = false;
-  s.silm = 0.5;
+  s.voodis = ruut(s.x, s.y) === 'B';
+  s.kapis = false;
+  s.peidus = s.voodis;
+  s.silm = s.voodis ? 0.12 : 0.5;
+  s.hiilib = false;
+  s.myra = 0;
+  s.ruutNr = Math.floor(s.y) * 100 + Math.floor(s.x);
+  s.vSiht = null;
+  s.viimati = null;
+  s.nuusk = 0;
+  s.kadunud = 0;
+  s.otsiAeg = 0;
+  s.sammuAeg = 0;
+  s.jutuAeg = 5;
   s.vz = 0;
   s.vOlek = 'peidus';
   s.vHupe = 0;
-  s.ootab = 7 - 3 * k;
+  s.ootab = 9 - 3 * k;
   s.hoiatatud = false;
   s.raputus = 0;
   mang.sees = true;
+  mang.valjas = false;
   taisVaade(true);
   siht = null;
   vajutab = false;
   vajutused.clear();
+  klahvid.clear();
   heli.laulab = false;
-  huua('Korja tähti ⭐, peitu voodi alla 🛏️ ja leia roheline VÄLJA-uks!', 3.2);
+  const puudu = puuduvad();
+  huua(puudu ? `🌙 Päev ${mang.paev}/${PAEVI}. Leia ${puudu} ja pääse majast välja!` : `🌙 Päev ${mang.paev}/${PAEVI}. Kõik on käes, mine VÄLJA-ukse juurde!`, 3.5);
 }
 
 function lahku() {
   const m = tuba.maja;
   mang.sees = false;
+  mang.valjas = true;
   taisVaade(false);
   vajutused.clear();
   siht = null;
   mangija.x = m.x + m.w / 2;
   mangija.y = m.y + m.h + 26;
   klahvid.clear();
-  uksePaus = kell + 1;
   const valik = peidukohad.filter((p) => Math.hypot(p.x - mangija.x, p.y - mangija.y) > 200);
   const koht = valik[Math.floor(Math.random() * valik.length)] || peidukohad[0];
   Object.assign(vanaisa, { x: koht.x, y: koht.y, z: 0, olek: 'peidus', aeg: 0, hupe: null, hupeAeg: 0, kinni: 0 });
   heli.laulab = false;
-  huue = null;
+  huua('🎉 Pääsesid majast välja! Nüüd jookse üles väravasse 🏁', 2.5);
 }
 
 // Distances from the player to every floor square, so grandpa can find his way around walls.
@@ -1523,6 +1650,8 @@ function pling() {
 function hyppaValjaSees() {
   tuba.vOlek = 'jaht';
   tuba.vHupe = HUPE_AEG;
+  tuba.kadunud = 0;
+  tuba.viimati = { x: Math.floor(tuba.x), y: Math.floor(tuba.y) };
   tuba.raputus = 0.45;
   huua('TUNG-TUNG-TUNG!!', 1.4);
   heli.laulab = true;
@@ -1530,10 +1659,47 @@ function hyppaValjaSees() {
   heli.kone('Tung tung tung!', true);
 }
 
+// Lines grandpa mutters while he limps around looking for you (our own words).
+const OTSI = ['Kus sa oled?', 'Ma kuulen sind…', 'Tule välja, puupakk ootab!', 'Tung… tung… kus mu külaline on?'];
+
+function puuduvad() {
+  return TOORIISTAD.filter((_, i) => !mang.tooriistad.has(i)).map((t) => t.mark).join(' ');
+}
+
+function juhuslikRuut() {
+  const p = tuba.porand;
+  return p[Math.floor(Math.random() * p.length)];
+}
+
+// Grandpa heard you, so he limps over to see what it was.
+function kuuleb() {
+  const s = tuba;
+  s.vOlek = 'otsib';
+  s.vSiht = { x: Math.floor(s.x), y: Math.floor(s.y) };
+  s.nuusk = 0;
+  s.otsiAeg = 0;
+  huua('👂 Mis see oli? Ma kuulsin midagi!', 1.6);
+  heli.kone('Mis see oli?', true);
+}
+
+// Caught: grandpa carries you back to bed and a new day starts, until the days run out.
+function kinni() {
+  heli.vaikus();
+  heli.bonk();
+  if (mang.paev >= PAEVI) {
+    lopp();
+    return;
+  }
+  mang.paev++;
+  heli.kone('Sain kätte! Tagasi voodisse!', true);
+  sisene(mang.kodu);
+  huua(`🌙 Vanaisa viis su voodisse tagasi. Päev ${mang.paev}/${PAEVI}`, 3);
+}
+
 function uuendaSees(dt) {
   const s = tuba;
-  if (!s.voodis) mang.aeg += dt; // under a bed you are safe, but your time stops
-  const k = Math.min(1, mang.aeg / 90);
+  mang.aeg += dt;
+  const k = Math.min(1, mang.aeg / 120);
   s.raputus = Math.max(0, s.raputus - dt);
   const nupud = new Set(vajutused.values());
   let edasi = 0;
@@ -1542,62 +1708,130 @@ function uuendaSees(dt) {
   if (klahvid.has('ArrowDown') || klahvid.has('s') || nupud.has('tagasi')) edasi -= 1;
   if (klahvid.has('ArrowLeft') || klahvid.has('a') || nupud.has('vasak')) poore -= 1;
   if (klahvid.has('ArrowRight') || klahvid.has('d') || nupud.has('parem')) poore += 1;
+  const hiilib = s.hiilib || klahvid.has('Shift');
   s.nurk += poore * 2.4 * dt;
   s.kondib = edasi !== 0;
-  const dx = Math.cos(s.nurk) * edasi * 2.6 * dt;
-  const dy = Math.sin(s.nurk) * edasi * 2.6 * dt;
+  const kaik = hiilib ? 1.2 : 2.6; // sneaking is slow but silent
+  const dx = Math.cos(s.nurk) * edasi * kaik * dt;
+  const dy = Math.sin(s.nurk) * edasi * kaik * dt;
   const r = 0.22;
-  // Walking up to the green door takes you outside.
-  if (Math.abs(s.x - s.uks.x) < 0.5 && s.y > s.uks.y - 0.3) {
-    lahku();
-    return;
-  }
-  if (ruut(s.x + dx + Math.sign(dx) * r, s.y + dy + Math.sign(dy) * r) === '9') {
-    lahku();
-    return;
+  // The green door only opens with the key, the hammer and the wrench.
+  const uksel = Math.abs(s.x - s.uks.x) < 0.5 && s.y > s.uks.y - 0.3;
+  if (uksel || ruut(s.x + dx + Math.sign(dx) * r, s.y + dy + Math.sign(dy) * r) === '9') {
+    if (mang.tooriistad.size >= TOORIISTAD.length) {
+      lahku();
+      return;
+    }
+    if (!huue || kell > huue.kuni) huua(`🔒 Uks on lukus! Leia veel: ${puuduvad()}`, 1.8);
   }
   const vaba = (x, y) => !s.asjad.some((a) => a.blokk && Math.hypot(a.x - x, a.y - y) < 0.5);
   if (!onSein(ruut(s.x + dx + Math.sign(dx) * r, s.y)) && vaba(s.x + dx, s.y)) s.x += dx;
   if (!onSein(ruut(s.x, s.y + dy + Math.sign(dy) * r)) && vaba(s.x, s.y + dy)) s.y += dy;
 
-  // Stars add bonus seconds to your time.
+  // Picking up the things that open the door.
   const leitud = s.asjad.filter((a) => a.taht && Math.hypot(a.x - s.x, a.y - s.y) < 0.5);
   if (leitud.length) {
-    for (const a of leitud) korjatud.add(a.taht);
+    for (const a of leitud) {
+      korjatud.add(a.taht);
+      mang.tooriistad.add(a.tooriist);
+    }
     s.asjad = s.asjad.filter((a) => !leitud.includes(a));
-    mang.aeg += BOONUS * leitud.length;
     pling();
-    if (s.asjad.some((a) => a.taht)) huua(`⭐ +${BOONUS} sekundit!`, 1.2);
-    else huua('Kõik selle maja tähed käes! 🎉', 1.8);
+    const t = TOORIISTAD[leitud[0].tooriist];
+    const puudu = puuduvad();
+    huua(puudu ? `${t.mark} ${t.nimi} leitud! Veel: ${puudu}` : `${t.mark} Kõik käes! Nüüd mine VÄLJA-ukse juurde! 🚪`, 2.4);
   }
 
-  const oliVoodis = s.voodis;
+  // Hiding under a bed or in a wardrobe.
+  const oliPeidus = s.peidus;
   s.voodis = ruut(s.x, s.y) === 'B';
+  s.kapis = ruut(s.x, s.y) === 'K';
+  s.peidus = s.voodis || s.kapis;
   s.silm += ((s.voodis ? 0.12 : 0.5) - s.silm) * Math.min(1, dt * 8); // crawl down low
-  if (s.voodis && !oliVoodis) huua(s.vOlek === 'jaht' ? 'Hmm… kuhu sa kadusid? 🤔' : '🛏️ Voodi all on turvaline!', 1.8);
+  if (s.peidus && !oliPeidus && s.vOlek !== 'jaht') huua(s.kapis ? '🚪 Kapis on pime ja vaikne…' : '🛏️ Voodi all on turvaline!', 1.6);
+
+  // Walking makes noise and creaky floorboards creak; when it gets too loud, grandpa hears you.
+  const ruutNr = Math.floor(s.y) * 100 + Math.floor(s.x);
+  if (s.kondib && !hiilib) s.myra += dt * 0.22;
+  if (ruutNr !== s.ruutNr) {
+    s.ruutNr = ruutNr;
+    if (s.kriuksud.has(ruutNr) && !hiilib) {
+      s.myra += 0.7;
+      heli.kriuks();
+      huua('KRIIIUKS! 😬', 1);
+    }
+  }
+  s.myra = Math.max(0, s.myra - dt * 0.12);
+  if (s.myra >= 1) {
+    s.myra = 0;
+    if (s.vOlek !== 'jaht') kuuleb();
+  }
 
   const kaugus = Math.hypot(s.x - s.vx, s.y - s.vy);
+  const naebSind = !s.peidus && kaugus < 7 && naeb(s.x, s.y, s.vx, s.vy);
+  s.vHupe = Math.max(0, s.vHupe - dt);
   if (s.vOlek === 'peidus') {
-    // Grandpa waits around a corner and jumps out when you come close.
+    // At first grandpa waits around a corner and jumps out when you come close.
     s.ootab -= dt;
     if (!s.hoiatatud && s.ootab < 1.6) {
       s.hoiatatud = true;
       huua('Tung… tung… keegi on siin!', 1.5);
       if (heli.ac) heli.koputus(heli.ac.currentTime, 0.7);
     }
-    if (s.ootab <= 0 || (!s.voodis && (kaugus < 1.4 || (kaugus < 3 && naeb(s.x, s.y, s.vx, s.vy))))) hyppaValjaSees();
+    if (!s.peidus && (kaugus < 1.4 || (kaugus < 3 && naebSind))) {
+      hyppaValjaSees();
+    } else if (s.ootab <= 0) {
+      s.vOlek = 'otsib';
+      s.vSiht = null;
+      huua('Uhh… lähen vaatan ringi.', 1.6);
+    }
     return;
   }
+  if (s.vOlek === 'otsib' && naebSind) {
+    s.vOlek = 'jaht';
+    s.kadunud = 0;
+    heli.laulab = true;
+    huua('Ahaa! Näen sind! 👀', 1.4);
+    heli.kone('Ahaa! Näen sind!', true);
+  }
+  if (s.vOlek === 'jaht') {
+    if (naebSind) {
+      s.kadunud = 0;
+      s.viimati = { x: Math.floor(s.x), y: Math.floor(s.y) };
+    } else {
+      s.kadunud += dt;
+    }
+    if (s.peidus || s.kadunud > 2.5) {
+      // He lost you: he limps to where he saw you last and sniffs around.
+      s.vOlek = 'otsib';
+      s.vSiht = s.viimati || { x: Math.floor(s.vx), y: Math.floor(s.vy) };
+      s.nuusk = 0;
+      s.otsiAeg = 0;
+      heli.laulab = false;
+      huua(s.peidus ? 'Hmm… kuhu sa kadusid? 🤔' : 'Kus sa oled? 🤔', 1.8);
+      heli.kone('Kus sa oled?', true);
+    }
+  } else {
+    s.jutuAeg -= dt;
+    if (s.jutuAeg <= 0) {
+      s.jutuAeg = 6 + Math.random() * 5;
+      const jutt = OTSI[Math.floor(Math.random() * OTSI.length)];
+      if (!huue || kell > huue.kuni) huua(jutt, 1.8);
+      heli.kone(jutt);
+    }
+  }
 
-  // When you hide under a bed he can't find you and limps back to his corner.
-  const sihtX = s.voodis ? s.koduX : Math.floor(s.x);
-  const sihtY = s.voodis ? s.koduY : Math.floor(s.y);
-  const kaugused = kaugusKaart(sihtX, sihtY);
-  let siheX = s.x;
-  let siheY = s.y;
+  // Find the way around the walls, one square at a time.
+  if (s.vOlek === 'otsib' && !s.vSiht) s.vSiht = juhuslikRuut();
+  const jaht = s.vOlek === 'jaht';
+  const sihtX = jaht ? Math.floor(s.x) : s.vSiht.x;
+  const sihtY = jaht ? Math.floor(s.y) : s.vSiht.y;
   const gx = Math.floor(s.vx);
   const gy = Math.floor(s.vy);
+  let siheX = jaht ? s.x : sihtX + 0.5;
+  let siheY = jaht ? s.y : sihtY + 0.5;
   if (gx !== sihtX || gy !== sihtY) {
+    const kaugused = kaugusKaart(sihtX, sihtY);
     let lahim = Infinity;
     for (const [nx, ny] of [[gx + 1, gy], [gx - 1, gy], [gx, gy + 1], [gx, gy - 1]]) {
       const d = kaugused.get(ny * 100 + nx);
@@ -1608,23 +1842,43 @@ function uuendaSees(dt) {
       }
     }
   }
-  s.vHupe = Math.max(0, s.vHupe - dt);
-  const kiirus = (1.5 + 0.9 * k) * (s.vHupe > 0 ? 1.9 : lonk());
-  const ex = siheX - s.vx;
-  const ey = siheY - s.vy;
-  const e = Math.hypot(ex, ey);
-  if (e > 0.01) {
-    const samm = Math.min(e, kiirus * dt);
-    s.vx += (ex / e) * samm;
-    s.vy += (ey / e) * samm;
+  s.otsiAeg += dt;
+  const kohal = !jaht && Math.hypot(s.vx - siheX, s.vy - siheY) < 0.1;
+  if (kohal || (!jaht && s.otsiAeg > 15)) {
+    // At the spot he stops and sniffs for a moment, then limps somewhere else.
+    if (s.nuusk === 0 && kohal) huua('Nuuh-nuuh… 👃', 1.2);
+    s.nuusk += dt;
+    if (s.nuusk > 2 || !kohal) {
+      s.nuusk = 0;
+      s.otsiAeg = 0;
+      s.vSiht = juhuslikRuut();
+    }
+  } else {
+    const kiirus = jaht ? (1.5 + 0.9 * k) * (s.vHupe > 0 ? 1.9 : lonk()) : (0.9 + 0.5 * k) * lonk();
+    const ex = siheX - s.vx;
+    const ey = siheY - s.vy;
+    const e = Math.hypot(ex, ey);
+    if (e > 0.01) {
+      const samm = Math.min(e, kiirus * dt);
+      s.vx += (ex / e) * samm;
+      s.vy += (ey / e) * samm;
+    }
+    // His limping steps sound louder the closer he is.
+    s.sammuAeg -= dt;
+    if (s.sammuAeg <= 0) {
+      s.sammuAeg = 0.52;
+      if (heli.ac) heli.trumm(heli.ac.currentTime, clamp(0.55 - kaugus * 0.05, 0.03, 0.55));
+    }
   }
   if (s.vHupe > 0) {
     s.vz = Math.sin(Math.PI * (1 - s.vHupe / HUPE_AEG)) * 0.45;
-  } else {
+  } else if (jaht) {
     const f = kell % 1.8;
     s.vz = f < 0.45 ? Math.sin((Math.PI * f) / 0.45) * 0.25 : 0; // he hops while he sings
+  } else {
+    s.vz = 0;
   }
-  if (!s.voodis && kaugus < 0.45 && s.vz < 0.2) lopp();
+  if (!s.peidus && kaugus < 0.45 && s.vz < 0.2) kinni();
 }
 
 // Grandpa is drawn once per frame onto a small canvas and shown as a picture in 3D.
@@ -1717,7 +1971,19 @@ function joonistaVoodiAlune() {
   ctx.fillRect(-10, -10, W + 20, k - 10);
   ctx.fillStyle = '#6b4423';
   for (let x = 10; x < W; x += 80) ctx.fillRect(x, -10, 34, k - 14);
-  if (!huue || kell > huue.kuni) mull('🛏️ Oled voodi all. Siin vanaisa sind kätte ei saa!', W / 2, VAATE_K - 40);
+  if (!huue || kell > huue.kuni) mull('🛏️ Oled voodi all. Siin vanaisa sind kätte ei saa!', W / 2, VAATE_K - 80);
+}
+
+// Peeking out through the gap between the wardrobe doors.
+function joonistaKapiSees() {
+  const pilu = Math.max(24, W * 0.07);
+  ctx.fillStyle = 'rgba(30, 16, 6, 0.97)';
+  ctx.fillRect(-20, -20, W / 2 - pilu / 2 + 20, VAATE_K + 40);
+  ctx.fillRect(W / 2 + pilu / 2, -20, W / 2 + 20, VAATE_K + 40);
+  ctx.fillStyle = '#6b4423';
+  ctx.fillRect(W / 2 - pilu / 2 - 8, -20, 8, VAATE_K + 40);
+  ctx.fillRect(W / 2 + pilu / 2, -20, 8, VAATE_K + 40);
+  if (!huue || kell > huue.kuni) mull('🚪 Oled kapis. Vanaisa ei näe sind!', W / 2, VAATE_K - 80);
 }
 
 function joonistaSees() {
@@ -1734,13 +2000,13 @@ function joonistaSees() {
     ctx.translate((Math.random() - 0.5) * m, (Math.random() - 0.5) * m);
   }
   let gr = ctx.createLinearGradient(0, 0, 0, pool);
-  gr.addColorStop(0, '#fff8e8');
-  gr.addColorStop(1, '#d9c39a');
+  gr.addColorStop(0, '#4a3e36');
+  gr.addColorStop(1, '#9a8566');
   ctx.fillStyle = gr;
   ctx.fillRect(-10, -10, W + 20, pool + 10);
   gr = ctx.createLinearGradient(0, pool, 0, VAATE_K);
-  gr.addColorStop(0, '#7a5232');
-  gr.addColorStop(1, '#d9a873');
+  gr.addColorStop(0, '#3e2818');
+  gr.addColorStop(1, '#a87a4a');
   ctx.fillStyle = gr;
   ctx.fillRect(-10, pool, W + 20, pool + 10);
 
@@ -1786,14 +2052,14 @@ function joonistaSees() {
     const korgus = SKAALA / kaugus;
     const y0 = pool - korgus * (1 - s.silm);
     ctx.drawImage(seinaTekstuur(tyyp), texX, 0, 1, 64, i * lai, y0, lai + 0.5, korgus);
-    const tume = Math.min(0.75, kaugus / 10 + (kylg ? 0.15 : 0));
+    const tume = Math.min(0.88, kaugus / 6 + (kylg ? 0.15 : 0));
     ctx.fillStyle = `rgba(30, 15, 40, ${tume.toFixed(2)})`;
     ctx.fillRect(i * lai, y0, lai + 0.5, korgus);
   }
 
   // Everything standing in the room, the farthest first.
   const kaamera = { x: s.x, y: s.y, dirX, dirY, plX, plY, pool, lai, silm: s.silm };
-  const minuVoodi = (a) => a.voodi && s.voodis && Math.floor(a.x) === Math.floor(s.x) && Math.floor(a.y) === Math.floor(s.y);
+  const minuVoodi = (a) => a.peidik && s.peidus && Math.floor(a.x) === Math.floor(s.x) && Math.floor(a.y) === Math.floor(s.y);
   const spraidid = s.asjad.filter((a) => !minuVoodi(a)).map((a) => (a.taht
     ? { ...a, z: a.z + Math.sin(kell * 3 + a.x) * 0.06, laius: a.laius * Math.max(0.15, Math.abs(Math.cos(kell * 2 + a.y))) }
     : a));
@@ -1803,23 +2069,39 @@ function joonistaSees() {
   spraidid.sort((a, b) => kaugusRuut(b) - kaugusRuut(a));
   for (const a of spraidid) joonistaSprait(kaamera, a);
   ctx.imageSmoothingEnabled = true;
-  if (s.silm > 0.3) joonistaKaed(s);
+  // It is dark in grandpa's house: only the middle of the view is lit, like with a torch.
+  const vari = ctx.createRadialGradient(W / 2, pool, Math.min(W, VAATE_K) * 0.18, W / 2, pool, Math.max(W, VAATE_K) * 0.72);
+  vari.addColorStop(0, 'rgba(12, 6, 22, 0)');
+  vari.addColorStop(1, 'rgba(12, 6, 22, 0.78)');
+  ctx.fillStyle = vari;
+  ctx.fillRect(-10, -10, W + 20, VAATE_K + 20);
+  if (s.kapis) joonistaKapiSees();
+  else if (s.silm > 0.3) joonistaKaed(s);
   else joonistaVoodiAlune();
   ctx.restore();
 
-  // stars and time
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+  // days, tools, time and how loud you are
+  ctx.font = 'bold 15px ui-rounded, system-ui, sans-serif';
+  const tooriistad = TOORIISTAD.map((t, i) => (mang.tooriistad.has(i) ? t.mark : '❔')).join(' ');
+  const hud = `🌙 ${mang.paev}/${PAEVI}   ${tooriistad}   ⏱ ${Math.floor(mang.aeg)} s`;
+  const hudLai = Math.max(180, ctx.measureText(hud).width + 28);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
   ctx.strokeStyle = '#2b2340';
   ctx.lineWidth = 2;
-  kast(8, 8, 150, 30, 12);
+  kast(8, 8, hudLai, 54, 12);
   ctx.fill();
   ctx.stroke();
   ctx.fillStyle = '#2b2340';
-  ctx.font = 'bold 15px ui-rounded, system-ui, sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  const siin = s.kokku - s.asjad.filter((a) => a.taht).length;
-  ctx.fillText(`⭐ ${siin}/${s.kokku}   ⏱ ${Math.floor(mang.aeg)} s`, 18, 24);
+  ctx.fillText(hud, 18, 24);
+  ctx.fillText('👂', 18, 47);
+  ctx.fillStyle = '#e4dcef';
+  ctx.fillRect(42, 42, 100, 10);
+  ctx.fillStyle = s.myra > 0.7 ? '#e8506f' : '#f0a020';
+  ctx.fillRect(42, 42, 100 * Math.min(1, s.myra), 10);
+  ctx.fillStyle = '#2b2340';
+  if (s.hiilib || klahvid.has('Shift')) ctx.fillText('🤫 hiilid', 150, 47);
 
   // small map in the corner
   const r = Math.max(5, Math.round(Math.min(W, H) / 90));
@@ -1829,12 +2111,16 @@ function joonistaSees() {
   ctx.fillRect(mx0 - 2, my0 - 2, 12 * r + 4, 12 * r + 4);
   s.kaart.forEach((rida, y) => {
     [...rida].forEach((c, x) => {
-      if (c === 'B') {
-        ctx.fillStyle = '#5aa0e8';
+      if (c === 'B' || c === 'K') {
+        ctx.fillStyle = c === 'B' ? '#5aa0e8' : '#a0663a';
+        ctx.fillRect(mx0 + x * r, my0 + y * r, r, r);
+      } else if (s.kriuksud.has(y * 100 + x)) {
+        ctx.fillStyle = 'rgba(160, 100, 50, 0.45)'; // a creaky floorboard
         ctx.fillRect(mx0 + x * r, my0 + y * r, r, r);
       }
       if (!onSein(c)) return;
-      ctx.fillStyle = c === '9' ? '#2fa84f' : '#2b2340';
+      const lahti = mang.tooriistad.size >= TOORIISTAD.length;
+      ctx.fillStyle = c === '9' ? (lahti ? '#2fa84f' : '#e8506f') : '#2b2340';
       ctx.fillRect(mx0 + x * r, my0 + y * r, r, r);
     });
   });
@@ -1866,7 +2152,7 @@ function joonistaSees() {
     const all = new Set(vajutused.values());
     NUPUD.forEach((n, i) => {
       const k = nupuKast(i);
-      ctx.fillStyle = all.has(n.id) ? '#ffc933' : '#8c6cf2';
+      ctx.fillStyle = all.has(n.id) || (n.id === 'hiili' && tuba.hiilib) ? '#ffc933' : '#8c6cf2';
       kast(k.x, VAATE_K + 12, k.w, H - VAATE_K - 24, 18);
       ctx.fill();
       ctx.stroke();

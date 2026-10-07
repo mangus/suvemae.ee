@@ -4,10 +4,11 @@ import { lab } from '../lab.js';
 const studio = lab();
 
 const GOAL = 500;
-const BUILD_MS = 2200;
+const BUILD_MS = 3500;
 const PUBLISH_MS = 1500;
-const MAX_ENERGY = 10;
-const ENERGY_EVERY = 1.2; // seconds per credit
+const START_ENERGY = 10;
+const TANK_GROWTH = 3; // more credit space for every published idea
+const ENERGY_EVERY = 1.5; // seconds per credit
 const BUG_CHANCE = 0.4;
 const MAX_BUGS = 6;
 const BEST_KEY = 'bot-game-studio-best';
@@ -15,16 +16,27 @@ const BEST_KEY = 'bot-game-studio-best';
 const IDEAS = [
   { id: 'sky', icon: '🎨', name: 'Paint a sky', fun: 5, cost: 1, needs: [], code: 'sky.color = "light blue";' },
   { id: 'hero', icon: '🙂', name: 'Add a hero', fun: 10, cost: 2, needs: [], code: 'let hero = new Hero("smiley");' },
+  { id: 'sun', icon: '☀️', name: 'Add a sun', fun: 5, cost: 1, needs: ['sky'], code: 'sky.add(new Sun());' },
   { id: 'clouds', icon: '☁️', name: 'Add clouds', fun: 5, cost: 1, needs: ['sky'], code: 'clouds.add(3);' },
   { id: 'music', icon: '🎵', name: 'Add music', fun: 10, cost: 2, needs: ['sky'], code: 'music.play("happy tune");' },
   { id: 'jump', icon: '🦘', name: 'Make the hero jump', fun: 10, cost: 2, needs: ['hero'], code: 'onTap(() => hero.jump());' },
+  { id: 'trees', icon: '🌳', name: 'Plant trees', fun: 5, cost: 2, needs: ['hero'], code: 'ground.plant("tree", 2);' },
   { id: 'coins', icon: '🪙', name: 'Add coins', fun: 15, cost: 3, needs: ['hero'], code: 'coins.spawn({ every: 1 });' },
+  { id: 'hat', icon: '🎩', name: 'Give the hero a hat', fun: 10, cost: 2, needs: ['hero'], code: 'hero.wear("top hat");' },
+  { id: 'bird', icon: '🐦', name: 'Add a bird', fun: 10, cost: 2, needs: ['clouds'], code: 'bird.fly("across the sky");' },
+  { id: 'flowers', icon: '🌸', name: 'Grow flowers', fun: 5, cost: 2, needs: ['trees'], code: 'ground.plant("flower", 5);' },
+  { id: 'pet', icon: '🐶', name: 'Add a pet', fun: 15, cost: 3, needs: ['jump'], code: 'hero.pet = new Puppy();' },
   { id: 'monster', icon: '👾', name: 'Add a monster', fun: 15, cost: 3, needs: ['jump'], code: 'monster.walk("left", "right");' },
   { id: 'rainbow', icon: '🌈', name: 'Add a rainbow', fun: 10, cost: 2, needs: ['clouds'], code: 'sky.add(new Rainbow());' },
+  { id: 'house', icon: '🏠', name: 'Build a house', fun: 10, cost: 3, needs: ['trees'], code: 'world.build(new House());' },
+  { id: 'hearts', icon: '❤️', name: 'Add lives', fun: 15, cost: 3, needs: ['monster'], code: 'hero.lives = 3;' },
   { id: 'scores', icon: '🏆', name: 'Add high scores', fun: 15, cost: 3, needs: ['coins'], code: 'scores.save(nickname, points);' },
+  { id: 'stars', icon: '✨', name: 'Add sparkles', fun: 10, cost: 3, needs: ['rainbow'], code: 'sky.sparkle(5);' },
   { id: 'boss', icon: '🐉', name: 'Add a big boss', fun: 25, cost: 4, needs: ['monster'], code: 'let boss = new Dragon("huge");' },
+  { id: 'fireworks', icon: '🎆', name: 'Add fireworks', fun: 20, cost: 4, needs: ['boss'], code: 'onWin(() => fireworks.go());' },
   { id: 'levels', icon: '🗺️', name: 'Add more levels', fun: 20, cost: 4, needs: ['boss'], code: 'levels.push(level2, level3);' },
-  { id: 'friends', icon: '🤝', name: 'Play with friends', fun: 30, cost: 5, needs: ['scores', 'levels'], code: 'room.join("friends");' },
+  { id: 'castle', icon: '🏰', name: 'Build a castle', fun: 25, cost: 5, needs: ['levels'], code: 'level3.add(new Castle());' },
+  { id: 'friends', icon: '🤝', name: 'Play with friends', fun: 30, cost: 5, needs: ['scores', 'castle'], code: 'room.join("friends");' },
 ];
 
 const $ = (id) => document.getElementById(id);
@@ -39,7 +51,7 @@ const state = {
   live: new Set(), // published
   building: null,
   publishing: 0, // time publishing started, 0 when not publishing
-  energy: MAX_ENERGY,
+  energy: START_ENERGY,
   bugs: [],
   players: 0,
   startedAt: 0,
@@ -51,6 +63,8 @@ const pops = []; // little bangs where bugs got squashed
 const has = (id) => state.built.has(id);
 const funOf = (ids) => IDEAS.filter((i) => ids.has(i.id)).reduce((sum, i) => sum + i.fun, 0);
 const pickOne = (list) => list[Math.floor(Math.random() * list.length)];
+const costOf = (idea) => idea.cost + state.built.size; // every build makes the next one cost 1 more
+const maxEnergy = () => START_ENERGY + state.live.size * TANK_GROWTH;
 
 function say(text) {
   $('say').textContent = text;
@@ -65,7 +79,7 @@ function cardState(idea) {
 }
 
 function cardInfo(kind, idea) {
-  if (kind === 'open') return `⚡${idea.cost} · +${idea.fun} fun`;
+  if (kind === 'open') return `⚡${costOf(idea)} · +${idea.fun} fun`;
   if (kind === 'locked') return 'Build more first';
   if (kind === 'done') return '✅ built, not published';
   return '🌍 live!';
@@ -116,9 +130,9 @@ function pick(id) {
   if (state.publishing) return say('Wait, I am publishing! 🚀');
   const kind = cardState(idea);
   if (kind !== 'open') return say(kind === 'locked' ? 'Build other things first!' : 'Already built! Try another idea.');
-  if (state.energy < idea.cost) return say(`I need ${idea.cost} ⚡ for that. Wait a moment!`);
+  if (state.energy < costOf(idea)) return say(`I need ${costOf(idea)} ⚡ for that. Wait a moment!`);
   if (!state.startedAt) state.startedAt = performance.now();
-  state.energy -= idea.cost;
+  state.energy -= costOf(idea);
   state.building = idea;
   $('bot').classList.add('busy');
   say(`${pickOne(['On it!', 'Writing code…', 'Great idea!', 'Beep boop, building!'])} ${idea.icon}`);
@@ -138,7 +152,7 @@ function finishBuild(idea) {
     spawnBug();
     say(`${idea.icon} is in! But oops, a bug 🐛 got in too. Tap it to squash it!`);
   } else {
-    say(`Done! ${idea.icon} is in your game. Press Publish so players can see it.`);
+    say(`Done! ${idea.icon} is in your game. New ideas now cost 1 ⚡ more. Press Publish so players can see it.`);
   }
   renderCards();
 }
@@ -151,11 +165,12 @@ function publish() {
   say('git push… 🚀 Your game goes live in a moment!');
   beep(523, 0.1);
   setTimeout(() => {
+    const grow = (state.built.size - state.live.size) * TANK_GROWTH;
     state.live = new Set(state.built);
     state.bugs.forEach((bug) => { bug.live = true; });
     state.publishing = 0;
     const n = state.bugs.length;
-    say(n ? `It's live! But ${n} bug${n > 1 ? 's' : ''} went live too 😬 Players don't like bugs. Squash them!` : "It's live! 🎉 Players are coming!");
+    say((n ? `It's live! But ${n} bug${n > 1 ? 's' : ''} went live too 😬 Players don't like bugs. Squash them!` : "It's live! 🎉 Players are coming!") + ` Your ⚡ tank grew by ${grow}!`);
     beep(880, 0.15);
     renderCards();
   }, PUBLISH_MS);
@@ -364,6 +379,8 @@ function draw(t, now) {
     for (let y = 0; y < H; y += 24) ctx.fillRect(0, y, W, 1);
   }
 
+  if (has('sun')) circle(W * 0.1, H * 0.15, H * 0.08 + Math.sin(t * 2) * 2, '#ffd43b');
+
   if (has('rainbow')) {
     const colors = ['#ff6b6b', '#ffa94d', '#ffd43b', '#69db7c', '#4dabf7', '#9775fa'];
     const width = H * 0.035;
@@ -386,6 +403,15 @@ function draw(t, now) {
     }
   }
 
+  if (has('stars')) {
+    for (let i = 0; i < 5; i += 1) {
+      const size = H * (0.04 + 0.03 * Math.abs(Math.sin(t * 3 + i)));
+      label('✨', W * (0.2 + i * 0.15), H * (0.08 + (i % 2) * 0.1), size, 'center');
+    }
+  }
+
+  if (has('bird')) label('🐦', ((t * 50) % (W + 80)) - 40, H * 0.3 + Math.sin(t * 5) * 8, H * 0.08, 'center');
+
   const ground = H * 0.82;
   if (has('hero')) {
     ctx.fillStyle = '#6bd36b';
@@ -393,6 +419,19 @@ function draw(t, now) {
     ctx.fillStyle = '#4cb24c';
     ctx.fillRect(0, ground, W, 4);
   }
+
+  if (has('flowers')) {
+    for (let i = 0; i < 6; i += 1) label('🌸', W * (0.05 + i * 0.18), ground + H * 0.08, H * 0.06, 'center');
+  }
+
+  if (has('trees')) {
+    label('🌳', W * 0.06, ground - H * 0.09, H * 0.2, 'center');
+    label('🌳', W * 0.42, ground - H * 0.07, H * 0.15, 'center');
+  }
+
+  if (has('house')) label('🏠', W * 0.62, ground - H * 0.08, H * 0.17, 'center');
+
+  if (has('castle')) label('🏰', W * 0.9, ground - H * 0.14, H * 0.28, 'center');
 
   if (has('levels')) {
     const w = H * 0.1;
@@ -434,7 +473,10 @@ function draw(t, now) {
     const r = H * 0.07;
     const hop = (phase) => (has('jump') ? Math.abs(Math.sin(t * 3 + phase)) * H * 0.25 : 0);
     if (has('friends')) drawFace(W * 0.1, ground - r - hop(1), r, '#ff8fc7');
-    drawFace(W * 0.22, ground - r - hop(0), r, '#ffc933');
+    const heroY = ground - r - hop(0);
+    drawFace(W * 0.22, heroY, r, '#ffc933');
+    if (has('hat')) label('🎩', W * 0.22, heroY - r * 1.1, r * 1.2, 'center');
+    if (has('pet')) label('🐶', W * 0.33, ground - r * 0.7 - hop(0.6) * 0.5, r * 1.4, 'center');
   }
 
   if (has('music')) {
@@ -443,6 +485,10 @@ function draw(t, now) {
       label('♪', W * 0.3 + i * W * 0.06, y, H * 0.09, 'center', '#8c6cf2');
     }
   }
+
+  if (has('hearts')) label('❤️❤️❤️', 10, H * 0.93, H * 0.06);
+
+  if (has('fireworks')) label('🎆', W * (0.3 + (Math.floor(t) % 3) * 0.2), H * 0.2, H * (0.06 + (t % 1) * 0.12), 'center');
 
   if (has('scores')) label(`🏆 ${Math.floor(t * 10) % 10000}`, W - 10, H * 0.08, H * 0.06, 'right');
 
@@ -477,11 +523,11 @@ function frame(now) {
     energyClock += dt;
     if (energyClock >= ENERGY_EVERY) {
       energyClock = 0;
-      if (state.energy < MAX_ENERGY) state.energy += 1;
+      if (state.energy < maxEnergy()) state.energy += 1;
     }
     if (state.startedAt) {
       const liveBugs = state.bugs.filter((bug) => bug.live).length;
-      const rate = funOf(state.live) / 8 - liveBugs * 3; // players per second
+      const rate = funOf(state.live) / 12 - liveBugs * 3; // players per second
       state.players = Math.max(0, state.players + rate * dt);
       if (state.players >= GOAL) win(now);
     }
@@ -490,7 +536,7 @@ function frame(now) {
   pops.forEach((pop) => { pop.age += dt; });
   while (pops.length && pops[0].age > 0.5) pops.shift();
 
-  $('energy').textContent = state.energy;
+  $('energy').textContent = `${state.energy}/${maxEnergy()}`;
   $('players').textContent = Math.floor(state.players);
   $('bar').style.width = `${Math.min(100, (state.players / GOAL) * 100)}%`;
   $('time').textContent = state.startedAt ? Math.floor(((state.finishedAt || now) - state.startedAt) / 1000) : 0;

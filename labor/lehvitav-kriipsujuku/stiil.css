@@ -236,25 +236,25 @@ p {
   pointer-events: none;
 }
 
-/* Broccoli costume: a hood of floret clusters around the face (under the head)
-   and a suit with a pale stalk and florets over the body (under the arms and legs).
-   Both pictures are SVG files in this folder. */
+/* Giant broccoli costume: a huge crown of floret clusters around and above
+   the face (under the head) and a thick pale stalk over the body (under the
+   arms and legs). Both pictures are SVG files in this folder. */
 .kapuuts {
   position: absolute;
-  top: -25px;
-  left: 31px;
+  top: -150px;
+  left: -51px;
   z-index: 1;
-  width: 176px;
-  height: 150px;
+  width: 340px;
+  height: 260px;
   background: url(kapuuts.svg) center / 100% 100% no-repeat;
 }
 
 .ylikond {
   position: absolute;
-  top: 94px;
-  left: 71px;
-  width: 86px;
-  height: 132px;
+  top: 84px;
+  left: 44px;
+  width: 150px;
+  height: 175px;
   background: url(ylikond.svg) center / 100% 100% no-repeat;
 }
 

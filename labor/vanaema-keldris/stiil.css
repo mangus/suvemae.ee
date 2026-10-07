@@ -1,0 +1,48 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; background: #fff4d6; color: #3b2a4a; text-align: center; }
+.tagasi { position: absolute; top: 10px; left: 12px; color: #7a4b8f; font-weight: bold; text-decoration: none; }
+h1 { margin: 40px 10px 4px; font-size: clamp(1.6rem, 6vw, 2.6rem); }
+#olek { margin: 0 0 10px; }
+#kelder { position: relative; width: min(96vw, 900px); height: min(70vh, 460px); margin: 0 auto; overflow: hidden; border-radius: 20px;
+  background-color: #c7835c;
+  background-image: linear-gradient(#a8644a 3px, transparent 3px), linear-gradient(90deg, #a8644a 3px, transparent 3px);
+  background-size: 60px 30px; }
+.aken { position: absolute; top: 18px; left: 50%; width: 110px; height: 60px; margin-left: -55px; background: #9fe3ff; border: 6px solid #6b4a2f; border-radius: 6px;
+  box-shadow: inset 0 0 0 3px #6b4a2f; background-image: linear-gradient(90deg, transparent 47%, #6b4a2f 47% 53%, transparent 53%); }
+.lamp { position: absolute; top: 0; left: 22%; transform-origin: top center; animation: koigu 3s ease-in-out infinite; }
+.juhe { display: block; width: 3px; height: 70px; background: #333; margin: 0 auto; }
+.pirn { display: block; width: 28px; height: 34px; border-radius: 50% 50% 45% 45%; background: #ffe66b; box-shadow: 0 0 40px 20px rgba(255, 230, 107, .55); }
+@keyframes koigu { 0%,100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+.riiul { position: absolute; top: 120px; right: 6%; width: 160px; border-bottom: 10px solid #6b4a2f; font-size: 28px; display: flex; justify-content: space-around; }
+.kartul { position: absolute; bottom: 14%; font-size: 26px; }
+.k1 { left: 6%; } .k2 { left: 10%; bottom: 13%; transform: rotate(40deg); }
+.amblik { position: absolute; top: 4px; right: 4px; font-size: 40px; opacity: .8; }
+.porand { position: absolute; left: 0; right: 0; bottom: 0; height: 18%; background: #8c8c8c; border-top: 6px solid #6e6e6e; }
+#vanaema { position: absolute; bottom: 6%; left: 0; width: 120px; height: 200px; cursor: pointer; outline: none;
+  animation: kõnni 12s linear infinite; }
+#vanaema svg { width: 100%; height: 100%; display: block; }
+.keha { transform-origin: 60px 190px; animation: kiigu .6s ease-in-out infinite alternate; }
+.jalg { transform-box: fill-box; transform-origin: top center; animation: samm .6s ease-in-out infinite alternate; }
+.jalg.b { animation-direction: alternate-reverse; }
+.suu { transform-box: fill-box; transform-origin: center; animation: suu 1.2s ease-in-out infinite; }
+.silmad { animation: pilgu 4s infinite; transform-box: fill-box; transform-origin: center; }
+.kasi { transform-box: fill-box; transform-origin: top center; }
+@keyframes kõnni {
+  0% { left: 2%; transform: scaleX(1); }
+  48% { left: calc(98% - 120px); transform: scaleX(1); }
+  50% { left: calc(98% - 120px); transform: scaleX(-1); }
+  98% { left: 2%; transform: scaleX(-1); }
+  100% { left: 2%; transform: scaleX(1); }
+}
+@keyframes kiigu { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+@keyframes samm { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
+@keyframes suu { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.35); } }
+@keyframes pilgu { 0%,94%,100% { transform: scaleY(1); } 97% { transform: scaleY(.1); } }
+#vanaema.lehvitab .kasi { animation: lehvita .3s ease-in-out 6 alternate; }
+@keyframes lehvita { from { transform: rotate(0); } to { transform: rotate(-150deg); } }
+#vanaema.lehvitab { animation-play-state: paused; }
+#vanaema.lehvitab .keha, #vanaema.lehvitab .jalg { animation-play-state: paused; }
+#jutt { position: absolute; top: 28%; left: 50%; transform: translateX(-50%); background: #fff; border-radius: 16px; padding: 8px 14px; font-weight: bold; font-size: 1.2rem;
+  opacity: 0; transition: opacity .3s; pointer-events: none; }
+#jutt.nahtav { opacity: 1; }
+@media (max-width: 500px) { #vanaema { width: 90px; height: 150px; } .riiul { width: 110px; font-size: 20px; top: 100px; } .aken { width: 80px; margin-left: -40px; } }

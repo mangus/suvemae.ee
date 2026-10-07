@@ -685,7 +685,7 @@
 
   const npcs = TEGELASED.map((o, i) => ({
     ...o,
-    label: o.teacher ? 'Õpetaja ' + o.name + (o.aine ? ' (' + o.aine + ')' : '') : o.name,
+    label: o.teacher ? 'Õpetaja ' + o.name : o.name,
     sprite: makeSprite({ ...o, seed: 100 + i * 17 }),
     x: SPAWN[i][0], y: SPAWN[i][1],
     tx: SPAWN[i][0], ty: SPAWN[i][1],

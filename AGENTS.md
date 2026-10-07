@@ -108,7 +108,14 @@ Push to `main` every time the child is happy with a step: that is how it goes li
 2. Put your commit on top of everyone else's: `git pull --rebase origin main`.
 3. If git reports a conflict, keep **both** sides: in `labor/index.html` and `www/` that means keeping every card and every group's change. Then `git add` the file and `git rebase --continue`. If you cannot tell how to combine them, `git rebase --abort` and ask a grown-up.
 4. Push: `git push origin HEAD:main`. If it is rejected because someone pushed in between, go back to step 2.
-5. Tell the child that in about a minute it is live at `https://labor.suvemäe.ee/<slug>/`, at `https://labor.suvemäe.ee/` for the lab page, or at `https://suvemäe.ee/` for the landing page. The deploy's progress is at `https://github.com/mangus/suvemae.ee/actions`, and every commit gets its ✔ or ✖ there. If it fails, read the log and fix the problem with another small commit, never by force-pushing.
+5. Check that it is live before you tell the child. Fetch a file you changed from the live site and compare it with yours, every 15 seconds until they match; it usually takes about a minute:
+
+   ```sh
+   curl -fsS https://labor.xn--suveme-fua.ee/<slug>/index.html | cmp - labor/<slug>/index.html
+   ```
+
+   `xn--suveme-fua.ee` is `suvemäe.ee` written for the command line. Compare a file of your own project if you can: a shared page may already carry someone's newer change, so there check only that your part is in it. Then tell the child it is at `https://labor.suvemäe.ee/<slug>/`, at `https://labor.suvemäe.ee/` for the lab page, or at `https://suvemäe.ee/` for the landing page.
+6. Deploys run one at a time, and of several waiting pushes only the newest is deployed, since it carries all their changes: the ones it overtook show as *cancelled* at `https://github.com/mangus/suvemae.ee/actions`, and that is normal. If your change is not live after five minutes, look there. If the deploy *failed* because of your change, fix it with another small commit, never by force-pushing; otherwise tell a grown-up.
 
 When a project is ready to show, add its card to the *Laste tööd* list in `labor/index.html`, before the *tulekul* placeholders. Anything else on the lab page the child may change too (see *Boundaries*):
 

@@ -45,7 +45,7 @@ Then open <http://localhost:8000/naidis/>.
 
 ## Publishing
 
-Every push to `main` goes live: [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) runs [`deploy/opalstack.sh`](deploy/opalstack.sh), which mirrors `www/`, `labor/` and `redirect/` onto their Opalstack apps with rsync over SSH (files removed here are removed there too), copies `server/` to the API app, backs up the API's database into `data/backup/` and restarts the server. The job then checks that both pages serve what was pushed and that the API answers. There is no staging copy in between. A deploy takes about a minute; every commit on GitHub gets its ✔ or ✖, the log is under *Actions*, and a deploy can be started by hand there too.
+Every push to `main` goes live: [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) runs [`deploy/opalstack.sh`](deploy/opalstack.sh), which mirrors `www/`, `labor/` and `redirect/` onto their Opalstack apps with rsync over SSH (files removed here are removed there too), copies `server/` to the API app, backs up the API's database into `data/backup/` and restarts the server. The job then checks that both pages serve what was pushed and that the API answers. There is no staging copy in between. A deploy takes about a minute, and deploys run one at a time: a push made during a deploy waits, and of several waiting pushes only the newest is deployed, since it carries all their changes; the ones it overtook show as cancelled. The log is under *Actions*, and a deploy can be started by hand there too.
 
 | Folder | Opalstack app | Serves |
 |---|---|---|
@@ -55,3 +55,5 @@ Every push to `main` goes live: [`.github/workflows/deploy.yml`](.github/workflo
 | `server/` | `~/apps/suvemaeweb_laborapi/server` | labor.suvemäe.ee/api/ (a proxy-port app on port 1534, started by `server/run.sh` from the user's crontab) |
 
 The workflow runs in the repository's `production` environment, which only `main` may deploy to. Its one secret, `DEPLOY_SSH_KEY`, is an SSH key made for this workflow alone and installed with `restrict` in `~/.ssh/authorized_keys` on Opalstack; deleting the `github-actions@mangus/suvemae.ee` line there revokes it. The API's database, config and logs live in its `data/` folder and `config.json` on Opalstack and are never overwritten. Files are never edited by hand on Opalstack: the next deploy overwrites them. To see what a deploy would change without doing it, run the script with `DRY_RUN=1` and the same environment variables as the workflow from a machine with SSH access.
+
+GitHub can leave a run hanging in *waiting* for the environment although `production` has no reviewers or wait timer: on 7 October 2026 one hung for half an hour, and every deploy after it queued up behind it. So each run first cancels the older runs hanging there (the `unstick` job), and the next push frees a stuck queue. Should the day's last push hang, cancel it under *Actions* and start a deploy by hand.

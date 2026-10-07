@@ -1,7 +1,8 @@
 # Publishes main to Opalstack on every push: suvemäe.ee, labor.suvemäe.ee, the
-# redirect domains and the lab API. Runs in the "production" environment, which
-# only main may deploy to and which holds the one secret, DEPLOY_SSH_KEY: a
-# private key that may log in as suvemaeweb on opal11 (deploy/opalstack.sh).
+# redirect domains and the lab API. The deploy job runs in the "production"
+# environment, which only main may deploy to and which holds the one secret,
+# DEPLOY_SSH_KEY: a private key that may log in as suvemaeweb on opal11
+# (deploy/opalstack.sh).
 name: Deploy
 
 on:
@@ -12,11 +13,6 @@ on:
 permissions:
   contents: read
 
-# One deploy at a time; a push during a deploy waits, then publishes the newest main.
-concurrency:
-  group: deploy
-  cancel-in-progress: false
-
 env:
   SSH_TARGET: suvemaeweb@opal11.opalstack.com
   SSH_HOST_KEY: opal11.opalstack.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINfP6S08Zs0s1gOI8vMqkWky5n1WSDScsvfh+EI3GudP
@@ -26,9 +22,39 @@ env:
   API_DIR: /home/suvemaeweb/apps/suvemaeweb_laborapi/server
 
 jobs:
+  # GitHub has left a run hanging in "waiting" for the environment with nothing
+  # to wait for (production has no reviewers or wait timer), and every later
+  # deploy queued up behind it. A newer run publishes everything an older one
+  # would, so each run cancels the older runs hanging there. This job stays out
+  # of the deploy queue, so a hanging run cannot hold it up too.
+  unstick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      actions: write
+    steps:
+      - name: Cancel older runs hanging in waiting
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh run list --workflow deploy.yml --status waiting --json databaseId \
+            --jq ".[] | select(.databaseId < $GITHUB_RUN_ID) | .databaseId" |
+          while read -r id; do
+            echo "Cancelling run $id, which hangs in waiting"
+            gh run cancel "$id"
+          done
+
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # One deploy at a time. A push during a deploy waits; when several wait,
+    # only the newest goes, since it carries all their changes, and the others
+    # are cancelled.
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
     environment:
       name: production
       url: https://labor.xn--suveme-fua.ee/

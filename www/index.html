@@ -26,8 +26,8 @@ a{color:inherit}
 .d-star{top:30px;left:6%;width:clamp(42px,6vw,66px);transform:rotate(-12deg)}
 .d-plane{top:46%;left:7%;width:clamp(72px,8vw,104px)}
 .d-squiggle{top:56%;right:7%;width:clamp(92px,10vw,132px)}
-.d-ladybug{bottom:clamp(34px,6vw,96px);left:18%;width:clamp(46px,5.5vw,70px);transform:rotate(24deg);animation:wiggle 3.2s ease-in-out infinite}
-@keyframes wiggle{0%,100%{transform:rotate(24deg)}50%{transform:rotate(14deg) translateX(4px)}}
+.d-ladybug{bottom:clamp(34px,6vw,96px);left:18%;width:clamp(46px,5.5vw,70px);transform:rotate(24deg);animation:crawl 8s ease-in-out infinite}
+@keyframes crawl{0%,100%{transform:translate(0,0) rotate(24deg)}25%{transform:translate(36px,-8px) rotate(12deg)}50%{transform:translate(72px,0) rotate(30deg)}75%{transform:translate(36px,8px) rotate(16deg)}}
 h1{margin:0;font-size:clamp(3.4rem,13vw,7.5rem);line-height:1;font-weight:900;letter-spacing:-.01em;text-shadow:3px 4px 0 rgba(43,35,64,.1)}
 h1 span span{display:inline-block;color:var(--c);transform:rotate(var(--r))}
 .underline{display:block;width:min(340px,70vw);height:22px;margin:.3rem auto 0}

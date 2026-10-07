@@ -88,6 +88,33 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 // ---------- sound: drums, wooden knocks and a singing voice, all made with Web Audio ----------
 
+// The baby's words, spoken by an Estonian speech voice and saved as sound files,
+// so they sound Estonian even when the browser has no Estonian voice of its own.
+const HAAL = {
+  'Tüdrukud ja poisid, kus te olete?': 'kutse',
+  'Ma-ma-ma-ma!': 'mama',
+  'Ma-ma! Näen sind!': 'naen',
+  'Mis see oli?': 'mis',
+  'Sain kätte! Kalli-kalli!': 'kalli',
+  'Sain kätte!': 'sain',
+  'Oi! Sa pääsesid minema!': 'paasesid',
+};
+const klipid = {};
+let klipp = null; // the sound file that is playing right now
+
+function klippHeli(tekst) {
+  const nimi = HAAL[tekst];
+  if (!nimi) return null;
+  if (!klipid[nimi]) {
+    const a = new Audio(`haal/${nimi}.wav`);
+    a.preservesPitch = false; // playing a little faster makes the voice higher, like a baby's
+    a.webkitPreservesPitch = false;
+    a.mozPreservesPitch = false;
+    klipid[nimi] = a;
+  }
+  return klipid[nimi];
+}
+
 const heli = {
   ac: null,
   valjund: null,
@@ -280,19 +307,37 @@ const heli = {
 
   // The words are also read out by the browser's own voice, when it has one.
   kone(tekst, kohe = false) {
-    if (!this.sees || !('speechSynthesis' in window)) return;
+    if (!this.sees) return;
+    const k = klippHeli(tekst);
+    if (k) {
+      if (!kohe && klipp && !klipp.paused && !klipp.ended) return;
+      if (klipp && klipp !== k) klipp.pause();
+      if ('speechSynthesis' in window) speechSynthesis.cancel();
+      klipp = k;
+      k.currentTime = 0;
+      k.playbackRate = 1.25;
+      k.play().catch(() => {});
+      return;
+    }
+    if (!('speechSynthesis' in window)) return;
+    // Other words use the browser's voice, but only an Estonian or Finnish one: an English voice sounds wrong.
+    const haaled = speechSynthesis.getVoices();
+    const keelne = (keel) => haaled.find((v) => v.lang && v.lang.toLowerCase().startsWith(keel));
+    if (!keelne('et') && !keelne('fi')) return;
     if (kohe) speechSynthesis.cancel();
     else if (speechSynthesis.speaking) return;
     const u = new SpeechSynthesisUtterance(tekst.replace(/-/g, ' '));
     u.lang = 'et-EE';
-    const haal = speechSynthesis.getVoices().find((v) => v.lang && v.lang.toLowerCase().startsWith('et'));
-    if (haal) u.voice = haal;
+    const haal = keelne('et') || keelne('fi');
+    u.voice = haal;
+    u.lang = haal.lang;
     u.pitch = 1.9;
     u.rate = 1.15;
     speechSynthesis.speak(u);
   },
 
   vaikus() {
+    if (klipp) klipp.pause();
     this.laulab = false;
     this.rida = -1;
     if ('speechSynthesis' in window) speechSynthesis.cancel();

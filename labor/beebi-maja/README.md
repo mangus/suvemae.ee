@@ -9,3 +9,5 @@ Inside the houses the game is a full-screen 3D view; look around with the mouse 
 The baby, the rooms and all the sounds were drawn and made in code (canvas, Web Audio and the browser's own speech voice). No outside pictures or sounds are used.
 
 Made with the help of the Suvemäe labor [AI agent on mintbot.ai](https://mintbot.ai/).
+
+The baby's spoken words in `haal/` were generated with the Estonian speech synthesis Neurokõne by TartuNLP, University of Tartu ([neurokone.ee](https://www.neurokone.ee/), voice "Mari"), and are played a little faster so they sound higher.

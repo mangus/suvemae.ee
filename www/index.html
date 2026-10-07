@@ -90,14 +90,15 @@ main{max-width:1000px;margin:0 auto;padding:0 20px}
 .frame small{font-size:.92rem;font-weight:700;color:var(--ink-soft)}
 footer{padding:26px 20px 34px;text-align:center;color:var(--ink-soft);font-size:.98rem}
 footer p{margin:.2rem 0}
-.d-bee{position:absolute;top:24%;left:0;width:clamp(56px,7vw,84px);pointer-events:none;animation:bee-fly 18s ease-in-out infinite}
-.d-bee svg{display:block;width:100%;height:auto;animation:bee-bob .5s ease-in-out infinite alternate}
+.d-bee{position:absolute;top:24%;left:0;width:clamp(56px,7vw,84px);pointer-events:none;animation:bee-x 26s linear infinite,bee-y 4.3s ease-in-out infinite alternate}
+.d-bee svg{display:block;width:100%;height:auto;animation:bee-bob 1.6s ease-in-out infinite alternate}
 .bee-wing{transform-box:fill-box;transform-origin:50% 100%;animation:bee-flap .07s linear infinite alternate}
-.bee-buzz{position:absolute;top:-.4em;right:100%;font-weight:900;font-size:clamp(.9rem,1.8vw,1.2rem);color:#d95a00;white-space:nowrap;transform:rotate(-10deg);animation:bee-buzz .25s steps(2) infinite}
-@keyframes bee-fly{0%{transform:translate(-140px,0)}25%{transform:translate(28vw,70px)}50%{transform:translate(55vw,-20px)}75%{transform:translate(80vw,80px)}100%{transform:translate(calc(100vw + 140px),0)}}
-@keyframes bee-bob{to{transform:translateY(-7px) rotate(-5deg)}}
+.bee-buzz{position:absolute;top:-.4em;right:100%;font-weight:900;font-size:clamp(.9rem,1.8vw,1.2rem);color:#d95a00;white-space:nowrap;transform:rotate(-10deg);text-shadow:0 2px 0 #fff,0 0 8px #fff3c4;letter-spacing:.04em;animation:bee-buzz 2.4s ease-in-out infinite}
+@keyframes bee-x{from{translate:-140px 0}to{translate:calc(100vw + 140px) 0}}
+@keyframes bee-y{from{transform:translateY(-10px) rotate(5deg)}to{transform:translateY(70px) rotate(-5deg)}}
+@keyframes bee-bob{to{transform:translateY(-4px) rotate(-3deg)}}
 @keyframes bee-flap{to{transform:scaleY(.3)}}
-@keyframes bee-buzz{50%{transform:rotate(-14deg) translate(2px,-3px)}}
+@keyframes bee-buzz{0%,100%{transform:rotate(-10deg) translateY(0)}50%{transform:rotate(-5deg) translateY(-5px)}}
 /* Bugs leave over an edge and come back; different cycle lengths make the mix on screen look random.
    The translate property stacks with each bug's own transform animation. */
 @keyframes walk-l{0%,65%,100%{translate:-100vw 0}10%,55%{translate:0 0}}

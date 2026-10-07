@@ -54,7 +54,7 @@ tagaLouend.className = 'juuksed juuksed-taga';
 tagaLouend.setAttribute('aria-hidden', 'true');
 juku.prepend(tagaLouend);
 const jlTaga = tagaLouend.getContext('2d');
-const TAGA = 90; // strands behind the head
+const TAGA = 0; // bald on request (was 90 strands behind the head)
 const JL_X = -70; // canvas box inside the figure, matches .juuksed
 const JL_Y = -70;
 const JL_LAIUS = 370;
@@ -80,7 +80,7 @@ function teeJuuksed() {
   const r = pea.offsetWidth / 2;
   const kx = pea.offsetLeft + r - JL_X;
   const ky = pea.offsetTop + r - JL_Y;
-  juukseTaust = teeJuukseTaust(kx, ky, r);
+  juukseTaust = null; // bald: no hair mass behind the head (was teeJuukseTaust(kx, ky, r))
   // Fringe first, so it survives when slow computers drop half of the hair.
   for (let j = 0; j < TUKK; j++) {
     const fii = -42 + (84 * (j + 0.5)) / TUKK + (Math.random() - 0.5) * 4;

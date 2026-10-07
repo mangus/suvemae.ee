@@ -1,6 +1,6 @@
 # Lehvitav kriipsujuku
 
-Rõõmus kriipsujuku, kes on kiilaspäine, hoiab käes zombinuga, millelt tilgub rohelist zombilima. Taevast sajab brokoleid!
+Rõõmus kriipsujuku brokolikostüümis, hoiab käes zombinuga, millelt tilgub rohelist zombilima. Taevast sajab brokoleid!
 
 ## Kuidas mängida
 

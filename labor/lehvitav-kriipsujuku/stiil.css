@@ -236,6 +236,41 @@ p {
   pointer-events: none;
 }
 
+/* Broccoli costume: a bumpy floret hood around the face (under the head)
+   and a green suit over the body (under the arms and legs). */
+.kapuuts {
+  position: absolute;
+  top: -20px;
+  left: 49px;
+  z-index: 1;
+  width: 156px;
+  height: 128px;
+  background:
+    radial-gradient(circle at 50% 13%, #4caf50 0 18px, transparent 19px),
+    radial-gradient(circle at 26% 22%, #43a047 0 20px, transparent 21px),
+    radial-gradient(circle at 74% 22%, #43a047 0 20px, transparent 21px),
+    radial-gradient(circle at 11% 48%, #4caf50 0 19px, transparent 20px),
+    radial-gradient(circle at 89% 48%, #4caf50 0 19px, transparent 20px),
+    radial-gradient(circle at 16% 76%, #388e3c 0 17px, transparent 18px),
+    radial-gradient(circle at 84% 76%, #388e3c 0 17px, transparent 18px),
+    radial-gradient(ellipse at 50% 50%, #2e7d32 0 62%, transparent 63%);
+}
+
+.ylikond {
+  position: absolute;
+  top: 100px;
+  left: 77px;
+  width: 74px;
+  height: 124px;
+  border: 5px solid #2e7d32;
+  border-radius: 40px 40px 22px 22px;
+  background:
+    radial-gradient(circle at 30% 20%, #2e7d32 0 5px, transparent 6px),
+    radial-gradient(circle at 68% 32%, #2e7d32 0 4px, transparent 5px),
+    radial-gradient(circle at 42% 46%, #2e7d32 0 4px, transparent 5px),
+    linear-gradient(#4caf50 0 60%, #9ccc65 60%);
+}
+
 .silm {
   position: absolute;
   top: 28px;

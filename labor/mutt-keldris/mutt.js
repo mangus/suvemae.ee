@@ -23,3 +23,16 @@ mutt.addEventListener('click', kaeva);
 mutt.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); kaeva(); }
 });
+
+// Clicking the lamp switches the light off and on.
+const kelder = document.getElementById('kelder');
+const lamp = document.getElementById('lamp');
+
+function lulita() {
+  kelder.classList.toggle('pime');
+}
+
+lamp.addEventListener('click', lulita);
+lamp.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); lulita(); }
+});

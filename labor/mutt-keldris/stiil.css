@@ -42,6 +42,12 @@ h1 { margin: 40px 10px 4px; font-size: clamp(1.6rem, 6vw, 2.6rem); }
 #mutt.kaevab svg { animation: kaeva 1.8s ease-in-out; }
 #mutt.kaevab .muld { width: 120px; height: 30px; margin-left: -60px; }
 @keyframes kaeva { 0% { transform: translateY(0); } 35%,60% { transform: translateY(80%); opacity: .2; } 100% { transform: translateY(0); opacity: 1; } }
+/* Light switch: clicking the lamp darkens the cellar */
+#lamp { z-index: 3; cursor: pointer; outline: none; padding: 0 12px 12px; }
+#kelder::after { content: ""; position: absolute; inset: 0; z-index: 2; background: #0b0820; opacity: 0; pointer-events: none; transition: opacity .4s; }
+#kelder.pime::after { opacity: .85; }
+#kelder.pime .pirn { background: #9a9a9a; box-shadow: none; }
+#jutt { z-index: 4; }
 #jutt { position: absolute; top: 28%; left: 50%; transform: translateX(-50%); background: #fff; border-radius: 16px; padding: 8px 14px; font-weight: bold; font-size: 1.2rem;
   opacity: 0; transition: opacity .3s; pointer-events: none; }
 #jutt.nahtav { opacity: 1; }

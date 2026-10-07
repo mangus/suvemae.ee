@@ -236,26 +236,26 @@ p {
   pointer-events: none;
 }
 
-/* Giant broccoli costume: a huge crown of floret clusters around and above
-   the face (under the head) and a thick pale stalk over the body (under the
-   arms and legs). Both pictures are SVG files in this folder. */
+/* Giant broccoli costume: exactly the falling broccoli (brokoli.svg), drawn
+   5.5 times bigger. The face sits in the middle floret, the florets are under
+   the head and the stalk covers the body (under the arms and legs). */
 .kapuuts {
   position: absolute;
-  top: -150px;
-  left: -51px;
+  top: -104px;
+  left: -40px;
   z-index: 1;
-  width: 340px;
-  height: 260px;
-  background: url(kapuuts.svg) center / 100% 100% no-repeat;
+  width: 319px;
+  height: 231px;
+  background: url(kostyym-oisik.svg) center / 100% 100% no-repeat;
 }
 
 .ylikond {
   position: absolute;
-  top: 84px;
-  left: 44px;
-  width: 150px;
-  height: 175px;
-  background: url(ylikond.svg) center / 100% 100% no-repeat;
+  top: 61px;
+  left: 53px;
+  width: 132px;
+  height: 170px;
+  background: url(kostyym-vars.svg) center / 100% 100% no-repeat;
 }
 
 .silm {

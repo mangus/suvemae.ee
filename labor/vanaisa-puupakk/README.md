@@ -6,6 +6,7 @@ A run-away game. Vanaisa Puupakk (Grandpa Log) is an old man in a big wooden log
 
 - Move with the arrow keys or WASD, or touch or click where you want to run.
 - Stay away from the grandpa as long as you can. When he gets tired he jumps off to hide behind another house.
+- Walk up into a house door to go inside: the rooms are a real 3D view (raycasting, like old first-person games). Turn and walk with the arrow keys or the buttons, and leave through the green VÄLJA door. Grandpa follows you in after a few seconds.
 - He gets faster the longer you last. Your time can go on the high score table with a nickname.
 
 ## Made by

@@ -7,7 +7,7 @@ const H = 560;
 const SAMM = 60 / 128 / 2; // one eighth note at 128 bpm, in seconds
 
 const louend = document.getElementById('louend');
-const ctx = louend.getContext('2d');
+let ctx = louend.getContext('2d'); // swapped briefly when grandpa is drawn for the 3D view
 const kate = document.getElementById('kate');
 const kateTekst = document.getElementById('kateTekst');
 const alustaNupp = document.getElementById('alusta');
@@ -74,7 +74,7 @@ const lilled = Array.from({ length: 50 }, (_, i) => ({
 
 const mangija = { x: 200, y: 535, liigub: false, suund: 1 };
 const vanaisa = { x: 80, y: 300, z: 0, olek: 'demo', aeg: 0, hupe: null, hupeAeg: 0, kinni: 0 };
-let mang = { kaib: false, aeg: 0 };
+let mang = { kaib: false, aeg: 0, sees: false };
 let huue = null; // a shout bubble: { tekst, kuni }
 let kell = 0;
 let viimane = 0;
@@ -304,19 +304,27 @@ function punkt(e) {
   return { x: ((e.clientX - r.left) * W) / r.width, y: ((e.clientY - r.top) * H) / r.height };
 }
 louend.addEventListener('pointerdown', (e) => {
+  louend.setPointerCapture(e.pointerId);
+  if (mang.sees) {
+    vajutused.set(e.pointerId, nuppPunktis(punkt(e)));
+    return;
+  }
   vajutab = true;
   siht = punkt(e);
-  louend.setPointerCapture(e.pointerId);
 });
 louend.addEventListener('pointermove', (e) => {
+  if (mang.sees) {
+    if (vajutused.has(e.pointerId)) vajutused.set(e.pointerId, nuppPunktis(punkt(e)));
+    return;
+  }
   if (vajutab) siht = punkt(e);
 });
-louend.addEventListener('pointerup', () => {
+function vabasta(e) {
   vajutab = false;
-});
-louend.addEventListener('pointercancel', () => {
-  vajutab = false;
-});
+  vajutused.delete(e.pointerId);
+}
+louend.addEventListener('pointerup', vabasta);
+louend.addEventListener('pointercancel', vabasta);
 
 heliNupp.addEventListener('click', () => {
   heli.lulita();
@@ -390,6 +398,17 @@ function uuenda(dt) {
     if (dx) mangija.suund = Math.sign(dx);
   }
 
+  // Walking up into a door takes you inside the house.
+  if (dy < 0) {
+    for (const m of majad) {
+      const ux = m.x + m.w / 2;
+      if (Math.abs(mangija.x - ux) < 13 && mangija.y > m.y + m.h && mangija.y < m.y + m.h + 12) {
+        sisene(m);
+        return;
+      }
+    }
+  }
+
   const g = vanaisa;
   g.aeg += dt;
   const kaugus = Math.hypot(mangija.x - g.x, mangija.y - g.y);
@@ -457,7 +476,8 @@ function alusta() {
   klahvid.clear();
   const koht = peidukohad[Math.floor(Math.random() * 4)]; // behind one of the top houses
   Object.assign(vanaisa, { x: koht.x, y: koht.y, z: 0, olek: 'peidus', aeg: 0, hupe: null, hupeAeg: 0, kinni: 0 });
-  mang = { kaib: true, aeg: 0 };
+  mang = { kaib: true, aeg: 0, sees: false };
+  vajutused.clear();
   huue = null;
   heli.vaikus();
   kate.hidden = true;
@@ -881,6 +901,10 @@ function lauluRida() {
 }
 
 function joonista() {
+  if (mang.sees) {
+    joonistaSees();
+    return;
+  }
   ctx.fillStyle = '#dff5c8';
   ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = '#f6e7c1';
@@ -909,13 +933,426 @@ function joonista() {
   }
 }
 
+// ---------- inside a house: a real 3D view drawn with raycasting ----------
+
+const VAATE_K = 440; // height of the 3D view; the buttons are below it
+const KIIRI = 200; // number of rays, one per 2-pixel column
+// Room maps: 1 wallpaper, 2 bricks, 3 wood, 9 the way out, . floor.
+const KAARDID = [
+  [
+    '111111111111',
+    '1....1.....1',
+    '1....1..3..1',
+    '1..........1',
+    '1....1.....1',
+    '111.111.1111',
+    '1......1...1',
+    '1......1...1',
+    '1..2...1...1',
+    '1..........1',
+    '1......1...1',
+    '111119111111',
+  ],
+  [
+    '111111111111',
+    '1...1......1',
+    '1...1..33..1',
+    '1...1..33..1',
+    '1..........1',
+    '11.1111.1111',
+    '1......1...1',
+    '1..........1',
+    '1.22...1...1',
+    '1......1...1',
+    '1......1...1',
+    '111119111111',
+  ],
+];
+
+function tekstuur(joonistus) {
+  const c = document.createElement('canvas');
+  c.width = 64;
+  c.height = 64;
+  joonistus(c.getContext('2d'));
+  return c;
+}
+function tapeet(varv) {
+  return tekstuur((t) => {
+    t.fillStyle = varv;
+    t.fillRect(0, 0, 64, 64);
+    t.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    for (let x = 0; x < 64; x += 16) t.fillRect(x, 0, 6, 56);
+    t.fillStyle = '#fff';
+    for (const [x, y] of [[11, 12], [27, 36], [43, 18], [59, 44]]) {
+      t.beginPath();
+      t.arc(x, y, 3, 0, Math.PI * 2);
+      t.fill();
+    }
+    t.fillStyle = '#8a5a30';
+    t.fillRect(0, 56, 64, 8);
+  });
+}
+const TEKSTUURID = {
+  2: tekstuur((t) => {
+    t.fillStyle = '#f0d9c0';
+    t.fillRect(0, 0, 64, 64);
+    t.fillStyle = '#c8553d';
+    for (let r = 0; r < 4; r++) {
+      for (let c = -1; c < 3; c++) t.fillRect(c * 32 + (r % 2) * 16 + 1, r * 16 + 1, 30, 14);
+    }
+  }),
+  3: tekstuur((t) => {
+    t.fillStyle = '#b07d48';
+    t.fillRect(0, 0, 64, 64);
+    t.fillStyle = '#8a5a30';
+    for (let x = 0; x < 64; x += 16) t.fillRect(x, 0, 2, 64);
+    t.strokeStyle = 'rgba(90, 55, 25, 0.5)';
+    for (let x = 6; x < 64; x += 16) {
+      t.beginPath();
+      t.moveTo(x, 0);
+      t.bezierCurveTo(x + 4, 20, x - 3, 40, x + 2, 64);
+      t.stroke();
+    }
+  }),
+  9: tekstuur((t) => {
+    t.fillStyle = '#fff4d6';
+    t.fillRect(0, 0, 64, 64);
+    t.fillStyle = '#8a5a30';
+    t.fillRect(14, 16, 36, 48);
+    t.fillStyle = '#a8743f';
+    t.fillRect(18, 28, 12, 14);
+    t.fillRect(34, 28, 12, 14);
+    t.fillStyle = '#ffd23f';
+    t.fillRect(42, 46, 4, 4);
+    t.fillStyle = '#2fa84f';
+    t.fillRect(8, 2, 48, 12);
+    t.fillStyle = '#fff';
+    t.font = 'bold 9px sans-serif';
+    t.textAlign = 'center';
+    t.textBaseline = 'middle';
+    t.fillText('VÄLJA', 32, 8.5);
+  }),
+};
+const tapeedid = new Map();
+function seinaTekstuur(tyyp) {
+  if (tyyp !== '1') return TEKSTUURID[tyyp];
+  if (!tapeedid.has(tuba.maja)) tapeedid.set(tuba.maja, tapeet(tuba.maja.sein));
+  return tapeedid.get(tuba.maja);
+}
+
+const tuba = { maja: null, kaart: null, x: 0, y: 0, nurk: 0, uksX: 0, uksY: 0, vx: 0, vy: 0, vanaisaSees: false, ootab: 0, hoiatatud: false };
+const zPuhver = new Float32Array(KIIRI);
+const NUPUD = [
+  { id: 'vasak', x: 4, mark: '◀' },
+  { id: 'edasi', x: 103, mark: '▲' },
+  { id: 'tagasi', x: 202, mark: '▼' },
+  { id: 'parem', x: 301, mark: '▶' },
+];
+const vajutused = new Map(); // pointer id -> button id, so two fingers work at once
+
+function nuppPunktis(p) {
+  if (p.y < VAATE_K) return null;
+  const nupp = NUPUD.find((n) => p.x >= n.x && p.x < n.x + 95);
+  return nupp ? nupp.id : null;
+}
+
+function ruut(x, y) {
+  const rida = tuba.kaart[Math.floor(y)];
+  return (rida && rida[Math.floor(x)]) || '1';
+}
+
+function sisene(m) {
+  const k = Math.min(1, mang.aeg / 90);
+  tuba.maja = m;
+  tuba.kaart = KAARDID[majad.indexOf(m) % KAARDID.length];
+  const alumine = tuba.kaart.length - 1;
+  tuba.uksX = tuba.kaart[alumine].indexOf('9') + 0.5;
+  tuba.uksY = alumine - 0.5;
+  tuba.x = tuba.uksX;
+  tuba.y = tuba.uksY;
+  tuba.nurk = -Math.PI / 2;
+  tuba.vanaisaSees = false;
+  tuba.ootab = 4.5 - 1.5 * k;
+  tuba.hoiatatud = false;
+  mang.sees = true;
+  siht = null;
+  vajutab = false;
+  vajutused.clear();
+  heli.laulab = false;
+  huua('Oled maja sees! Välja saad rohelise ukse kaudu.', 2.5);
+}
+
+function lahku() {
+  const m = tuba.maja;
+  mang.sees = false;
+  vajutused.clear();
+  siht = null;
+  mangija.x = m.x + m.w / 2;
+  mangija.y = m.y + m.h + 22;
+  const valik = peidukohad.filter((p) => Math.hypot(p.x - mangija.x, p.y - mangija.y) > 200);
+  const koht = valik[Math.floor(Math.random() * valik.length)] || peidukohad[0];
+  Object.assign(vanaisa, { x: koht.x, y: koht.y, z: 0, olek: 'peidus', aeg: 0, hupe: null, hupeAeg: 0, kinni: 0 });
+  heli.laulab = false;
+  huue = null;
+}
+
+// Distances from the player to every floor square, so grandpa can find his way around walls.
+function kaugusKaart(px, py) {
+  const kaugused = new Map([[py * 100 + px, 0]]);
+  const jarjekord = [[px, py]];
+  for (let i = 0; i < jarjekord.length; i++) {
+    const [x, y] = jarjekord[i];
+    const d = kaugused.get(y * 100 + x);
+    for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
+      const voti = ny * 100 + nx;
+      if (!kaugused.has(voti) && ruut(nx + 0.5, ny + 0.5) === '.') {
+        kaugused.set(voti, d + 1);
+        jarjekord.push([nx, ny]);
+      }
+    }
+  }
+  return kaugused;
+}
+
+function uuendaSees(dt) {
+  mang.aeg += dt;
+  const k = Math.min(1, mang.aeg / 90);
+  const s = tuba;
+  const nupud = new Set(vajutused.values());
+  let edasi = 0;
+  let poore = 0;
+  if (klahvid.has('ArrowUp') || klahvid.has('w') || nupud.has('edasi')) edasi += 1;
+  if (klahvid.has('ArrowDown') || klahvid.has('s') || nupud.has('tagasi')) edasi -= 1;
+  if (klahvid.has('ArrowLeft') || klahvid.has('a') || nupud.has('vasak')) poore -= 1;
+  if (klahvid.has('ArrowRight') || klahvid.has('d') || nupud.has('parem')) poore += 1;
+  s.nurk += poore * 2.4 * dt;
+  const dx = Math.cos(s.nurk) * edasi * 2.6 * dt;
+  const dy = Math.sin(s.nurk) * edasi * 2.6 * dt;
+  const r = 0.22;
+  if (ruut(s.x + dx + Math.sign(dx) * r, s.y + dy + Math.sign(dy) * r) === '9') {
+    lahku();
+    return;
+  }
+  if (ruut(s.x + dx + Math.sign(dx) * r, s.y) === '.') s.x += dx;
+  if (ruut(s.x, s.y + dy + Math.sign(dy) * r) === '.') s.y += dy;
+
+  if (!s.vanaisaSees) {
+    s.ootab -= dt;
+    if (!s.hoiatatud && s.ootab < 1.6) {
+      s.hoiatatud = true;
+      huua('Tung… tung… keegi tuleb!', 1.5);
+      if (heli.ac) heli.koputus(heli.ac.currentTime, 0.7);
+    }
+    if (s.ootab <= 0) {
+      s.vanaisaSees = true;
+      s.vx = s.uksX;
+      s.vy = s.uksY;
+      huua('TUNG-TUNG-TUNG!! Vanaisa tuli ka sisse!', 1.6);
+      heli.laulab = true;
+      heli.boing();
+      heli.kone('Tung tung tung!', true);
+    }
+    return;
+  }
+
+  const kaugused = kaugusKaart(Math.floor(s.x), Math.floor(s.y));
+  let siheX = s.x;
+  let siheY = s.y;
+  const gx = Math.floor(s.vx);
+  const gy = Math.floor(s.vy);
+  if (gx !== Math.floor(s.x) || gy !== Math.floor(s.y)) {
+    let lahim = Infinity;
+    for (const [nx, ny] of [[gx + 1, gy], [gx - 1, gy], [gx, gy + 1], [gx, gy - 1]]) {
+      const d = kaugused.get(ny * 100 + nx);
+      if (d !== undefined && d < lahim) {
+        lahim = d;
+        siheX = nx + 0.5;
+        siheY = ny + 0.5;
+      }
+    }
+  }
+  const kiirus = 1.5 + 0.9 * k;
+  const ex = siheX - s.vx;
+  const ey = siheY - s.vy;
+  const e = Math.hypot(ex, ey);
+  if (e > 0.01) {
+    const samm = Math.min(e, kiirus * dt);
+    s.vx += (ex / e) * samm;
+    s.vy += (ey / e) * samm;
+  }
+  if (Math.hypot(s.x - s.vx, s.y - s.vy) < 0.45) lopp();
+}
+
+// Grandpa is drawn once per frame onto a small canvas and shown as a sprite in 3D.
+const V_LAI = 140;
+const V_KORGUS = 130;
+const vPilt = document.createElement('canvas');
+vPilt.width = V_LAI * 2;
+vPilt.height = V_KORGUS * 2;
+const vCtx = vPilt.getContext('2d');
+function renderVanaisaPilt() {
+  const paris = ctx;
+  const g = vanaisa;
+  const salvestus = { x: g.x, y: g.y, z: g.z, olek: g.olek };
+  vCtx.setTransform(1, 0, 0, 1, 0, 0);
+  vCtx.clearRect(0, 0, vPilt.width, vPilt.height);
+  vCtx.setTransform(2, 0, 0, 2, 0, 0);
+  ctx = vCtx;
+  Object.assign(g, { x: V_LAI / 2, y: V_KORGUS - 5, z: 0, olek: 'jaht' });
+  joonistaVanaisa();
+  Object.assign(g, salvestus);
+  ctx = paris;
+}
+
+function joonistaSees() {
+  const s = tuba;
+  const pool = VAATE_K / 2;
+  let gr = ctx.createLinearGradient(0, 0, 0, pool);
+  gr.addColorStop(0, '#fff8e8');
+  gr.addColorStop(1, '#d9c39a');
+  ctx.fillStyle = gr;
+  ctx.fillRect(0, 0, W, pool);
+  gr = ctx.createLinearGradient(0, pool, 0, VAATE_K);
+  gr.addColorStop(0, '#7a5232');
+  gr.addColorStop(1, '#d9a873');
+  ctx.fillStyle = gr;
+  ctx.fillRect(0, pool, W, pool);
+
+  const dirX = Math.cos(s.nurk);
+  const dirY = Math.sin(s.nurk);
+  const plX = -dirY * 0.66;
+  const plY = dirX * 0.66;
+  const lai = W / KIIRI;
+  ctx.imageSmoothingEnabled = false;
+  for (let i = 0; i < KIIRI; i++) {
+    const kx = (2 * (i + 0.5)) / KIIRI - 1;
+    const rx = dirX + plX * kx;
+    const ry = dirY + plY * kx;
+    let mx = Math.floor(s.x);
+    let my = Math.floor(s.y);
+    const ddx = Math.abs(1 / rx);
+    const ddy = Math.abs(1 / ry);
+    const stepX = rx < 0 ? -1 : 1;
+    const stepY = ry < 0 ? -1 : 1;
+    let sdx = rx < 0 ? (s.x - mx) * ddx : (mx + 1 - s.x) * ddx;
+    let sdy = ry < 0 ? (s.y - my) * ddy : (my + 1 - s.y) * ddy;
+    let kylg = 0;
+    let tyyp = '1';
+    for (let n = 0; n < 64; n++) {
+      if (sdx < sdy) {
+        sdx += ddx;
+        mx += stepX;
+        kylg = 0;
+      } else {
+        sdy += ddy;
+        my += stepY;
+        kylg = 1;
+      }
+      tyyp = ruut(mx + 0.5, my + 0.5);
+      if (tyyp !== '.') break;
+    }
+    const kaugus = Math.max(0.05, kylg === 0 ? sdx - ddx : sdy - ddy);
+    zPuhver[i] = kaugus;
+    let seinX = kylg === 0 ? s.y + kaugus * ry : s.x + kaugus * rx;
+    seinX -= Math.floor(seinX);
+    let texX = Math.min(63, Math.floor(seinX * 64));
+    if ((kylg === 0 && rx < 0) || (kylg === 1 && ry > 0)) texX = 63 - texX;
+    const korgus = VAATE_K / kaugus;
+    const y0 = pool - korgus / 2;
+    ctx.drawImage(seinaTekstuur(tyyp), texX, 0, 1, 64, i * lai, y0, lai + 0.5, korgus);
+    const tume = Math.min(0.75, kaugus / 10 + (kylg ? 0.15 : 0));
+    ctx.fillStyle = `rgba(30, 15, 40, ${tume.toFixed(2)})`;
+    ctx.fillRect(i * lai, y0, lai + 0.5, korgus);
+  }
+
+  if (s.vanaisaSees) {
+    const sx = s.vx - s.x;
+    const sy = s.vy - s.y;
+    const inv = 1 / (plX * dirY - dirX * plY);
+    const tx = inv * (dirY * sx - dirX * sy);
+    const ty = inv * (-plY * sx + plX * sy);
+    if (ty > 0.15) {
+      renderVanaisaPilt();
+      const yks = VAATE_K / ty; // one square's height on screen at this distance
+      const ekraanX = (W / 2) * (1 + tx / ty);
+      const h = yks;
+      const w = h * (V_LAI / V_KORGUS);
+      const f = kell % 1.8;
+      const hupe = f < 0.45 ? Math.sin((Math.PI * f) / 0.45) * 0.3 : 0; // he jumps now and then
+      const yla = pool + yks / 2 - hupe * yks - h;
+      const x0 = ekraanX - w / 2;
+      const allikaLai = (vPilt.width * lai) / w;
+      const algus = Math.max(0, Math.floor(x0 / lai));
+      const lopp2 = Math.min(KIIRI, Math.ceil((x0 + w) / lai));
+      for (let i = algus; i < lopp2; i++) {
+        if (ty >= zPuhver[i]) continue;
+        const srcX = clamp(((i * lai - x0) / w) * vPilt.width, 0, vPilt.width - allikaLai);
+        ctx.drawImage(vPilt, srcX, 0, allikaLai, vPilt.height, i * lai, yla, lai + 0.5, h);
+      }
+    }
+  }
+  ctx.imageSmoothingEnabled = true;
+
+  // small map in the corner
+  const r = 5;
+  const mx0 = W - 12 * r - 8;
+  const my0 = 8;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+  ctx.fillRect(mx0 - 2, my0 - 2, 12 * r + 4, 12 * r + 4);
+  s.kaart.forEach((rida, y) => {
+    [...rida].forEach((c, x) => {
+      if (c === '.') return;
+      ctx.fillStyle = c === '9' ? '#2fa84f' : '#2b2340';
+      ctx.fillRect(mx0 + x * r, my0 + y * r, r, r);
+    });
+  });
+  ctx.fillStyle = '#f08a24';
+  ovaal(mx0 + s.x * r, my0 + s.y * r, 2.5, 2.5);
+  ctx.fill();
+  ctx.strokeStyle = '#f08a24';
+  ctx.lineWidth = 1.5;
+  joon(mx0 + s.x * r, my0 + s.y * r, mx0 + (s.x + Math.cos(s.nurk)) * r, my0 + (s.y + Math.sin(s.nurk)) * r);
+  if (s.vanaisaSees) {
+    ctx.fillStyle = '#e8506f';
+    ovaal(mx0 + s.vx * r, my0 + s.vy * r, 2.5, 2.5);
+    ctx.fill();
+  }
+
+  // touch buttons
+  ctx.fillStyle = '#ffe0ec';
+  ctx.fillRect(0, VAATE_K, W, H - VAATE_K);
+  ctx.strokeStyle = '#2b2340';
+  ctx.lineWidth = 3;
+  joon(0, VAATE_K, W, VAATE_K);
+  const all = new Set(vajutused.values());
+  for (const n of NUPUD) {
+    ctx.fillStyle = all.has(n.id) ? '#ffc933' : '#8c6cf2';
+    kast(n.x, VAATE_K + 12, 95, H - VAATE_K - 24, 18);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 34px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(n.mark, n.x + 47.5, VAATE_K + (H - VAATE_K) / 2);
+  }
+
+  if (huue && kell < huue.kuni) {
+    mull(huue.tekst, W / 2, 110);
+  } else if (s.vanaisaSees) {
+    const rr = lauluRida();
+    if (rr >= 0) mull('♪ ' + LAUL[rr].tekst, W / 2, 110);
+  }
+}
+
 let eelmine = performance.now();
 function kaader(nyyd) {
   const dt = Math.min(0.05, Math.max(0, (nyyd - eelmine) / 1000));
   eelmine = nyyd;
   kell += dt;
   if (mang.kaib) {
-    uuenda(dt);
+    if (mang.sees) uuendaSees(dt);
+    else uuenda(dt);
     if (mang.kaib) {
       heli.planeeri();
       aegEl.textContent = Math.floor(mang.aeg);

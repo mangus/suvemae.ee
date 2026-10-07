@@ -222,6 +222,9 @@ p {
   z-index: 2;
 }
 
+/* Hair behind the head sits under it. */
+.juuksed.juuksed-taga { z-index: 1; }
+
 /* Hair canvas drawn by juku.js; this box must match the JL_* constants there. */
 .juuksed {
   position: absolute;

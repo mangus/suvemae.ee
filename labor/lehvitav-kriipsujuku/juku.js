@@ -48,6 +48,13 @@ juukseLouend.className = 'juuksed';
 juukseLouend.setAttribute('aria-hidden', 'true');
 juku.append(juukseLouend);
 const jl = juukseLouend.getContext('2d');
+// A second canvas under the head for the hair that hangs behind it.
+const tagaLouend = document.createElement('canvas');
+tagaLouend.className = 'juuksed juuksed-taga';
+tagaLouend.setAttribute('aria-hidden', 'true');
+juku.prepend(tagaLouend);
+const jlTaga = tagaLouend.getContext('2d');
+const TAGA = 70; // strands behind the head
 const JL_X = -70; // canvas box inside the figure, matches .juuksed
 const JL_Y = -70;
 const JL_LAIUS = 370;
@@ -55,12 +62,14 @@ const JL_KORGUS = 330;
 const KARVU = 200; // fewer, thicker strands keep slow computers smooth
 const TUKK = 26; // short fringe strands over the forehead
 const OSAD = 18; // segments per strand, enough for tight frizzy curls
-// Four browns, then black, pink and dark red streaks.
-const juuksevarvid = ['#8d4b1f', '#7a3f17', '#9c5826', '#a8632d', '#1f1a1c', '#ff6fb5', '#7a1424'];
-const juuksepaksus = [2.6, 3.2, 2.9, 3.5, 3.1, 3.1, 3.1]; // one width per colour, so a colour's strands are drawn together
+// Four browns, then black, pink, dark red and blond streaks.
+const juuksevarvid = ['#8d4b1f', '#7a3f17', '#9c5826', '#a8632d', '#1f1a1c', '#ff6fb5', '#7a1424', '#f2cf6b'];
+const juuksepaksus = [2.6, 3.2, 2.9, 3.5, 3.1, 3.1, 3.1, 3.1]; // one width per colour, so a colour's strands are drawn together
 const MUST = 4;
 const ROOSA = 5;
 const PUNANE = 6;
+const BLOND = 7;
+const salguToon = (i) => [i % 4, PUNANE, i % 4, MUST, i % 4, ROOSA, BLOND][i % 7];
 const vaikne = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const karvad = [];
 let juukseMoot = 0;
@@ -140,7 +149,43 @@ function teeJuuksed() {
       nihe: 0,
       kiirus: 0,
       faas: Math.random() * 6.3,
-      toon: i % 7 === 3 ? MUST : i % 7 === 5 ? ROOSA : i % 7 === 1 ? PUNANE : i % 4, // some black, pink and dark red strands
+      toon: salguToon(i), // some black, pink, dark red and blond strands
+      px: new Float32Array(OSAD + 1),
+      py: new Float32Array(OSAD + 1),
+    });
+  }
+  // Hair behind the head, pushed last so slow computers drop it first.
+  for (let i = 0; i < TAGA; i++) {
+    const fii = (Math.random() * 2 - 1) * 150;
+    const nurk = (fii * Math.PI) / 180;
+    const juur = r * (0.3 + Math.random() * 0.55);
+    const pool = fii >= 0 ? 1 : -1;
+    const valja = -pool * (55 + (25 * Math.abs(fii)) / 150); // out to the side first
+    const alla = -pool * (8 + Math.random() * 10); // then down the back
+    const pikkus = (150 + Math.random() * 80) * (0.85 + Math.random() * 0.3);
+    const lokiFaas = Math.random() * 6.3;
+    const lokiSamm = 1.8 + Math.random() * 0.6;
+    const lokiSuurus = 55 + Math.random() * 25;
+    const puhke = [];
+    for (let k = 0; k < OSAD; k++) {
+      const f = (k + 0.5) / OSAD;
+      const lokk = lokiSuurus * Math.min(1, 0.35 + f) * Math.sin(k * lokiSamm + lokiFaas);
+      puhke.push(valja + (alla - valja) * f ** 0.6 + lokk);
+    }
+    const keskmine = (puhke[OSAD >> 1] * Math.PI) / 180;
+    karvad.push({
+      x: kx + Math.sin(nurk) * juur,
+      y: ky - Math.cos(nurk) * juur,
+      puhke,
+      osa: pikkus / OSAD,
+      cos: Math.cos(keskmine),
+      sin: Math.sin(keskmine),
+      jaikus: 45 + Math.random() * 30,
+      nihe: 0,
+      kiirus: 0,
+      faas: Math.random() * 6.3,
+      toon: salguToon(i),
+      taga: true,
       px: new Float32Array(OSAD + 1),
       py: new Float32Array(OSAD + 1),
     });
@@ -192,24 +237,31 @@ function liigutaJuukseid(dt, aeg) {
   const moot = s * Math.min(window.devicePixelRatio || 1, 1.5);
   if (moot !== juukseMoot) {
     juukseMoot = moot;
-    juukseLouend.width = Math.round(JL_LAIUS * moot);
-    juukseLouend.height = Math.round(JL_KORGUS * moot);
+    for (const louend of [juukseLouend, tagaLouend]) {
+      louend.width = Math.round(JL_LAIUS * moot);
+      louend.height = Math.round(JL_KORGUS * moot);
+    }
   }
-  jl.setTransform(moot, 0, 0, moot, 0, 0);
-  jl.clearRect(0, 0, JL_LAIUS, JL_KORGUS);
-  jl.lineCap = 'round';
-  // One path per colour and segment: two dozen strokes a frame instead of a thousand.
+  joonistaJuuksed(jl, moot, false);
+  joonistaJuuksed(jlTaga, moot, true);
+}
+
+function joonistaJuuksed(c, moot, taga) {
+  c.setTransform(moot, 0, 0, moot, 0, 0);
+  c.clearRect(0, 0, JL_LAIUS, JL_KORGUS);
+  c.lineCap = 'round';
+  // One path per colour and segment: a few dozen strokes a frame instead of thousands.
   for (let v = 0; v < juuksevarvid.length; v++) {
-    jl.strokeStyle = juuksevarvid[v];
+    c.strokeStyle = juuksevarvid[v];
     for (let i = 0; i < OSAD; i++) {
-      jl.lineWidth = juuksepaksus[v] * (1 - i / (OSAD + 2));
-      jl.beginPath();
+      c.lineWidth = juuksepaksus[v] * (1 - i / (OSAD + 2));
+      c.beginPath();
       for (const k of karvad) {
-        if (k.toon !== v) continue;
-        jl.moveTo(k.px[i], k.py[i]);
-        jl.lineTo(k.px[i + 1], k.py[i + 1]);
+        if (k.toon !== v || !k.taga !== !taga) continue;
+        c.moveTo(k.px[i], k.py[i]);
+        c.lineTo(k.px[i + 1], k.py[i + 1]);
       }
-      jl.stroke();
+      c.stroke();
     }
   }
 }

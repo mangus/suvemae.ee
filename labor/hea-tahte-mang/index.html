@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hea tahte mäng</title>
+<meta name="description" content="Kõnni Suvemäe majas ringi, aita õpilasi ja õpetajaid ning korja südameid hea tahte kokkuleppe järgi.">
+<link rel="stylesheet" href="stiil.css">
+<script src="mang.js" defer></script>
+</head>
+<body>
+<a class="tagasi" href="../">← labor</a>
+
+<header class="pais">
+  <h1>Hea tahte mäng</h1>
+  <div class="skoor"><span aria-hidden="true">♥</span> <b id="sudamed">0</b>/<span id="eesmark">12</span></div>
+</header>
+
+<main class="lava">
+  <canvas id="louend" width="720" height="720" aria-label="Suvemäe maja, kus õpilased ja õpetajad liiguvad"></canvas>
+
+  <section id="algus" class="kaart">
+    <h2>Tere tulemast Suvemäele!</h2>
+    <p>Sa oled Suvemäe õpilane. Kõnni majas ringi ja vaata, kellel on <b class="hyyu">!</b> pea kohal. Mine tema juurde ja vali, mida teed.</p>
+    <p>Kui teed nii, nagu <b>hea tahte kokkulepe</b> ütleb, saad südame. Korja ka maast prahti, sest see on <i>Minu Maa</i>.</p>
+    <p>Kogu <b>12 südant</b> ja päev on läbi!</p>
+    <p class="juhis">Liigu: puuduta või klõpsa kohta, kuhu minna. Või kasuta nooli.</p>
+    <button id="alusta" type="button">Alusta päeva</button>
+  </section>
+
+  <section id="dialoog" class="kaart peidus" aria-live="polite">
+    <p class="kes" id="kes"></p>
+    <p class="jutt" id="jutt"></p>
+    <div class="valikud" id="valikud"></div>
+    <p class="tagasiside peidus" id="tagasiside"></p>
+    <p class="reegel peidus" id="reegel"></p>
+    <button id="edasi" type="button" class="peidus">Edasi</button>
+  </section>
+
+  <section id="lopp" class="kaart peidus">
+    <h2>Päev on läbi!</h2>
+    <p id="lopujutt"></p>
+    <p>Sinu kleepsud:</p>
+    <ul id="kleepsud" class="kleepsud"></ul>
+    <button id="uuesti" type="button">Uus päev</button>
+  </section>
+</main>
+
+<p class="teade" id="teade" aria-live="polite"></p>
+</body>
+</html>

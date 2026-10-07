@@ -269,11 +269,12 @@ function drawMonkey(g, view, swing) {
     blob(g, 50, 42, 8, 10, fur);
     blob(g, 50, 42, 4, 6, '#7a4535');
     blob(g, 84, 54, 15, 12, '#8a5a44');
-    poly(g, [76, 57, 98, 55, 96, 64, 78, 64], '#2a0000');
-    poly(g, [82, 57, 86, 57, 84, 61], '#f0e8d0');
-    poly(g, [89, 56, 93, 56, 91, 60], '#f0e8d0');
-    poly(g, [66, 36, 84, 40, 84, 36, 68, 32], dark);
-    blob(g, 74, 44, 5, 5, '#120606');
+    g.save();
+    g.beginPath(); g.moveTo(72, 55); g.quadraticCurveTo(84, 70, 99, 52); g.quadraticCurveTo(86, 59, 72, 55);
+    g.fillStyle = '#2a0000'; g.fill(); g.clip();
+    g.fillStyle = '#f0e8d0';
+    for (let x = 72; x < 99; x += 5) { g.fillRect(x, 52, 4, 7); g.fillRect(x + 2, 61, 4, 7); }
+    g.restore();
   } else {
     const back = view === 2;
     // Seen from behind, the monkey's left is on the left of the picture.
@@ -306,16 +307,14 @@ function drawMonkey(g, view, swing) {
     poly(g, [44, 28, 50, 12, 56, 24, 62, 6, 68, 24, 76, 12, 84, 28], fur);
     if (!back) {
       blob(g, 64, 50, 19, 17, '#8a5a44');
-      blob(g, 56, 44, 7, 6, '#120606'); blob(g, 72, 44, 7, 6, '#120606');
-      poly(g, [46, 34, 62, 41, 61, 37, 48, 31], dark);
-      poly(g, [82, 34, 66, 41, 67, 37, 80, 31], dark);
-      blob(g, 61, 52, 1.5, 2, '#120606'); blob(g, 67, 52, 1.5, 2, '#120606');
-      blob(g, 64, 60, 12, 6, '#2a0000');
-      for (let i = 0; i < 6; i++) {
-        const x = 54 + i * 4 - 2;
-        poly(g, [x, 55, x + 4, 55, x + 2, 59.5], '#f0e8d0');
-        poly(g, [x, 65, x + 4, 65, x + 2, 60.5], '#f0e8d0');
-      }
+      blob(g, 61, 53, 1.5, 2, '#120606'); blob(g, 67, 53, 1.5, 2, '#120606');
+      // A wide grin full of teeth.
+      g.save();
+      g.beginPath(); g.moveTo(40, 55); g.quadraticCurveTo(64, 83, 88, 55); g.quadraticCurveTo(64, 64, 40, 55);
+      g.fillStyle = '#2a0000'; g.fill(); g.clip();
+      g.fillStyle = '#f0e8d0';
+      for (let x = 40; x < 88; x += 5) { g.fillRect(x, 54, 4, 8); g.fillRect(x + 2, 64, 4, 8); }
+      g.restore();
     }
   }
   // Round 3D shading: light from the upper left, shadow on the far side.
@@ -330,16 +329,14 @@ function drawMonkey(g, view, swing) {
   g.globalCompositeOperation = 'source-over';
 }
 
-// The glowing red eyes, drawn after the darkness so they always shine.
+// Big wide-open eyes, drawn after the darkness so they always shine.
 function monkeyEyes(view) {
-  const eyes = view === 0 ? [56, 72] : view === 1 ? [74] : [];
+  const eyes = view === 0 ? [[53, 41, 10, 12, 0], [75, 41, 10, 12, 0]] : view === 1 ? [[76, 41, 8, 11, 3]] : [];
   return (g) => {
-    for (const x of eyes) {
-      const e = g.createRadialGradient(x, 44, 0, x, 44, 7);
-      e.addColorStop(0, '#ffffff');
-      e.addColorStop(0.25, '#ff2a00');
-      e.addColorStop(1, 'rgba(255,0,0,0)');
-      g.fillStyle = e; g.fillRect(x - 7, 37, 14, 14);
+    for (const [x, y, rx, ry, look] of eyes) {
+      blob(g, x, y, rx + 1.2, ry + 1.2, '#1a0d06');
+      blob(g, x, y, rx, ry, '#fffdf5');
+      blob(g, x + look, y, 2.2, 2.4, '#120606');
     }
   };
 }
@@ -1343,6 +1340,7 @@ function buildMini() {
 
 function drawMini() {
   mctx.drawImage(miniBase, 0, 0);
+  for (const it of items) if (it.alive && !it.ball) blob(mctx, it.x * MINI, it.y * MINI, 1.4, 1.4, GEM_COLORS[it.color]);
   for (const it of items) if (it.alive && it.ball) blob(mctx, it.x * MINI, it.y * MINI, 2.6, 2.6, '#4fd2ff');
   monkeys.forEach((m, i) => blob(mctx, m.x * MINI, m.y * MINI, 3.3, 3.3, MONKEY_TINT[i % 3]));
   for (const p of peers.values()) if (!p.dead) blob(mctx, p.x * MINI, p.y * MINI, 2.6, 2.6, SHIRTS[p.look.s][0]);

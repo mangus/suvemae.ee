@@ -1,19 +1,20 @@
 'use strict';
 // Hea tahte mäng: walk around the Suvemäe house, help students and teachers
 // by choosing what the Good Will Agreement says, and pick up litter.
-// Drawn in a picture-book style: scratchy ink, hatching, spirals and a few bold printed colours.
+// Drawn in the manner of Latvian illustrator Arta Ozola-Jaunaraja: hair-fine ink lines,
+// soft watercolour washes, airy cross-hatched grids and a crochet-lace border.
 (() => {
   const W = 720;
   const EESMARK = 12;
   const MAX_PRAHT = 4;
-  const INK = '#1c1815';
-  const PUNANE = '#d9493a';
-  const SINEP = '#e3a83a';
-  const SININE = '#3fb0b0';
-  const ROHE = '#7d9a4f';
-  const KORALL = '#ef8a6c';
-  const PABER = '#f5ecd3';
-  const VALGE = '#fffaf0';
+  const INK = '#35344a';
+  const PUNANE = '#c8705f';
+  const SINEP = '#dcb15a';
+  const SININE = '#7ea6b8';
+  const ROHE = '#98ad7c';
+  const KORALL = '#e3a58e';
+  const PABER = '#f8f2e4';
+  const VALGE = '#fffdf7';
   const KIRI = '700 20px "Segoe Print", "Bradley Hand", "Chalkboard SE", "Comic Sans MS", cursive';
 
   const cv = document.getElementById('louend');
@@ -194,31 +195,35 @@
     return [x0, y0, x1, y1];
   }
 
-  // Scratchy pen line: one firm stroke and two thin, wandering ones
+  // Hair-fine pen line: one delicate stroke and a faint second one beside it
   function ink(c, pts, closed, r, w = 2, j = 1.2) {
     c.save();
     c.strokeStyle = INK;
     c.lineCap = 'round';
     c.lineJoin = 'round';
-    c.lineWidth = w;
-    smoothPath(c, jit(pts, j * 0.5, r), closed);
+    c.lineWidth = Math.max(0.7, w * 0.6);
+    smoothPath(c, jit(pts, j * 0.3, r), closed);
     c.stroke();
-    c.lineWidth = Math.max(0.6, w * 0.35);
-    c.globalAlpha = 0.8;
-    for (let k = 0; k < 2; k++) {
-      smoothPath(c, jit(pts, j * 1.5, r), closed);
-      c.stroke();
-    }
+    c.lineWidth = Math.max(0.4, w * 0.25);
+    c.globalAlpha = 0.45;
+    smoothPath(c, jit(pts, j * 0.9, r), closed);
+    c.stroke();
     c.restore();
   }
 
-  // Flat printed colour with a little paper grain
+  // Watercolour wash: see-through colour, a darker pooled edge and paper grain
   function flat(c, pts, color, r, j = 1.5) {
     const p = jit(pts, j, r);
     c.save();
     c.fillStyle = color;
+    c.globalAlpha = 0.85;
     smoothPath(c, p, true);
     c.fill();
+    c.globalAlpha = 0.35;
+    c.strokeStyle = color;
+    c.lineWidth = 2.2;
+    c.stroke();
+    c.globalAlpha = 1;
     c.clip();
     c.fillStyle = c.createPattern(grain, 'repeat');
     c.fillRect(-1000, -1000, 3000, 3000);
@@ -235,16 +240,19 @@
     smoothPath(c, pts, true);
     c.clip();
     c.strokeStyle = INK;
-    c.lineWidth = 0.7;
+    c.lineWidth = 0.45;
     c.lineCap = 'round';
     for (let d = x0 - h; d < x1 + 2; d += gap) {
       const f = (d + h / 2 - sx) / (x1 - sx + 1) + 0.3;
       if (f <= 0) continue;
       c.globalAlpha = alpha * Math.min(1, f);
       const k = (r() - 0.5) * 1.4;
+      c.globalAlpha *= 0.55;
       c.beginPath();
       c.moveTo(d + k, y1 + 2);
       c.lineTo(d + h + 4 + k, y0 - 2);
+      c.moveTo(d + k, y0 - 2);
+      c.lineTo(d + h + 4 + k, y1 + 2);
       c.stroke();
     }
     c.restore();
@@ -500,6 +508,35 @@
     dot(b, 668, 640, 6, SININE);
     const pott = flat(b, ellipsePts(600, 676, 13, 16, 12), VALGE, r, 0.6);
     ink(b, pott, true, r, 1.4, 0.4);
+
+    // Crochet-lace border: a chain of small loops with dots, rosettes in the corners
+    b.save();
+    b.strokeStyle = INK;
+    b.fillStyle = INK;
+    b.lineWidth = 0.7;
+    b.globalAlpha = 0.75;
+    const loop = (x, y, a) => {
+      b.beginPath();
+      b.arc(x, y, 5, a, a + Math.PI);
+      b.stroke();
+      b.beginPath();
+      b.arc(x + Math.cos(a + Math.PI / 2) * 2.5, y + Math.sin(a + Math.PI / 2) * 2.5, 0.9, 0, Math.PI * 2);
+      b.fill();
+    };
+    for (let x = 18; x < W - 12; x += 10) { loop(x, 4, 0); loop(x, W - 4, Math.PI); }
+    for (let y = 18; y < W - 12; y += 10) { loop(4, y, -Math.PI / 2); loop(W - 4, y, Math.PI / 2); }
+    [[9, 9], [W - 9, 9], [9, W - 9], [W - 9, W - 9]].forEach(([x, y]) => {
+      for (let k = 0; k < 8; k++) {
+        const a = k * Math.PI / 4;
+        b.beginPath();
+        b.ellipse(x + Math.cos(a) * 4, y + Math.sin(a) * 4, 3.2, 1.6, a, 0, Math.PI * 2);
+        b.stroke();
+      }
+      b.beginPath();
+      b.arc(x, y, 1.4, 0, Math.PI * 2);
+      b.fill();
+    });
+    b.restore();
   })();
 
   // ---------- Characters ----------

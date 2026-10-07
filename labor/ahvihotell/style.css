@@ -51,3 +51,11 @@ html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-
 #team { font-size: 16px; }
 #spec { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: rgba(80, 0, 0, .75); padding: 8px 18px; border-radius: 18px; font-weight: 700; text-align: center; pointer-events: none; }
 .players .kick { margin: 6px 0 0; font-size: 14px; padding: 6px 10px; background: #ff3b6b; color: #fff; box-shadow: 0 3px 0 #a01a3a; }
+
+/* Nickname and high score table on the start screen */
+.nick button { margin: 0 0 0 6px; font-size: 16px; padding: 6px 14px; box-shadow: 0 3px 0 #b8901a; }
+.screen h2 { margin: 18px 0 0; color: #ffd23b; }
+.top { list-style: none; padding: 0; margin: 6px 0; width: min(100%, 360px); }
+.top li { display: flex; justify-content: space-between; gap: 10px; padding: 4px 12px; border-radius: 10px; font-size: 18px; }
+.top li:nth-child(odd) { background: rgba(255, 255, 255, .1); }
+.top li.mine { background: rgba(255, 210, 59, .35); }

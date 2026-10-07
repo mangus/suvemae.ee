@@ -23,6 +23,8 @@ const TURN_SPEED = 2.4;
 const MONKEY_SPEED = PLAYER_SPEED * 0.8;
 const POWER_TIME = 30;
 const SCARE_TIME = 1.7;
+// How long each jumpscare waits before the face appears: A jumps at once, B turns the lights off, C breathes behind you.
+const SCARE_LEAD = [0, 1.4, 1.6];
 const TEX = 64;
 const LEVELS = 10;
 const MINI = 6;
@@ -578,6 +580,12 @@ function cleanLook(l) {
   const w = Array.isArray(o.w) ? o.w.filter((id) => SHOP.some((s) => s.id === id)).slice(0, 8) : [];
   return { s: idx(o.s, SHIRTS.length), k: idx(o.k, SKINS.length), b: idx(o.b, BODIES.length), w };
 }
+// Nicknames are made of preset words, so nobody types their real name.
+const NICK_A = ['Kiire', 'Julge', 'Vapper', 'Kaval', 'Särav', 'Väle', 'Lustakas', 'Uljas', 'Salajane', 'Vilgas'];
+const NICK_B = ['Rebane', 'Ilves', 'Kakk', 'Saarmas', 'Siil', 'Jänes', 'Karu', 'Orav', 'Konn', 'Hunt'];
+const pickOf = (a) => a[Math.floor(Math.random() * a.length)];
+const newNick = () => `${pickOf(NICK_A)} ${pickOf(NICK_B)} ${10 + Math.floor(Math.random() * 90)}`;
+const NICK_RE = new RegExp(`^(${NICK_A.join('|')}) (${NICK_B.join('|')}) [1-9][0-9]$`);
 const STORE = 'ahvihotell-mina';
 function loadProfile() {
   let o = null;
@@ -588,12 +596,15 @@ function loadProfile() {
   const bodies = Array.isArray(o.bodies) ? o.bodies.filter((id) => BODIES.some((b) => b.id === id && b.price)) : [];
   const b = BODIES[o.body];
   const body = Number.isInteger(o.body) && b && (!b.price || bodies.includes(b.id)) ? o.body : 0;
-  return { gems: Math.max(0, Math.floor(Number(o.gems) || 0)), owned, wear: look.w.filter((id) => owned.includes(id)), shirt: look.s, skin: look.k, bodies, body };
+  return { gems: Math.max(0, Math.floor(Number(o.gems) || 0)), owned, wear: look.w.filter((id) => owned.includes(id)), shirt: look.s, skin: look.k, bodies, body,
+    nick: typeof o.nick === 'string' && NICK_RE.test(o.nick) ? o.nick : newNick(),
+    best: Math.max(0, Math.floor(Number(o.best) || 0)) };
 }
 const me = loadProfile();
 function saveProfile() {
   try { localStorage.setItem(STORE, JSON.stringify(me)); } catch (e) { /* private mode */ }
 }
+saveProfile(); // keeps a newly made nickname
 const myLook = () => ({ s: me.shirt, k: me.skin, b: me.body, w: me.wear.slice() });
 
 // ---------- Sound (Web Audio, starts after the first tap) ----------
@@ -677,6 +688,29 @@ const sfx = {
     }
     noise(1.5, 0.6, 2200);
     tone(90, 1.2, 'square', 0.25, 30);
+  },
+  // Lamps click and buzz, then the power dies with a falling hum.
+  lightsOut() {
+    [0, 0.25, 0.4, 0.7, 0.85].forEach((at) => tone(140 + Math.random() * 80, 0.05, 'square', 0.18, null, at));
+    tone(220, 0.6, 'sawtooth', 0.12, 25, 0.9);
+  },
+  // Slow heavy breathing right behind me.
+  breath() {
+    if (!ac) return;
+    for (const [at, dur, vol] of [[0, 0.55, 0.5], [0.65, 0.7, 0.35], [1.25, 0.3, 0.6]]) {
+      const len = Math.floor(ac.sampleRate * dur);
+      const buf = ac.createBuffer(1, len, ac.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.sin((i / len) * Math.PI);
+      const src = ac.createBufferSource();
+      const f = ac.createBiquadFilter();
+      const g = ac.createGain();
+      src.buffer = buf;
+      f.type = 'bandpass'; f.frequency.value = 500; f.Q.value = 1.2;
+      g.gain.value = vol;
+      src.connect(f).connect(g).connect(master);
+      src.start(ac.currentTime + at);
+    }
   },
   over() { tone(220, 2.2, 'sawtooth', 0.2, 30); tone(233, 2.2, 'sawtooth', 0.15, 32); },
   win() { [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, 0.3, 'triangle', 0.18, null, i * 0.12)); },
@@ -819,6 +853,9 @@ let beatT = 0;
 let chatterT = 3;
 let danger = 0;
 let scareT = 0;
+let scareKind = 0; // 0 jumps at you, 1 lights go out, 2 breathing behind you
+let scareLoud = false;
+let scareA0 = 0;
 let overT = 0;
 let netT = 0;
 let wasHost = false;
@@ -1057,7 +1094,7 @@ function update(dt) {
   for (const m of monkeys) {
     const pd = myField[Math.floor(m.y) * MW + Math.floor(m.x)];
     if (pd >= 0) nearest = Math.min(nearest, pd);
-    if (invuln <= 0 && Math.hypot(m.x - player.x, m.y - player.y) < 0.5) { caught(); return; }
+    if (invuln <= 0 && Math.hypot(m.x - player.x, m.y - player.y) < 0.5) { caught(m); return; }
   }
   danger = clamp(1 - nearest / 8, 0, 1);
 
@@ -1079,13 +1116,27 @@ function takeItem(i, mine) {
   updateHud();
 }
 
-function caught() {
+function caught(m) {
   lives--;
   updateHud();
   state = 'scare';
   scareT = 0;
-  sfx.scare();
-  if (navigator.vibrate) navigator.vibrate([200, 50, 300]);
+  // Each catch picks one of three jumpscares at random.
+  scareKind = rand(3);
+  scareLoud = false;
+  scareA0 = player.a;
+  if (scareKind === 1) sfx.lightsOut();
+  if (scareKind === 2) {
+    sfx.breath();
+    // In a solo game the monkey sneaks right behind me, so I see it when I turn around.
+    if (mode === 'solo' && m) {
+      let d = 0.9;
+      while (d > 0.3 && wall(Math.floor(player.x - Math.cos(player.a) * d), Math.floor(player.y - Math.sin(player.a) * d))) d -= 0.1;
+      m.x = player.x - Math.cos(player.a) * d;
+      m.y = player.y - Math.sin(player.a) * d;
+      m.h = player.a;
+    }
+  }
   if (mode === 'team') {
     if (isHost()) relocateNear(player.x, player.y);
     else if (room) room.send({ t: 'hit' });
@@ -1096,6 +1147,8 @@ function caught() {
 function afterScare() {
   if (lives <= 0) { die(); return; }
   if (mode === 'solo') placeMonkeysFar([player]);
+  player.a = scareA0;
+  flick = 1;
   invuln = 2.5;
   state = 'play';
 }
@@ -1162,6 +1215,7 @@ function spectate() {
 
 function lose() {
   state = 'lost';
+  sendScore();
   $('spec').hidden = true;
   $('hud').hidden = true;
   const got = GEM_COUNT - gemsLeft;
@@ -1174,6 +1228,7 @@ function lose() {
 
 function win() {
   state = 'win';
+  sendScore();
   sfx.win();
   showPlayUi(false);
   $('spec').hidden = true;
@@ -1470,7 +1525,7 @@ function drawScareFace(g, cx, cy, s, t) {
   }
 }
 
-function drawScare(t) {
+function drawFace(t) {
   const flash = t < 0.06 || (t > 0.32 && t < 0.36) || (t > 0.9 && t < 0.93);
   ctx.fillStyle = flash ? '#ffffff' : '#000000';
   ctx.fillRect(0, 0, W, H);
@@ -1479,7 +1534,8 @@ function drawScare(t) {
   const shake = 3 + 12 * k;
   const ox = (Math.random() - 0.5) * shake;
   const oy = (Math.random() - 0.5) * shake;
-  const zoom = 0.33 + Math.min(t * 5, 1) * 0.2 + t * 0.03;
+  // Jumpscare A rushes at you out of the dark; in the others the face is already right in front of you.
+  const zoom = scareKind === 0 ? 0.04 + Math.min(t * 4, 1) ** 2 * 0.56 : 0.33 + Math.min(t * 5, 1) * 0.2 + t * 0.03;
   const s = H * zoom;
   const cx = W / 2 + ox;
   const cy = H * 0.47 + oy;
@@ -1492,6 +1548,34 @@ function drawScare(t) {
   }
   drawScareFace(ctx, cx, cy, s, t);
   if (Math.random() < 0.25) { ctx.fillStyle = 'rgba(255,0,0,0.25)'; ctx.fillRect(0, 0, W, H); }
+}
+
+// The whole jumpscare: its quiet start, then the face.
+const scareEnd = () => SCARE_LEAD[scareKind] + SCARE_TIME;
+
+function drawScare(t) {
+  const f = t - SCARE_LEAD[scareKind];
+  if (f >= 0) {
+    if (!scareLoud) {
+      scareLoud = true;
+      sfx.scare();
+      if (navigator.vibrate) navigator.vibrate([200, 50, 300]);
+    }
+    drawFace(f);
+    return;
+  }
+  if (scareKind === 1) {
+    // B: the lights flicker harder and harder, then everything goes black and quiet.
+    if (t > 0.9) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); return; }
+    flick = Math.random() < t ? 0.05 : 0.4 + Math.random() * 0.6;
+    render(player);
+    return;
+  }
+  // C: breathing behind me, then the view turns around by itself.
+  const turn = clamp((t - 1) / 0.5, 0, 1);
+  render({ ...player, a: scareA0 + (Math.PI * (1 - Math.cos(turn * Math.PI))) / 2 });
+  ctx.fillStyle = `rgba(0,0,0,${0.15 + turn * 0.25})`;
+  ctx.fillRect(0, 0, W, H);
 }
 
 function drawOver(dt) {
@@ -1716,6 +1800,43 @@ function showScreen(id) {
   for (const e of document.querySelectorAll('.walletNum')) e.textContent = me.gems;
 }
 
+// ---------- High scores: the most gems one player has collected in one game ----------
+
+const BOARD = 'kivid';
+function drawNick() {
+  $('nickName').textContent = me.nick;
+  $('myBest').textContent = me.best;
+}
+
+async function showTop() {
+  const list = $('topList');
+  if (!labApi) { $('topMsg').textContent = 'Edetabel ei tööta praegu.'; return; }
+  try {
+    const rows = await labApi.topScores(40, { board: BOARD });
+    const seen = new Set();
+    list.textContent = '';
+    for (const r of rows) {
+      if (seen.has(r.name) || !NICK_RE.test(r.name)) continue;
+      seen.add(r.name);
+      const li = el('li', r.name === me.nick ? 'mine' : '');
+      li.append(el('span', '', `${seen.size}. ${r.name}`), el('b', '', `${r.score} 💎`));
+      list.append(li);
+      if (seen.size >= 10) break;
+    }
+    $('topMsg').textContent = seen.size ? '' : 'Edetabel on veel tühi. Ole esimene!';
+  } catch (e) {
+    $('topMsg').textContent = 'Edetabel ei tööta praegu. Proovi hiljem uuesti.';
+  }
+}
+
+// After each game my result goes to the table, but only when it beats my own best.
+function sendScore() {
+  if (picked <= me.best) return;
+  me.best = picked;
+  saveProfile();
+  if (labApi) labApi.addScore(me.nick, picked, BOARD).then(showTop, () => {});
+}
+
 function goMenu() {
   leaveRoom();
   closeLobby();
@@ -1726,6 +1847,8 @@ function goMenu() {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, W, H);
   showScreen('start');
+  drawNick();
+  showTop();
 }
 
 function openRooms() {
@@ -1978,6 +2101,13 @@ $('goBtn').addEventListener('click', () => {
 });
 $('shopBtn').addEventListener('click', () => { state = 'shop'; showScreen('shop'); drawShop(); });
 $('shopBack').addEventListener('click', goMenu);
+$('nickBtn').addEventListener('click', () => {
+  me.nick = newNick();
+  me.best = 0;
+  saveProfile();
+  drawNick();
+  showTop();
+});
 
 let last = performance.now();
 function frame(now) {
@@ -1990,7 +2120,7 @@ function frame(now) {
   } else if (state === 'scare') {
     scareT += dt;
     drawScare(scareT);
-    if (scareT >= SCARE_TIME) afterScare();
+    if (scareT >= scareEnd()) afterScare();
   } else if (state === 'over' || state === 'lost') {
     drawOver(dt);
   } else if (state === 'spec') {
@@ -2002,4 +2132,6 @@ function frame(now) {
 resize();
 window.addEventListener('resize', resize);
 showScreen('start');
+drawNick();
+showTop();
 requestAnimationFrame(frame);

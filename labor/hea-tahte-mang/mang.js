@@ -461,6 +461,10 @@
     const head = paperCut(x, ellipsePts(0, -77, 13, 15, 12), o.skin, r, 0.6);
     ink(x, head, true, r, 1.5, 0.4);
     drawHair(x, o, r);
+    if (o.beard) {
+      const b = paperCut(x, [[-12, -73], [-10, -65], [-4, -61], [0, -60], [4, -61], [10, -65], [12, -73], [6, -68], [-6, -68]], o.hairColor, r, 0.6);
+      ink(x, b, true, r, 1.1, 0.3);
+    }
     dot(x, -5, -76, 1.7, INK);
     dot(x, 5, -76, 1.7, INK);
     dot(x, -8.5, -70.5, 3.2, 'rgba(214,90,80,.45)');
@@ -495,13 +499,17 @@
     { name: 'Lumi', coat: '#8fb8c9', pattern: 'lilled', patColor: '#c8553d', hair: 'bob', hairColor: '#1f1a17', skin: '#c99a72' },
     { name: 'Sass', coat: '#6d8b4e', pattern: 'tapid', patColor: '#f4ecd9', hair: 'curly', hairColor: '#5a3a22', skin: '#8d5e3c' },
     { name: 'Iris', coat: '#eaa6a0', pattern: 'triibud', patColor: '#2a7f7a', hair: 'bun', hairColor: '#b5562f', skin: '#f5dcc6' },
-    { name: 'Oto', coat: '#7a5c99', pattern: 'tapid', patColor: '#e0a631', hair: 'bob', hairColor: '#2b2622', skin: '#e9c9a6', hat: '#c8553d' },
+    { name: 'Andri', coat: '#7a5c99', pattern: 'tapid', patColor: '#e0a631', hair: 'spiky', hairColor: '#2b2622', skin: '#e9c9a6', hat: '#c8553d' },
     { name: 'Kaie', teacher: true, coat: '#2a7f7a', pattern: 'lilled', patColor: '#eaa6a0', hair: 'bun', hairColor: '#9a9a9a', skin: '#f0d2b6', glasses: true, book: '#c8553d' },
     { name: 'Tõnu', teacher: true, coat: '#a8743a', pattern: 'ruudud', patColor: '#2b2622', hair: 'spiky', hairColor: '#3b2a20', skin: '#d9a77f', glasses: true },
     { name: 'Liis', teacher: true, coat: '#c8553d', pattern: 'tapid', patColor: '#f4ecd9', hair: 'bob', hairColor: '#d9a441', skin: '#f3d9c2', scarf: '#e0a631', book: '#2a7f7a' },
+    { name: 'Jaan', teacher: true, coat: '#6d8b4e', pattern: 'triibud', patColor: '#f4ecd9', hair: 'short', hairColor: '#5a3a22', skin: '#e8c4a0', beard: true },
+    { name: 'Peeter', teacher: true, coat: '#8fb8c9', pattern: 'ruudud', patColor: '#c8553d', hair: 'curly', hairColor: '#2b2622', skin: '#8d5e3c', beard: true, book: '#e0a631' },
+    { name: 'Anu', teacher: true, coat: '#eaa6a0', pattern: 'lilled', patColor: '#2a7f7a', hair: 'bun', hairColor: '#3b2a20', skin: '#c99a72', scarf: '#7a5c99' },
+    { name: 'Maret', teacher: true, coat: '#e0a631', pattern: 'tapid', patColor: '#c8553d', hair: 'curly', hairColor: '#b5562f', skin: '#f5dcc6', glasses: true },
   ];
 
-  const SPAWN = [[150, 230], [270, 200], [500, 250], [600, 120], [150, 520], [520, 520], [440, 180], [620, 380], [240, 640]];
+  const SPAWN = [[150, 230], [270, 200], [500, 250], [600, 120], [150, 520], [520, 520], [440, 180], [620, 380], [240, 640], [330, 330], [90, 400], [400, 620], [660, 600]];
 
   const npcs = TEGELASED.map((o, i) => ({
     ...o,

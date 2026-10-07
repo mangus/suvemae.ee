@@ -1543,7 +1543,7 @@ function hyppaValjaSees() {
 }
 
 // Lines the baby mutters while he limps around looking for you (our own words).
-const OTSI = ['Tüdrukud ja poisid, kus te olete?', 'Agu-agu…', 'Tüdrukud ja poisid, kus te olete?', 'Tule mängima!', 'Kõks-kõks… tüdrukud ja poisid, kus te olete?'];
+const OTSI = ['Tüdrukud ja poisid, kus te olete?']; // the child wants the baby to call this out
 
 function puuduvad() {
   return TOORIISTAD.filter((_, i) => !mang.tooriistad.has(i)).map((t) => t.mark).join(' ');
@@ -1697,10 +1697,10 @@ function uuendaSees(dt) {
   } else {
     s.jutuAeg -= dt;
     if (s.jutuAeg <= 0) {
-      s.jutuAeg = 6 + Math.random() * 5;
+      s.jutuAeg = 4 + Math.random() * 2;
       const jutt = OTSI[Math.floor(Math.random() * OTSI.length)];
       if (!huue || kell > huue.kuni) huua(jutt, 1.8);
-      heli.kone(jutt);
+      heli.kone(jutt, true);
     }
   }
 

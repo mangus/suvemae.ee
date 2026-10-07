@@ -58,8 +58,16 @@ main{max-width:1000px;margin:0 auto;padding:0 20px}
 .frame small{font-size:.92rem;font-weight:700;color:var(--ink-soft)}
 footer{padding:26px 20px 34px;text-align:center;color:var(--ink-soft);font-size:.98rem;border-top:3px dashed #eadfc4}
 footer p{margin:.2rem 0}
+.d-bee{position:absolute;top:24%;left:0;width:clamp(56px,7vw,84px);pointer-events:none;animation:bee-fly 18s ease-in-out infinite}
+.d-bee svg{display:block;width:100%;height:auto;animation:bee-bob .5s ease-in-out infinite alternate}
+.bee-wing{transform-box:fill-box;transform-origin:50% 100%;animation:bee-flap .07s linear infinite alternate}
+.bee-buzz{position:absolute;top:-.4em;right:100%;font-weight:900;font-size:clamp(.9rem,1.8vw,1.2rem);color:#d95a00;white-space:nowrap;transform:rotate(-10deg);animation:bee-buzz .25s steps(2) infinite}
+@keyframes bee-fly{0%{transform:translate(-140px,0)}25%{transform:translate(28vw,70px)}50%{transform:translate(55vw,-20px)}75%{transform:translate(80vw,80px)}100%{transform:translate(calc(100vw + 140px),0)}}
+@keyframes bee-bob{to{transform:translateY(-7px) rotate(-5deg)}}
+@keyframes bee-flap{to{transform:scaleY(.3)}}
+@keyframes bee-buzz{50%{transform:rotate(-14deg) translate(2px,-3px)}}
 @media (max-width:720px){.d-plane,.d-squiggle{display:none}}
-@media (prefers-reduced-motion:reduce){.rays,.d-ladybug{animation:none}.door{transition:none}}
+@media (prefers-reduced-motion:reduce){.rays,.d-ladybug,.d-bee,.d-bee svg,.bee-wing,.bee-buzz{animation:none}.d-bee{left:12%}.door{transition:none}}
 </style>
 </head>
 <body>
@@ -90,6 +98,7 @@ footer p{margin:.2rem 0}
 <svg class="doodle d-plane" viewBox="0 0 100 70" aria-hidden="true"><path d="M8 34L92 8 68 62 50 42zM50 42L92 8" fill="none" stroke="#3fa7f5" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M4 60q10-9 20-1t20-1" fill="none" stroke="#3fa7f5" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 8"/></svg>
 <svg class="doodle d-squiggle" viewBox="0 0 120 40" aria-hidden="true"><path d="M4 26C18 4 30 4 36 22s20 18 28-4 24-18 32 2 16 16 20-6" fill="none" stroke="#8c6cf2" stroke-width="5" stroke-linecap="round"/></svg>
 <svg class="doodle d-ladybug" viewBox="0 0 80 80" aria-hidden="true"><g stroke="#2b2340" stroke-width="3.5" stroke-linecap="round" fill="none"><path d="M22 34l-10-6M20 46H8M22 58l-10 6M58 34l10-6M60 46h12M58 58l10 6M34 14l-6-9M46 14l6-9"/></g><circle cx="40" cy="22" r="10" fill="#2b2340"/><circle cx="40" cy="48" r="24" fill="#e23d3d" stroke="#2b2340" stroke-width="3.5"/><path d="M40 25v47" stroke="#2b2340" stroke-width="3.5"/><g fill="#2b2340"><circle cx="29" cy="38" r="5"/><circle cx="51" cy="38" r="5"/><circle cx="27" cy="56" r="4.5"/><circle cx="53" cy="56" r="4.5"/></g><circle cx="35" cy="20" r="2.2" fill="#fff"/><circle cx="45" cy="20" r="2.2" fill="#fff"/></svg>
+<div class="doodle d-bee" aria-hidden="true"><span class="bee-buzz">bzzz…</span><svg viewBox="0 0 90 70"><path d="M14 42L3 44l11 4z" fill="#2b2340"/><ellipse cx="42" cy="44" rx="28" ry="19" fill="#ffc933" stroke="#2b2340" stroke-width="3.5"/><path d="M34 27v34M48 27v34" stroke="#2b2340" stroke-width="7"/><circle cx="72" cy="40" r="12" fill="#2b2340"/><circle cx="76" cy="37" r="3" fill="#fff"/><path d="M74 45q4 3 7 0" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M74 29q2-10 8-12M68 29q-1-10 3-14" stroke="#2b2340" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse class="bee-wing" cx="38" cy="20" rx="13" ry="17" fill="#dff3ff" stroke="#2b2340" stroke-width="3" opacity=".85"/><ellipse class="bee-wing" cx="53" cy="22" rx="11" ry="15" fill="#dff3ff" stroke="#2b2340" stroke-width="3" opacity=".85"/></svg></div>
 <h1 aria-label="Suvemäe"><span aria-hidden="true"><span style="--c:#e23d6d;--r:-6deg">S</span><span style="--c:#d95a00;--r:4deg">u</span><span style="--c:#2f9a45;--r:-3deg">v</span><span style="--c:#1f7fd1;--r:5deg">e</span><span style="--c:#7b55e0;--r:-4deg">m</span><span style="--c:#148f8a;--r:3deg">ä</span><span style="--c:#e23d6d;--r:-5deg">e</span></span></h1>
 <svg class="underline" viewBox="0 0 300 24" preserveAspectRatio="none" aria-hidden="true"><path d="M6 15C60 4 120 22 180 11s90-3 114 3" fill="none" stroke="#ff8a3d" stroke-width="6" stroke-linecap="round"/></svg>
 <p class="tagline">Tallinna Kunstigümnaasiumi demokraatlik kooliosa</p>

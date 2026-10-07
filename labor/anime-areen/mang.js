@@ -342,6 +342,33 @@ function flash(text) {
   teateTaimer = setTimeout(() => teade.classList.remove('nahtav'), 2200);
 }
 
+// Big screen mode: the browser's real full screen where it is allowed,
+// and a window-sized arena (CSS) everywhere, also on iPhones.
+const suur = $('suur');
+function showBig(on) {
+  document.body.classList.toggle('taisekraan', on);
+  suur.textContent = on ? '✕' : '⛶ Suur ekraan';
+  suur.setAttribute('aria-label', on ? 'Välju suurest ekraanist' : 'Mängi suurel ekraanil');
+}
+suur.addEventListener('click', async () => {
+  const on = !document.body.classList.contains('taisekraan');
+  showBig(on);
+  suur.blur();
+  try {
+    if (on && !document.fullscreenElement) {
+      await document.documentElement.requestFullscreen?.({ navigationUI: 'hide' });
+      if (matchMedia('(pointer: coarse)').matches) await screen.orientation?.lock?.('landscape');
+    } else if (!on && document.fullscreenElement) {
+      await document.exitFullscreen();
+    }
+  } catch {
+    // Full screen or turning the phone is not allowed here; the CSS mode still works.
+  }
+});
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement) showBig(false);
+});
+
 function resize() {
   dpr = Math.min(2, window.devicePixelRatio || 1);
   areen.width = W * dpr;

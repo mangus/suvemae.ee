@@ -38,6 +38,7 @@ button:active, button.vajutatud { transform: translateY(3px); filter: brightness
 .eluriba span { display: block; height: 100%; background: linear-gradient(90deg, #39df8f, #f4ed4f); transition: width 0.2s; }
 #olek { flex: 1; text-align: center; }
 #voitja { white-space: nowrap; }
+.suur { padding: 3px 10px; border: 2px solid #fff; border-radius: 999px; background: #ff4f9a; color: #fff; font-size: inherit; white-space: nowrap; }
 #areen { display: block; width: min(100%, 92vh); aspect-ratio: 4 / 3; margin: 0 auto; touch-action: none; }
 .teade { position: absolute; left: 50%; top: 64px; transform: translateX(-50%); max-width: 92%; padding: 7px 14px; border: 2px solid #1d1430; border-radius: 999px; background: #fff8ac; font-weight: 1000; text-align: center; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
 .teade.nahtav { opacity: 1; }
@@ -59,6 +60,35 @@ kbd { padding: 2px 6px; border: 2px solid #1d1430; border-radius: 6px; backgroun
 .super { width: 84px; height: 84px; border-radius: 50%; background: linear-gradient(145deg, #ffe45c, #ff7a2e); box-shadow: 0 6px #1d1430; font-size: 0.95rem; }
 .super[hidden] { display: none; }
 .super.laeb { background: #d8d0e6; color: #5b426e; }
+
+/* Big screen mode: the arena covers the whole window, the picture keeps its 4:3 shape. */
+body.taisekraan { overflow: hidden; }
+body.taisekraan .manguala {
+  position: fixed; inset: 0; z-index: 10;
+  display: grid; grid-template-rows: auto minmax(0, 1fr);
+  border: 0; border-radius: 0; box-shadow: none;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background:
+    radial-gradient(rgba(255, 95, 168, 0.22) 1.6px, transparent 1.8px) 0 0 / 14px 14px,
+    linear-gradient(160deg, #e6dcff, #fff3e3 50%, #ffd9ec);
+}
+body.taisekraan #areen { width: 100%; height: 100%; aspect-ratio: auto; object-fit: contain; }
+body.taisekraan .teade { top: 76px; }
+body.taisekraan .puutenupud {
+  position: fixed; z-index: 11; left: 0; right: 0; bottom: 0;
+  width: auto; margin: 0;
+  padding: 0 max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  pointer-events: none;
+}
+body.taisekraan .puutenupud > * { pointer-events: auto; opacity: 0.85; }
+/* With a mouse and keyboard the touch buttons are not needed on the big screen. */
+@media (hover: hover) and (pointer: fine) {
+  body.taisekraan .puutenupud { display: none; }
+}
+/* A phone held upright: keep the buttons under the arena, not on top of it. */
+@media (pointer: coarse) and (orientation: portrait) {
+  body.taisekraan .manguala { padding-bottom: calc(190px + env(safe-area-inset-bottom)); }
+}
 
 @media (max-width: 600px) {
   body { padding: 8px; }

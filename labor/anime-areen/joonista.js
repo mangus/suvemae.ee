@@ -232,39 +232,64 @@ function features(ctx, x, y, eyeColor, mood) {
   }
 }
 
-// Draws one fighter standing with its feet at (x, y).
-export function drawFighter(ctx, character, x, y, options = {}) {
-  const { facing = 1, scale = 1, attack = 0, hurt = 0, time = 0, walking = false, label = '', hp = null, me = false, down = false } = options;
-  const color = COLORS[character.v] ?? COLORS[0];
-  const punch = attack > 0.55 ? 1 : attack / 0.55;
-  const step = walking && !down ? Math.sin(time / 85) : 0;
-  const breath = down ? 0 : Math.sin(time / 420) * 1.2;
-  const lean = punch * 5 - hurt * 5;
-  const mood = down ? 'down' : hurt > 0.4 ? 'hurt' : punch > 0.3 ? 'shout' : '';
+// The fire character the children drew themselves, cut out of their paper.
+// Until the picture has loaded, the drawn stand-in is shown instead.
+const picture = new Image();
+picture.src = new URL('tegelased/tuletegelane.webp', import.meta.url).href;
+const PICTURE_HEIGHT = 135;
 
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(scale, scale);
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-  ctx.fillStyle = 'rgba(29, 20, 48, 0.2)';
-  ctx.beginPath();
-  ctx.ellipse(down ? -55 * facing : 0, 0, down ? 62 : 22, 6, 0, 0, Math.PI * 2);
-  ctx.fill();
-  if (me && !down) {
-    ctx.strokeStyle = '#ffd23f';
-    ctx.lineWidth = 3;
+function hasPicture() {
+  return picture.complete && picture.naturalWidth > 0;
+}
+
+// A flickering fire blast: red outside, orange in between, yellow in the middle.
+function flame(ctx, x, y, length, size, time) {
+  for (const [color, k] of [['#e8364f', 1], ['#ff8a1f', 0.7], ['#ffe45c', 0.4]]) {
+    ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.ellipse(0, 0, 28, 8, 0, 0, Math.PI * 2);
-    ctx.stroke();
+    for (let i = 0; i <= 6; i += 1) {
+      const t = i / 6;
+      const r = size * k * (0.45 + Math.sin(t * Math.PI) * 0.75) * (1 + Math.sin(time / 45 + i * 1.7) * 0.15);
+      const fx = x + length * t;
+      const fy = y + Math.sin(time / 60 + i) * 2;
+      ctx.moveTo(fx + r, fy);
+      ctx.arc(fx, fy, r, 0, Math.PI * 2);
+    }
+    ctx.fill();
   }
-  ctx.scale(facing, 1);
-  if (down) {
-    ctx.translate(0, -5);
-    ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = '#fff2a8';
+  for (let i = 0; i < 6; i += 1) {
+    const t = (time / 350 + i / 6) % 1;
+    ctx.beginPath();
+    ctx.arc(x + length * t, y - 10 - t * 18 + Math.sin(time / 50 + i) * 5, 2, 0, Math.PI * 2);
+    ctx.fill();
   }
-  if (hurt > 0 && Math.floor(time / 70) % 2 === 0) ctx.globalAlpha = 0.5;
+}
 
+function drawPicture(ctx, { punch, attack, hurt, breath, step, time }) {
+  const h = PICTURE_HEIGHT;
+  const w = (h * picture.naturalWidth) / picture.naturalHeight;
+  ctx.save();
+  ctx.translate(0, breath - Math.abs(step) * 4);
+  ctx.rotate(punch * 0.08 - hurt * 0.1);
+  if (attack > 0) {
+    ctx.shadowColor = '#ff7a2e';
+    ctx.shadowBlur = 24 * attack;
+  }
+  // The wings breathe a little, as if they were flapping.
+  ctx.scale(1 + Math.sin(time / 260) * 0.03, 1);
+  ctx.drawImage(picture, -w / 2, -h, w, h);
+  ctx.restore();
+  if (attack > 0.05) {
+    ctx.save();
+    ctx.globalAlpha *= Math.min(1, attack * 2);
+    flame(ctx, 14, -72 + breath, 70 * punch, 13, time);
+    ctx.restore();
+  }
+}
+
+// The drawn stand-in fighter, used while the picture is loading.
+function standIn(ctx, color, lean, breath, step, punch, attack, mood) {
   const sb = [-6 + lean, -97 + breath];
   const sf = [7 + lean, -97 + breath];
   // Back arm and leg first, so the body covers them.
@@ -305,6 +330,43 @@ export function drawFighter(ctx, character, x, y, options = {}) {
     ctx.lineWidth = 2;
     ctx.stroke();
   }
+}
+
+// Draws one fighter standing with its feet at (x, y).
+export function drawFighter(ctx, character, x, y, options = {}) {
+  const { facing = 1, scale = 1, attack = 0, hurt = 0, time = 0, walking = false, label = '', hp = null, me = false, down = false } = options;
+  const color = COLORS[character.v] ?? COLORS[0];
+  const punch = attack > 0.55 ? 1 : attack / 0.55;
+  const step = walking && !down ? Math.sin(time / 85) : 0;
+  const breath = down ? 0 : Math.sin(time / 420) * 1.2;
+  const lean = punch * 5 - hurt * 5;
+  const mood = down ? 'down' : hurt > 0.4 ? 'hurt' : punch > 0.3 ? 'shout' : '';
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.fillStyle = 'rgba(29, 20, 48, 0.2)';
+  ctx.beginPath();
+  ctx.ellipse(down ? -55 * facing : 0, 0, down ? 62 : 22, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  if (me && !down) {
+    ctx.strokeStyle = '#ffd23f';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 28, 8, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.scale(facing, 1);
+  if (down) {
+    ctx.translate(0, -5);
+    ctx.rotate(-Math.PI / 2);
+  }
+  if (hurt > 0 && Math.floor(time / 70) % 2 === 0) ctx.globalAlpha = 0.5;
+
+  if (hasPicture()) drawPicture(ctx, { punch, attack, hurt, breath, step, time });
+  else standIn(ctx, color, lean, breath, step, punch, attack, mood);
   ctx.restore();
 
   if (hurt > 0.45 && !down) {
@@ -314,7 +376,7 @@ export function drawFighter(ctx, character, x, y, options = {}) {
   }
 
   if (hp !== null) {
-    const top = y - (down ? 40 : 140) * scale;
+    const top = y - (down ? 40 : hasPicture() ? 150 : 140) * scale;
     ctx.save();
     ctx.fillStyle = INK;
     ctx.fillRect(x - 21, top, 42, 7);

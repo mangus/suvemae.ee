@@ -1,7 +1,7 @@
 // Anime Areen: a realtime fighting game for several players in one shared
 // room. Each player keeps track of their own health; an attacker only tells
-// the target that it was hit. The fighters are drawn stand-ins until the
-// children's own character pictures are added.
+// the target that it was hit. Every fighter is the fire character the
+// children drew; more of their characters will be added later.
 import { lab } from '../lab.js';
 import { clamp, moveFighter, attackHits, applyDamage, cleanCharacter } from './game-core.js';
 import { COLORS, drawFighter, drawArena, drawFocusLines } from './joonista.js';

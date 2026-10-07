@@ -1450,7 +1450,7 @@ function sisene(m) {
   s.kadunud = 0;
   s.otsiAeg = 0;
   s.sammuAeg = 0;
-  s.jutuAeg = 5;
+  s.jutuAeg = 2;
   s.vz = 0;
   s.vOlek = 'otsib';
   s.vHupe = 0;
@@ -1543,7 +1543,7 @@ function hyppaValjaSees() {
 }
 
 // Lines the baby mutters while he limps around looking for you (our own words).
-const OTSI = ['Kus sa oled?', 'Agu-agu…', 'Tule mängima!', 'Kõks-kõks… kus sa oled?'];
+const OTSI = ['Tüdrukud ja poisid, kus te olete?', 'Agu-agu…', 'Tüdrukud ja poisid, kus te olete?', 'Tule mängima!', 'Kõks-kõks… tüdrukud ja poisid, kus te olete?'];
 
 function puuduvad() {
   return TOORIISTAD.filter((_, i) => !mang.tooriistad.has(i)).map((t) => t.mark).join(' ');
@@ -1691,8 +1691,8 @@ function uuendaSees(dt) {
       s.nuusk = 0;
       s.otsiAeg = 0;
       heli.laulab = false;
-      huua(s.peidus ? 'Hmm… kuhu sa kadusid? 🤔' : 'Kus sa oled? 🤔', 1.8);
-      heli.kone('Kus sa oled?', true);
+      huua('Tüdrukud ja poisid, kus te olete? 🤔', 1.8);
+      heli.kone('Tüdrukud ja poisid, kus te olete?', true);
     }
   } else {
     s.jutuAeg -= dt;

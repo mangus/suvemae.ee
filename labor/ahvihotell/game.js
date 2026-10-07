@@ -133,30 +133,55 @@ function resize() {
 
 // ---------- Textures and sprites (all drawn in code) ----------
 
+// Dark blue striped night wallpaper above a dark wood panel.
 function wallpaper(g) {
-  g.fillStyle = '#4e1a26'; g.fillRect(0, 0, TEX, 44);
-  g.fillStyle = '#5f2230';
+  g.fillStyle = '#2b2546'; g.fillRect(0, 0, TEX, 44);
+  g.fillStyle = '#221d3a';
   for (let x = 0; x < TEX; x += 16) g.fillRect(x, 0, 8, 44);
-  g.fillStyle = '#a8843a';
-  for (let y = 5; y < 42; y += 12) for (let x = 3; x < TEX; x += 16) { g.fillRect(x, y, 2, 2); g.fillRect(x + 8, y + 6, 2, 2); }
-  g.fillStyle = '#c9a24a'; g.fillRect(0, 42, TEX, 2);
-  g.fillStyle = '#3a2414'; g.fillRect(0, 44, TEX, 20);
-  g.fillStyle = '#26170c';
+  g.fillStyle = '#3d3560';
+  for (let y = 7; y < 40; y += 12) for (let x = 3; x < TEX; x += 16) { g.fillRect(x, y, 2, 2); g.fillRect(x + 8, y + 6, 2, 2); }
+  g.fillStyle = '#18162a'; g.fillRect(0, 0, TEX, 3);
+  g.fillStyle = '#5a4a3a'; g.fillRect(0, 42, TEX, 2);
+  g.fillStyle = '#2c1c1a'; g.fillRect(0, 44, TEX, 20);
+  g.fillStyle = '#1b100f';
   g.fillRect(0, 44, TEX, 2);
   for (let x = 0; x < TEX; x += 16) g.fillRect(x, 48, 1, 14);
-  g.fillRect(0, 62, TEX, 2);
+  g.fillRect(0, 60, TEX, 4);
 }
 
 function makeWallTex(kind, num) {
   const c = makeCanvas(TEX, TEX);
   const g = c.getContext('2d');
   wallpaper(g);
+  if (kind === 'door' || kind === 'hole') {
+    g.fillStyle = '#3b3328'; g.fillRect(13, 5, 38, 59);
+  }
   if (kind === 'door') {
-    g.fillStyle = '#2a170c'; g.fillRect(14, 6, 36, 58);
-    g.fillStyle = '#5b351b'; g.fillRect(16, 8, 32, 56);
-    g.fillStyle = '#4a2a14'; g.fillRect(20, 26, 24, 12); g.fillRect(20, 42, 24, 18);
-    g.fillStyle = '#d8b04a'; g.fillRect(41, 38, 3, 3); g.fillRect(25, 12, 14, 9);
-    g.fillStyle = '#2a170c';
+    // An old worn door: the paint peels off and the number plate has gone dull.
+    g.fillStyle = '#5c4c38'; g.fillRect(16, 8, 32, 56);
+    g.fillStyle = '#4b3d2c'; g.fillRect(20, 26, 24, 12); g.fillRect(20, 42, 24, 18);
+    for (let i = 0; i < 7; i++) {
+      blob(g, 18 + Math.random() * 28, 10 + Math.random() * 50, 1.5 + Math.random() * 3, 1 + Math.random() * 4, i % 2 ? '#7d6c52' : '#3a2e22');
+    }
+    g.strokeStyle = '#2b2219';
+    g.lineWidth = 1;
+    for (let i = 0; i < 3; i++) {
+      const x = 20 + Math.random() * 22;
+      const y = 28 + Math.random() * 20;
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x + 3 - Math.random() * 6, y + 8 + Math.random() * 8); g.stroke();
+    }
+    g.fillStyle = '#8a7440'; g.fillRect(41, 38, 3, 3);
+    g.fillStyle = '#9a8650'; g.fillRect(25, 12, 14, 9);
+  } else if (kind === 'hole') {
+    // The door is gone: only a dark doorway with a few broken boards.
+    g.fillStyle = '#050407'; g.fillRect(16, 8, 32, 56);
+    poly(g, [16, 30, 48, 22, 48, 26, 16, 35], '#4a3c2c');
+    poly(g, [16, 50, 40, 57, 38, 60, 16, 54], '#3d3226');
+    if (num === 313) { g.fillStyle = '#ff3b2a'; g.fillRect(27, 40, 2, 2); g.fillRect(33, 40, 2, 2); }
+    g.fillStyle = '#8a7a4a'; g.fillRect(25, 12, 14, 9);
+  }
+  if (kind === 'door' || kind === 'hole') {
+    g.fillStyle = '#2a2116';
     g.font = 'bold 7px monospace';
     g.textAlign = 'center';
     g.textBaseline = 'middle';
@@ -170,7 +195,8 @@ function makeWallTex(kind, num) {
 }
 
 const wallTex = { plain: makeWallTex('plain'), scratch: makeWallTex('scratch'), doors: [] };
-for (const n of [101, 104, 113, 207, 212, 216, 304, 313]) wallTex.doors.push(makeWallTex('door', n));
+for (const n of [101, 104, 113, 207, 212, 216]) wallTex.doors.push(makeWallTex('door', n));
+for (const n of [304, 313]) wallTex.doors.push(makeWallTex('hole', n));
 
 function texFor(x, y) {
   const h = (Math.imul(x, 73856093) ^ Math.imul(y, 19349663)) >>> 0;
@@ -1355,6 +1381,74 @@ function drawGlow(img, size, wx, wy, scale, lift, view, alpha, add) {
   ctx.globalCompositeOperation = 'source-over';
 }
 
+// ---------- Floor: a red hotel runner with a gold border along the walls ----------
+
+const FT = 32;
+const FLOOR_LV = 12;
+const FOG_RGB = [14, 16, 30];
+// One carpet tile for each mix of walls around a cell (bit 1 left, 2 right, 4 up, 8 down), so the border follows the walls.
+// Each tile is baked at several brightness levels that fade into the blue fog.
+const floorTiles = [];
+for (let mask = 0; mask < 16; mask++) {
+  const t = [];
+  for (let y = 0; y < FT; y++) for (let x = 0; x < FT; x++) {
+    const fx = (x + 0.5) / FT;
+    const fy = (y + 0.5) / FT;
+    const edge = Math.min(mask & 1 ? fx : 9, mask & 2 ? 1 - fx : 9, mask & 4 ? fy : 9, mask & 8 ? 1 - fy : 9);
+    const n = ((x * 7 + y * 13) % 5) * 3;
+    if (edge < 0.1) t.push([62 - n, 38 - n / 2, 20]);
+    else if (edge < 0.16) t.push([196, 150, 56]);
+    else if (Math.abs(fx - 0.5) + Math.abs(fy - 0.5) < 0.11) t.push([200, 155, 60]);
+    else t.push([140 - n, 22, 32]);
+  }
+  const levels = [];
+  for (let l = 0; l < FLOOR_LV; l++) {
+    const L = l / (FLOOR_LV - 1);
+    const a = new Uint32Array(FT * FT);
+    t.forEach(([r, g, b], i) => {
+      const c = (v, f) => Math.round(v * L + f * (1 - L));
+      a[i] = ((255 << 24) | (c(b, FOG_RGB[2]) << 16) | (c(g, FOG_RGB[1]) << 8) | c(r, FOG_RGB[0])) >>> 0;
+    });
+    levels.push(a);
+  }
+  floorTiles.push(levels);
+}
+let floorMap = null;
+let floorMask = null;
+let floorImg = null;
+let floorBuf = null;
+
+function drawFloor(cam, dirX, dirY, planeX, planeY, horizon, light) {
+  if (floorMap !== map) {
+    floorMap = map;
+    floorMask = new Uint8Array(MW * MH);
+    for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
+      floorMask[y * MW + x] = wall(x - 1, y) | (wall(x + 1, y) << 1) | (wall(x, y - 1) << 2) | (wall(x, y + 1) << 3);
+    }
+  }
+  if (!floorImg || floorImg.width !== W || floorImg.height !== H) {
+    floorImg = ctx.createImageData(W, H);
+    floorBuf = new Uint32Array(floorImg.data.buffer);
+  }
+  const y0 = Math.floor(horizon) + 1;
+  for (let y = y0; y < H; y++) {
+    const dist = K / (2 * (y + 0.5 - horizon));
+    const lev = Math.round(clamp(light(dist) * 0.85 + 0.05, 0, 1) * (FLOOR_LV - 1));
+    let wx = cam.x + dist * (dirX - planeX);
+    let wy = cam.y + dist * (dirY - planeY);
+    const sx = (dist * planeX * 2) / W;
+    const sy = (dist * planeY * 2) / W;
+    const o = y * W;
+    for (let x = 0; x < W; x++, wx += sx, wy += sy) {
+      const cx = Math.floor(wx);
+      const cy = Math.floor(wy);
+      const m = cx >= 0 && cy >= 0 && cx < MW && cy < MH ? floorMask[cy * MW + cx] : 15;
+      floorBuf[o + x] = floorTiles[m][lev][((((wy - cy) * FT) | 0) * FT) + (((wx - cx) * FT) | 0)];
+    }
+  }
+  ctx.putImageData(floorImg, 0, 0, 0, y0, W, H - y0);
+}
+
 // Draws the hotel through the eyes of cam: me, or the friend I am watching.
 function render(cam) {
   const dirX = Math.cos(cam.a);
@@ -1366,16 +1460,12 @@ function render(cam) {
   // Some old bulbs keep flickering on their own.
   for (const l of lamps) l.f = flick * (l.bad && Math.sin(time * 17 + l.ph) * Math.sin(time * 5.3 + l.ph) > 0.35 ? 0.15 : 1);
 
-  let g = ctx.createLinearGradient(0, 0, 0, horizon);
-  g.addColorStop(0, '#120c0a');
-  g.addColorStop(1, '#000');
+  const g = ctx.createLinearGradient(0, 0, 0, horizon);
+  g.addColorStop(0, '#161528');
+  g.addColorStop(1, '#0e1020');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, horizon);
-  g = ctx.createLinearGradient(0, horizon, 0, H);
-  g.addColorStop(0, '#000');
-  g.addColorStop(1, `rgb(${Math.round(70 * flick)},12,20)`);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, horizon, W, H - horizon);
+  drawFloor(cam, dirX, dirY, planeX, planeY, horizon, light);
 
   for (let x = 0; x < W; x++) {
     const camX = (2 * x) / W - 1;
@@ -1408,7 +1498,7 @@ function render(cam) {
     const front = side === 0 ? my * MW + mx - stepX : (my - stepY) * MW + mx;
     const lit = lampAt(cam.x + perp * rdx, cam.y + perp * rdy, front);
     const shade = 1 - clamp(light(perp) + lit, 0, 1) * (side ? 0.72 : 1);
-    if (shade > 0.02) { ctx.fillStyle = `rgba(0,0,0,${shade.toFixed(2)})`; ctx.fillRect(x, top, 1, lineH); }
+    if (shade > 0.02) { ctx.fillStyle = `rgba(14,16,30,${shade.toFixed(2)})`; ctx.fillRect(x, top, 1, lineH); }
     if (lit > 0.03) { ctx.fillStyle = `rgba(255,160,70,${(lit * 0.2).toFixed(2)})`; ctx.fillRect(x, top, 1, lineH); }
     zbuf[x] = perp;
   }

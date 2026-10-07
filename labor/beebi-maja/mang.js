@@ -793,13 +793,13 @@ function jalg(pool, tostab) {
   ctx.stroke();
 }
 
-// One chubby arm; nurk swings it, koristi puts the rattle in its hand.
-function kasi(pool, nurk, koristi) {
+// One chubby arm in the snail suit; nurk swings it, lusikas puts a big spoon in its hand.
+function kasi(pool, nurk, lusikas) {
   ctx.save();
   ctx.translate(pool * 13, -46);
   ctx.rotate(-pool * 0.5 + nurk);
   ctx.lineCap = 'round';
-  ctx.strokeStyle = '#8fdcbf';
+  ctx.strokeStyle = '#a8cf5a'; // snail-green sleeve
   ctx.lineWidth = 7;
   joon(0, 0, 0, 9);
   ctx.strokeStyle = '#f2c4a0';
@@ -808,21 +808,20 @@ function kasi(pool, nurk, koristi) {
   ctx.fillStyle = '#f6cfae';
   ovaal(0, 16, 3.8, 3.8);
   ctx.fill();
-  if (koristi) {
-    ctx.strokeStyle = '#e8506f';
-    ctx.lineWidth = 2.5;
-    joon(0, 16, 0, 27);
-    ctx.fillStyle = '#ffd23f';
-    ctx.strokeStyle = '#c98a00';
+  if (lusikas) {
+    // a big wooden spoon: "I'll eat you up!"
+    ctx.strokeStyle = '#a8703a';
+    ctx.lineWidth = 3;
+    joon(0, 12, 0, 30);
+    ctx.fillStyle = '#d9a35e';
+    ctx.strokeStyle = '#8a5a2a';
     ctx.lineWidth = 1.2;
-    ovaal(0, 31, 6, 6);
+    ovaal(0, 35, 5, 7);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#e8506f';
-    for (const [x, y] of [[-2.5, 29], [2.5, 30], [0, 33.5]]) {
-      ovaal(x, y, 1.2, 1.2);
-      ctx.fill();
-    }
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+    ovaal(-1.5, 33, 1.6, 3);
+    ctx.fill();
   }
   ctx.restore();
 }
@@ -907,7 +906,61 @@ function nagu(lobiseb) {
   }
 }
 
-// The baby: a big head, a mint onesie, a nappy and a rattle in its hand.
+// The snail hood with two eye stalks, worn over the baby's head.
+function tiguMyts() {
+  ctx.fillStyle = '#a8cf5a';
+  ctx.strokeStyle = '#6f9a2e';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, -66, 20, Math.PI * 1.03, Math.PI * 1.97);
+  ctx.quadraticCurveTo(0, -78, -20, -69);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  for (const p of [-1, 1]) {
+    const kiik = Math.sin(kell * 4 + p) * 1.5;
+    ctx.strokeStyle = '#8fbf45';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(p * 7, -84);
+    ctx.quadraticCurveTo(p * 9, -92, p * 12 + kiik, -99);
+    ctx.stroke();
+    ctx.fillStyle = '#a8cf5a';
+    ovaal(p * 12 + kiik, -100, 3.6, 3.6);
+    ctx.fill();
+    ctx.fillStyle = '#2b2340';
+    ovaal(p * 12.6 + kiik, -100.3, 1.4, 1.4);
+    ctx.fill();
+  }
+}
+
+// The snail shell on the baby's back, peeking out on one side.
+function tiguKarp() {
+  const gr = ctx.createRadialGradient(-20, -46, 2, -18, -44, 19);
+  gr.addColorStop(0, '#ffd28a');
+  gr.addColorStop(1, '#d97f3a');
+  ctx.fillStyle = gr;
+  ctx.strokeStyle = '#9a5220';
+  ctx.lineWidth = 1.5;
+  ovaal(-18, -44, 18, 18);
+  ctx.fill();
+  ctx.stroke();
+  ctx.strokeStyle = '#a85c26';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i < 60; i++) {
+    const n = i * 0.22;
+    const r = 14 - i * 0.22;
+    const x = -18 + Math.cos(n) * r;
+    const y = -44 + Math.sin(n) * r;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+
+// The baby in a snail costume: a shell, a green suit, a hood with eye stalks and a big spoon.
 function joonistaVanaisa() {
   const g = vanaisa;
   const tantsib = false; // the baby never dances
@@ -930,6 +983,7 @@ function joonistaVanaisa() {
   jalg(1, Math.max(0, kiik) * 5 + (tantsib ? Math.max(0, -tants) * 5 : 0));
 
   ctx.rotate(kiik * 0.12);
+  tiguKarp();
   ctx.fillStyle = '#ffffff'; // nappy
   ctx.strokeStyle = '#d8d0e8';
   ctx.lineWidth = 1.2;
@@ -937,11 +991,11 @@ function joonistaVanaisa() {
   ctx.fill();
   ctx.stroke();
   const keha = ctx.createLinearGradient(-14, 0, 14, 0);
-  keha.addColorStop(0, '#7fcfb0');
-  keha.addColorStop(0.5, '#b5f0da');
-  keha.addColorStop(1, '#7fcfb0');
+  keha.addColorStop(0, '#8fbf45');
+  keha.addColorStop(0.5, '#c8e88a');
+  keha.addColorStop(1, '#8fbf45');
   ctx.fillStyle = keha;
-  ctx.strokeStyle = '#4fa88a';
+  ctx.strokeStyle = '#6f9a2e';
   ovaal(0, -38, 14, 15);
   ctx.fill();
   ctx.stroke();
@@ -955,6 +1009,7 @@ function joonistaVanaisa() {
   kasi(-1, tantsib ? 1.6 + tants * 0.5 : kaed, false);
   kasi(1, tantsib ? -1.6 + tants * 0.5 : -kaed - (konnib ? 0.8 : 0), true);
   nagu(konnib || tantsib);
+  tiguMyts();
   ctx.restore();
 }
 

@@ -198,4 +198,30 @@ button:active { transform: translate(2px, 2px); box-shadow: none; }
   text-align: center;
 }
 
+/* Character builder */
+.koostaja { display: flex; gap: 10px; align-items: flex-start; }
+#eelvaade {
+  flex: none;
+  width: 96px;
+  height: 164px;
+  position: sticky;
+  top: 0;
+  background: radial-gradient(circle at 50% 60%, #f6e7bd 55%, transparent 56%);
+  box-shadow: none;
+  outline: none;
+  cursor: default;
+}
+.osad { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.osa { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.osa b { width: 100%; font-size: 14px; }
+.osa button { margin: 0; padding: 5px 9px; font-size: 14px; background: #fffdf7; }
+.osa button[aria-pressed="true"] { background: var(--ooker); outline: 2px solid var(--tint); }
+.osa button.toon { width: 30px; height: 30px; padding: 0; border-radius: 50%; }
+.osa button.toon[aria-pressed="true"] { outline: 3px solid var(--tint); outline-offset: 2px; }
+#valmis { background: var(--ooker); font-weight: 700; }
+@media (max-width: 420px) {
+  .koostaja { flex-direction: column; align-items: center; }
+  #eelvaade { position: static; }
+}
+
 .peidus { display: none !important; }

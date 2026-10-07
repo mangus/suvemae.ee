@@ -15,6 +15,7 @@
   const KORALL = '#e3a58e';
   const PABER = '#f8f2e4';
   const VALGE = '#fffdf7';
+  const LILLA = '#a58bc0';
   const KIRI = '700 20px "Segoe Print", "Bradley Hand", "Chalkboard SE", "Comic Sans MS", cursive';
 
   const cv = document.getElementById('louend');
@@ -701,7 +702,8 @@
     const h = o.hair;
     const col = o.hairColor;
     let pts;
-    if (h === 'bob') pts = [[-16, -68], [-17, -86], [-9, -95], [6, -95], [16, -87], [17, -68], [12, -80], [-12, -80]];
+    if (h === 'pikk') pts = [[-17, -60], [-19, -80], [-12, -93], [0, -97], [12, -93], [19, -80], [17, -60], [12, -66], [12, -82], [-12, -82], [-12, -66]];
+    else if (h === 'bob') pts = [[-16, -68], [-17, -86], [-9, -95], [6, -95], [16, -87], [17, -68], [12, -80], [-12, -80]];
     else if (h === 'spiky') pts = [[-15, -80], [-17, -91], [-11, -89], [-9, -100], [-3, -92], [1, -103], [5, -92], [11, -99], [12, -89], [17, -90], [15, -80], [0, -86]];
     else pts = [[-15, -78], [-13, -91], [-3, -96], [8, -95], [14, -89], [15, -78], [3, -86], [-6, -85]];
     const p = flat(c, pts, col, r, 0.6);
@@ -745,13 +747,20 @@
     // thin legs and small black shoes
     ink(x, [[-7, -14], [-7, -3]], false, r, 1.8, 0.4);
     ink(x, [[7, -14], [7, -3]], false, r, 1.8, 0.4);
-    x.fillStyle = INK;
+    x.fillStyle = o.shoes || INK;
     x.beginPath(); x.ellipse(-9, -2, 6, 3, 0, 0, Math.PI * 2); x.fill();
     x.beginPath(); x.ellipse(10, -2, 6, 3, 0, 0, Math.PI * 2); x.fill();
 
     // round, pear-shaped body with a pattern and hatched shade
     const body = [[0, -63], [11, -60], [19, -48], [23, -32], [21, -18], [12, -11], [0, -10], [-12, -11], [-21, -18], [-23, -32], [-19, -48], [-11, -60]];
-    const bp = flat(x, body, o.coat, r, 0.6);
+    const k = { sale: 0.8, umar: 1.15 }[o.bodyShape] || 1;
+    if (o.bag) {
+      // backpack peeking out behind the body
+      const g = flat(x, rectPts(12 * k, -58, 18, 32, 4), o.bag, r, 0.5);
+      hatch(x, g, r, 2.6, 0.5, 0.5);
+      ink(x, g, true, r, 1.2, 0.3);
+    }
+    const bp = flat(x, body.map(([px, py]) => [px * k, py]), o.coat, r, 0.6);
     x.save();
     smoothPath(x, bp, true);
     x.clip();
@@ -760,11 +769,12 @@
     x.restore();
     hatch(x, bp, r, 3, 0.55, 0.55);
     ink(x, bp, true, r, 1.8, 0.4);
+    if (o.bag) [-1, 1].forEach((sd) => ink(x, [[sd * 9 * k, -60], [sd * 12 * k, -34]], false, r, 2.2, 0.3));
 
     // short arms with round hands
-    ink(x, [[-20, -42], [-27, -33], [-27, -26]], false, r, 1.8, 0.4);
-    ink(x, [[20, -42], [27, -33], [27, -26]], false, r, 1.8, 0.4);
-    [-27, 27].forEach((hx) => {
+    ink(x, [[-20 * k, -42], [-27 * k, -33], [-27 * k, -26]], false, r, 1.8, 0.4);
+    ink(x, [[20 * k, -42], [27 * k, -33], [27 * k, -26]], false, r, 1.8, 0.4);
+    [-27 * k, 27 * k].forEach((hx) => {
       const p = flat(x, ellipsePts(hx, -24, 3.6, 3.6, 8), o.skin, r, 0.3);
       ink(x, p, true, r, 1, 0.2);
     });
@@ -783,7 +793,8 @@
     }
 
     // head
-    const head = flat(x, ellipsePts(0, -78, 14, 15, 14), o.skin, r, 0.5);
+    const [hw, hh] = { oval: [12.5, 17], wide: [17, 13.5] }[o.headShape] || [14, 15];
+    const head = flat(x, ellipsePts(0, -78, hw, hh, 14), o.skin, r, 0.5);
     hatch(x, head, r, 2.8, 0.7, 0.35);
     ink(x, head, true, r, 1.5, 0.35);
     drawHair(x, o, r);
@@ -833,12 +844,16 @@
   }
 
   const TEGELASED = [
-    { name: 'Mia', coat: PUNANE, pattern: 'triibud', patColor: VALGE, hair: 'pats', hairColor: '#3b2a20', skin: '#f2d3b8' },
     { name: 'Uku', coat: SININE, pattern: 'ruudud', patColor: SINEP, hair: 'spiky', hairColor: '#d99a2b', skin: '#e8c4a0' },
-    { name: 'Lumi', coat: VALGE, pattern: 'tapid', patColor: PUNANE, hair: 'bob', hairColor: INK, skin: '#c99a72' },
-    { name: 'Sass', coat: ROHE, pattern: 'triibud', patColor: SINEP, hair: 'curly', hairColor: '#5a3a22', skin: '#8d5e3c' },
-    { name: 'Iris', coat: KORALL, pattern: 'tapid', patColor: VALGE, hair: 'bun', hairColor: '#b5562f', skin: '#f5dcc6' },
+    { name: 'Iiris', coat: KORALL, pattern: 'tapid', patColor: VALGE, hair: 'bun', hairColor: '#b5562f', skin: '#f5dcc6' },
+    { name: 'Ralf-Stefan', coat: ROHE, pattern: 'ruudud', patColor: VALGE, hair: 'short', hairColor: '#5a3a22', skin: '#efcfb0' },
     { name: 'Andri', coat: SINEP, pattern: 'triibud', patColor: PUNANE, hair: 'spiky', hairColor: INK, skin: '#e9c9a6', hat: PUNANE },
+    { name: 'Leena', coat: VALGE, pattern: 'lilled', patColor: PUNANE, hair: 'pikk', hairColor: '#e8cc85', skin: '#f2d3b8' },
+    { name: 'Momo', coat: SININE, pattern: 'tapid', patColor: VALGE, hair: 'bob', hairColor: INK, skin: '#c99a72' },
+    { name: 'Esther', coat: PUNANE, pattern: 'triibud', patColor: VALGE, hair: 'curly', hairColor: '#3b2a20', skin: '#8d5e3c' },
+    { name: 'Lili', coat: LILLA, pattern: 'lilled', patColor: SINEP, hair: 'pats', hairColor: '#d99a2b', skin: '#f5dcc6' },
+    { name: 'Iti', coat: ROHE, pattern: 'tapid', patColor: SINEP, hair: 'spiky', hairColor: '#2b2622', skin: '#e8c4a0', scarf: KORALL },
+    { name: 'Vivian', coat: SINEP, pattern: 'ruudud', patColor: SININE, hair: 'pikk', hairColor: '#5a3a22', skin: '#f0d2b6', glasses: true },
     { name: 'Ruta', teacher: true, aine: 'inglise keel, ühiskonnaõpetuse ja kirjanduse teemad, saksa keel', coat: PUNANE, pattern: 'tapid', patColor: VALGE, hair: 'bob', hairColor: '#e3c27a', skin: '#f3d9c2', scarf: SINEP, book: SININE },
     { name: 'Teilo', teacher: true, aine: 'loodusõpetus, bioloogia, geograafia, inimeseõpetus', coat: ROHE, pattern: 'ruudud', patColor: VALGE, hair: 'spiky', hairColor: '#e0c07a', skin: '#efcfb0', glasses: true },
     { name: 'Rabin', teacher: true, aine: 'inglise keel, matemaatika, füüsika', coat: SININE, pattern: 'ruudud', patColor: SINEP, hair: 'short', hairColor: '#1f1a17', skin: '#a8714a', book: SINEP },
@@ -848,7 +863,7 @@
     { name: 'Mihkel', teacher: true, aine: 'inglise keel, kunst, ajalugu, eesti keel', coat: VALGE, pattern: 'triibud', patColor: SININE, hair: 'short', hairColor: '#2b2622', skin: '#e9c9a6' },
   ];
 
-  const SPAWN = [[80, 470], [210, 600], [380, 560], [540, 640], [300, 440], [460, 440], [570, 330], [630, 250], [120, 650], [430, 670], [650, 440], [230, 520], [560, 560]];
+  const SPAWN = [[80, 470], [210, 600], [380, 560], [540, 640], [300, 440], [460, 440], [570, 330], [630, 250], [120, 650], [430, 670], [650, 440], [230, 520], [560, 560], [100, 600], [620, 640], [200, 660], [480, 600]];
 
   // Floor areas inside the house where people walk around and litter shows up (x, y, w, h)
   const ALAD = [[30, 430, 105, 260], [170, 415, 520, 55], [170, 520, 510, 170], [545, 230, 45, 150], [615, 205, 40, 90]];
@@ -872,9 +887,99 @@
 
   const player = {
     name: 'sina', isPlayer: true,
-    sprite: makeSprite({ seed: 999, coat: PUNANE, pattern: 'tapid', patColor: VALGE, hair: 'curly', hairColor: '#3b2a20', skin: '#f0cfae', scarf: SINEP }),
+    sprite: null, // drawn from the player's own look, see the character builder below
     x: 360, y: 450, moving: false, phase: 0,
   };
+
+  // ---------- Character builder ----------
+  // The player picks body parts, colours and accessories; the choice is kept in localStorage.
+  const LOOK_KEY = 'hea-tahte-tegelane';
+  const OSAD = [
+    { key: 'headShape', silt: 'Pea', v: [['round', 'ümar'], ['oval', 'pikk'], ['wide', 'lai']] },
+    { key: 'bodyShape', silt: 'Keha', v: [['pirn', 'pirn'], ['sale', 'sale'], ['umar', 'ümar']] },
+    { key: 'skin', silt: 'Nahk', toon: true, v: [['#f5dcc6', 'hele'], ['#efcfb0', 'roosakas'], ['#e8c4a0', 'kreem'], ['#c99a72', 'pruunikas'], ['#a8714a', 'pruun'], ['#7a4f33', 'tumepruun']] },
+    { key: 'hair', silt: 'Soeng', v: [['short', 'lühike'], ['bob', 'pottsoeng'], ['pikk', 'pikk'], ['curly', 'lokid'], ['spiky', 'turris'], ['pats', 'patsid'], ['bun', 'krunn']] },
+    { key: 'hairColor', silt: 'Juuste värv', toon: true, v: [['#e8cc85', 'hele'], ['#d99a2b', 'kuldne'], ['#b5562f', 'punane'], ['#5a3a22', 'pruun'], ['#2b2622', 'must'], ['#d98fb5', 'roosa'], ['#7ea6b8', 'sinine']] },
+    { key: 'coat', silt: 'Riiete värv', toon: true, v: [[PUNANE, 'punane'], [SININE, 'sinine'], [ROHE, 'roheline'], [SINEP, 'kollane'], [KORALL, 'roosa'], [LILLA, 'lilla'], [VALGE, 'valge']] },
+    { key: 'pattern', silt: 'Muster', v: [['tapid', 'täpid'], ['triibud', 'triibud'], ['ruudud', 'ruudud'], ['lilled', 'lilled'], ['', 'ühevärviline']] },
+    { key: 'shoes', silt: 'Kingad', toon: true, v: [[INK, 'mustad'], [PUNANE, 'punased'], [SININE, 'sinised'], [SINEP, 'kollased']] },
+  ];
+  const LISAD = [['glasses', 'prillid'], ['hat', 'müts'], ['scarf', 'sall'], ['bag', 'seljakott'], ['book', 'raamat']];
+  const look = { headShape: 'round', bodyShape: 'pirn', skin: '#efcfb0', hair: 'curly', hairColor: '#5a3a22', coat: PUNANE, pattern: 'tapid', shoes: INK, glasses: false, hat: false, scarf: true, bag: false, book: false };
+  try {
+    const saved = JSON.parse(localStorage.getItem(LOOK_KEY) || 'null');
+    if (saved) {
+      OSAD.forEach((o) => { if (o.v.some(([v]) => v === saved[o.key])) look[o.key] = saved[o.key]; });
+      LISAD.forEach(([k]) => { if (typeof saved[k] === 'boolean') look[k] = saved[k]; });
+    }
+  } catch (e) { /* keep the default look */ }
+
+  function lookSprite() {
+    // accessories take a colour that stands out from the clothes
+    const muu = (a, b) => (look.coat === a ? b : a);
+    return makeSprite({
+      seed: 999, coat: look.coat, pattern: look.pattern, patColor: muu(VALGE, SININE),
+      hair: look.hair, hairColor: look.hairColor, skin: look.skin,
+      headShape: look.headShape, bodyShape: look.bodyShape, shoes: look.shoes,
+      glasses: look.glasses,
+      hat: look.hat ? muu(PUNANE, SININE) : null,
+      scarf: look.scarf ? muu(SINEP, PUNANE) : null,
+      book: look.book ? muu(SININE, PUNANE) : null,
+      bag: look.bag ? muu(ROHE, SINEP) : null,
+    });
+  }
+
+  const nupud = [];
+  function refreshLook() {
+    player.sprite = lookSprite();
+    const pv = $('eelvaade');
+    pv.width = player.sprite.width;
+    pv.height = player.sprite.height;
+    pv.getContext('2d').drawImage(player.sprite, 0, 0);
+    nupud.forEach(([btn, on]) => btn.setAttribute('aria-pressed', String(on())));
+    try { localStorage.setItem(LOOK_KEY, JSON.stringify(look)); } catch (e) { /* not saved, still works */ }
+  }
+
+  (function buildPicker() {
+    const osad = $('osad');
+    const rida = (silt) => {
+      const row = document.createElement('div');
+      row.className = 'osa';
+      const t = document.createElement('b');
+      t.textContent = silt;
+      row.append(t);
+      osad.append(row);
+      return row;
+    };
+    OSAD.forEach((o) => {
+      const row = rida(o.silt);
+      o.v.forEach(([val, txt]) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        if (o.toon) {
+          btn.className = 'toon';
+          btn.style.background = val;
+          btn.title = txt;
+          btn.setAttribute('aria-label', o.silt + ': ' + txt);
+        } else {
+          btn.textContent = txt;
+        }
+        btn.addEventListener('click', () => { look[o.key] = val; refreshLook(); });
+        nupud.push([btn, () => look[o.key] === val]);
+        row.append(btn);
+      });
+    });
+    const row = rida('Lisad');
+    LISAD.forEach(([k, txt]) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = txt;
+      btn.addEventListener('click', () => { look[k] = !look[k]; refreshLook(); });
+      nupud.push([btn, () => look[k]]);
+      row.append(btn);
+    });
+  })();
+  refreshLook();
 
   // Litter sprites
   function makeLitter(kind, seed) {
@@ -1029,6 +1134,7 @@
     target = null;
     npcs.forEach((n) => { n.event = null; n.cooldown = 0; });
     $('algus').classList.add('peidus');
+    $('koostaja').classList.add('peidus');
     $('lopp').classList.add('peidus');
     $('dialoog').classList.add('peidus');
     running = true;
@@ -1188,7 +1294,14 @@
     tone(1320, 0.4, 'sine', 0.08, 0.35);
   }
 
-  $('alusta').addEventListener('click', startGame);
+  const naitaKoostaja = () => {
+    $('algus').classList.add('peidus');
+    $('lopp').classList.add('peidus');
+    $('koostaja').classList.remove('peidus');
+  };
+  $('alusta').addEventListener('click', naitaKoostaja);
+  $('muuda').addEventListener('click', naitaKoostaja);
+  $('valmis').addEventListener('click', startGame);
   $('uuesti').addEventListener('click', startGame);
   $('edasi').addEventListener('click', closeDialog);
 

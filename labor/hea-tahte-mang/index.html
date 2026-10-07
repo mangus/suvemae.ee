@@ -25,7 +25,16 @@
     <p>Kui teed nii, nagu <b>hea tahte kokkulepe</b> ütleb, saad südame. Korja ka maast prahti, sest see on <i>Minu Maa</i>.</p>
     <p>Kogu <b>12 südant</b> ja päev on läbi!</p>
     <p class="juhis">Liigu: puuduta või klõpsa kohta, kuhu minna. Või kasuta nooli.</p>
-    <button id="alusta" type="button">Alusta päeva</button>
+    <button id="alusta" type="button">Pane oma tegelane kokku</button>
+  </section>
+
+  <section id="koostaja" class="kaart peidus">
+    <h2>Sinu tegelane</h2>
+    <div class="koostaja">
+      <canvas id="eelvaade" width="152" height="260" aria-label="Sinu tegelane"></canvas>
+      <div id="osad" class="osad"></div>
+    </div>
+    <button id="valmis" type="button">Alusta päeva</button>
   </section>
 
   <section id="dialoog" class="kaart peidus" aria-live="polite">
@@ -43,6 +52,7 @@
     <p>Sinu kleepsud:</p>
     <ul id="kleepsud" class="kleepsud"></ul>
     <button id="uuesti" type="button">Uus päev</button>
+    <button id="muuda" type="button">Muuda tegelast</button>
   </section>
 </main>
 

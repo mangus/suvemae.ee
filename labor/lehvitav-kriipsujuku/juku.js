@@ -1,6 +1,7 @@
 // Broccoli rain: tap a falling broccoli, the stick figure walks over and
 // chops it with his knife. The pieces stay on the grass, and after ten
-// broccoli he walks around and eats them all.
+// broccoli he walks around and eats them all. Round 2 needs 50 broccoli,
+// and chillies fall too: if he eats one, the costume bursts and it is over.
 
 const ala = document.querySelector('#ala');
 const koht = document.querySelector('#juku-koht');
@@ -9,7 +10,8 @@ const nupp = document.querySelector('#alusta');
 const sonum = document.querySelector('#sonum');
 const skoor = document.querySelector('#skoor');
 
-const EESMARK = 10;
+const EESMARGID = [10, 50]; // broccoli to chop in round 1 and round 2
+const TSILLI_OSA = 0.3; // share of chillies among the falling things in round 2
 const JUKU_LAIUS = 230; // stick figure box before scaling
 const JUKU_KORGUS = 330;
 const JALAD_Y = 317; // where the feet are inside the box
@@ -33,6 +35,8 @@ let hoivatud = false;
 let tekkeAeg = 0;
 let eelmine = 0;
 let aeglased = 0; // how many recent frames came late
+let raund = 1;
+let eesmark = EESMARGID[0];
 
 const brokolid = [];
 const jarjekord = [];
@@ -391,7 +395,7 @@ function hyyd(tekst, x, y) {
 }
 
 function naitaSkoori() {
-  skoor.textContent = `🥦 ${Math.min(tykeldatud, EESMARK)} / ${EESMARK}`;
+  skoor.textContent = `🥦 ${Math.min(tykeldatud, eesmark)} / ${eesmark}`;
 }
 
 function joonistaBrokoli(b) {
@@ -404,16 +408,18 @@ function joonistaTykk(t) {
 }
 
 function tekita() {
+  const tsilli = raund === 2 && Math.random() < TSILLI_OSA;
   const el = document.createElement('button');
   el.type = 'button';
-  el.className = 'brokoli';
-  el.setAttribute('aria-label', 'Brokoli');
-  el.innerHTML = '<img src="brokoli.svg" alt="" draggable="false">';
+  el.className = tsilli ? 'brokoli tsilli' : 'brokoli';
+  el.setAttribute('aria-label', tsilli ? 'Tsilli' : 'Brokoli');
+  el.innerHTML = `<img src="${tsilli ? 'tsilli.svg' : 'brokoli.svg'}" alt="" draggable="false">`;
   const b = {
     el,
+    tsilli,
     x: 8 + Math.random() * Math.max(0, laius - BROKOLI - 16),
     y: -BROKOLI,
-    kiirus: 55 + Math.random() * 55 + tykeldatud * 4,
+    kiirus: 55 + Math.random() * 55 + Math.min(tykeldatud, 15) * 4,
     olek: 'kukub'
   };
   el.style.rotate = `${Math.random() * 40 - 20}deg`;
@@ -434,8 +440,13 @@ function maandu(b) {
   b.el.classList.add('maandus');
   setTimeout(() => {
     b.el.remove();
-    brokolid.splice(brokolid.indexOf(b), 1);
+    eemalda(b);
   }, 500);
+}
+
+function eemalda(b) {
+  const i = brokolid.indexOf(b);
+  if (i >= 0) brokolid.splice(i, 1);
 }
 
 function pyua(b) {
@@ -443,6 +454,10 @@ function pyua(b) {
   b.olek = 'pyutud';
   b.el.tabIndex = -1;
   b.el.classList.add('pyutud');
+  if (b.tsilli) {
+    sooTsilli(b);
+    return;
+  }
   sonum.textContent = 'Püütud! Kriipsujuku tuleb! 🔪';
   jarjekord.push(b);
   tooJarjekord();
@@ -482,10 +497,11 @@ function plahvata(b) {
   const x = b.x + BROKOLI / 2;
   const y = b.y + BROKOLI / 2;
   b.el.remove();
-  brokolid.splice(brokolid.indexOf(b), 1);
+  eemalda(b);
   hyyd(hyyuded[Math.floor(Math.random() * hyyuded.length)], x, y - 30);
 
-  for (let i = 0; i < 8; i++) {
+  const tykke = raund === 1 ? 8 : 4; // fewer pieces in round 2, there are 50 broccoli
+  for (let i = 0; i < tykke; i++) {
     const el = document.createElement('span');
     el.className = i % 3 === 0 ? 'tykk vars' : 'tykk';
     const t = {
@@ -506,14 +522,14 @@ function plahvata(b) {
 
   tykeldatud += 1;
   naitaSkoori();
-  if (tykeldatud >= EESMARK && olek === 'kaib') {
+  if (tykeldatud >= eesmark && olek === 'kaib') {
     olek = 'lopp';
-    sonum.textContent = 'Kõik brokolid tükkideks! 🎉';
+    sonum.textContent = `Kõik ${eesmark} brokolit tükkideks! 🎉`;
     for (const muu of brokolid) {
       if (muu.olek === 'kukub') maandu(muu);
     }
   } else if (olek === 'kaib') {
-    sonum.textContent = `Tükeldatud! Veel ${EESMARK - tykeldatud} brokolit.`;
+    sonum.textContent = `Tükeldatud! Veel ${eesmark - tykeldatud} brokolit.`;
   }
 }
 
@@ -547,10 +563,93 @@ async function soo() {
   }
 
   hyppa();
-  sonum.textContent = 'Kõht on täis! Nämm-nämm! 😋';
-  nupp.textContent = 'Mängi uuesti 🥦';
+  if (raund === 1) {
+    sonum.textContent = 'Kõht on täis! Nüüd 2. raund: 50 brokolit. Ära puuduta tsillisid! 🌶️';
+    nupp.textContent = '2. raund! 🌶️';
+    raund = 2;
+  } else {
+    sonum.textContent = 'VÕITSID! 50 brokolit ja ükski tsilli ei läinud kõhtu! 🏆';
+    nupp.textContent = 'Mängi uuesti 🥦';
+    raund = 1;
+  }
   nupp.hidden = false;
   olek = 'ootab';
+}
+
+// A chilli was tapped: he walks over, eats it, and the costume bursts.
+async function sooTsilli(b) {
+  olek = 'pauk';
+  sonum.textContent = 'Oi ei, tsilli! 🌶️';
+  for (const muu of jarjekord.splice(0)) maandu(muu);
+  for (const muu of brokolid) {
+    if (muu !== b && muu.olek === 'kukub') maandu(muu);
+  }
+  while (hoivatud) await oota(50);
+
+  // The chilli hovers above his head while he walks under it.
+  const siht = piira(b.x + BROKOLI / 2 - SUU_X * s, 0, laius - JUKU_LAIUS * s);
+  const aeg = Math.max(0.35, Math.abs(siht - jukuX) / 320);
+  const suuY = maa - (JALAD_Y - SUU_Y) * s;
+  b.el.style.transition = `translate ${aeg}s ease-in-out`;
+  b.x = siht + SUU_X * s - BROKOLI / 2;
+  b.y = suuY - BROKOLI - 40;
+  joonistaBrokoli(b);
+  await Promise.all([konni(siht, 320), oota(aeg * 1000)]);
+
+  const suuX = jukuX + SUU_X * s;
+  b.el.classList.remove('pyutud');
+  b.el.style.transition = 'translate .35s ease-in, scale .35s ease-in';
+  b.x = suuX - BROKOLI / 2;
+  b.y = suuY - BROKOLI / 2;
+  joonistaBrokoli(b);
+  b.el.style.scale = '.3';
+  juku.classList.add('soob');
+  await oota(380);
+  b.el.remove();
+  eemalda(b);
+  juku.classList.remove('soob');
+  juku.classList.add('punane');
+  hyyd('KUUM! 🔥', suuX, suuY - 40);
+  await oota(1000);
+  lohka();
+}
+
+function lohka() {
+  juku.classList.remove('punane');
+  juku.classList.add('lohkes');
+  const cx = jukuX + 120 * s;
+  hyyd('PAUK! 💥', cx, maa - (JALAD_Y - 20) * s);
+  // The costume flies apart into big green pieces.
+  for (let i = 0; i < 36; i++) {
+    const el = document.createElement('span');
+    el.className = i % 4 === 0 ? 'tykk suur vars' : 'tykk suur';
+    const t = {
+      el,
+      x: cx + (Math.random() - 0.5) * 200 * s,
+      y: maa - (JALAD_Y - (i % 2 ? 10 : 150)) * s,
+      vx: (Math.random() - 0.5) * 700,
+      vy: -250 - Math.random() * 450,
+      poore: Math.random() * 360,
+      keerlemine: (Math.random() - 0.5) * 900,
+      sygavus: Math.random() * 30 - 4,
+      maas: false
+    };
+    ala.append(el);
+    tykid.push(t);
+    joonistaTykk(t);
+  }
+  sonum.textContent = 'PAUK! Kriipsujuku sõi tsilli ja brokoli lõhkes! Mäng läbi. 🌶️💥';
+  nupp.textContent = 'Proovi uuesti 🥦';
+  nupp.hidden = false;
+  raund = 1;
+  olek = 'ootab';
+}
+
+// Clear the field before a new round.
+function koristaVali() {
+  for (const t of tykid.splice(0)) t.el.remove();
+  for (const b of brokolid.splice(0)) b.el.remove();
+  juku.classList.remove('lohkes', 'punane');
 }
 
 function samm(aeg) {
@@ -570,9 +669,9 @@ function samm(aeg) {
   if (olek === 'kaib') {
     tekkeAeg -= dt;
     const kukuvad = brokolid.filter((b) => b.olek === 'kukub').length;
-    if (tekkeAeg <= 0 && kukuvad < 5) {
+    if (tekkeAeg <= 0 && kukuvad < (raund === 1 ? 5 : 6)) {
       tekita();
-      tekkeAeg = 1.1 + Math.random() * 0.6;
+      tekkeAeg = raund === 1 ? 1.1 + Math.random() * 0.6 : 0.75 + Math.random() * 0.5;
     }
   }
 
@@ -605,12 +704,16 @@ function samm(aeg) {
 
 nupp.addEventListener('click', () => {
   if (olek !== 'ootab') return;
+  koristaVali();
+  eesmark = EESMARGID[raund - 1];
   tykeldatud = 0;
   naitaSkoori();
   tekkeAeg = 0;
   olek = 'kaib';
   nupp.hidden = true;
-  sonum.textContent = 'Puuduta kukkuvat brokolit!';
+  sonum.textContent = raund === 1
+    ? 'Puuduta kukkuvat brokolit!'
+    : '2. raund! Püüa brokoleid, aga ära puuduta tsillisid! 🌶️';
   hyppa();
 });
 

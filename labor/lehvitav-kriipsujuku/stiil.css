@@ -168,6 +168,8 @@ p {
   pointer-events: none;
 }
 
+.tykk.suur { scale: 1.8; }
+
 .tykk.vars {
   top: -8px;
   left: -4px;
@@ -280,7 +282,21 @@ p {
   border-radius: 0 0 50% 50%;
 }
 
-/* Open mouth while eating. */
+/* Too hot: the face turns red and shakes. */
+.juku.punane .pea {
+  background: #ff7a6b;
+  animation: varise .08s linear infinite alternate;
+}
+
+/* The costume has burst: only the stick figure is left. */
+.juku.lohkes .kapuuts,
+.juku.lohkes .ylikond {
+  display: none;
+}
+
+/* Open mouth while eating, and in shock. */
+.juku.punane .suu,
+.juku.lohkes .suu,
 .juku.soob .suu {
   left: 26px;
   bottom: 10px;
@@ -475,6 +491,11 @@ p {
   70% { translate: 0 0; scale: .96 1.04; }
 }
 
+@keyframes varise {
+  from { translate: -3px 0; }
+  to { translate: 3px 0; }
+}
+
 @keyframes vingu {
   from { scale: 1; }
   to { scale: 1.12; }
@@ -493,4 +514,5 @@ p {
 @media (prefers-reduced-motion: reduce) {
   .tilk { animation: none; }
   .juku.huppab { animation: none; }
+  .juku.punane .pea { animation: none; }
 }

@@ -48,10 +48,11 @@ a{color:inherit}
 h1{margin:0;font-size:clamp(3.4rem,13vw,7.5rem);line-height:1;font-weight:900;letter-spacing:-.01em;text-shadow:3px 4px 0 rgba(43,35,64,.1)}
 h1 span span{display:inline-block;color:var(--c);transform:rotate(var(--r))}
 h1 .has-fly{position:relative}
-.fly{position:absolute;left:50%;top:55%;width:0;height:0;pointer-events:none;animation:fly-orbit 7s linear infinite}
-.fly svg{position:absolute;left:-.16em;top:-.78em;width:.32em;height:auto;animation:fly-flap .22s ease-in-out infinite alternate}
-@keyframes fly-orbit{to{transform:rotate(360deg)}}
-@keyframes fly-flap{to{transform:scaleX(.35)}}
+/* Butterfly wanders around the letter on an uneven path, tilting into turns; flaps in bursts, then glides */
+.fly{position:absolute;left:50%;top:55%;width:0;height:0;pointer-events:none;animation:fly-path 13s ease-in-out infinite}
+.fly svg{position:absolute;left:-.16em;top:-.78em;width:.32em;height:auto;animation:fly-flap 1.7s linear infinite}
+@keyframes fly-path{0%,100%{transform:translate(0,-.1em) rotate(-8deg)}11%{transform:translate(.38em,-.22em) rotate(14deg)}23%{transform:translate(.62em,.12em) rotate(26deg)}34%{transform:translate(.4em,.42em) rotate(6deg)}45%{transform:translate(.05em,.3em) rotate(-12deg)}57%{transform:translate(-.48em,.4em) rotate(-24deg)}68%{transform:translate(-.64em,.05em) rotate(-10deg)}80%{transform:translate(-.35em,-.24em) rotate(10deg)}90%{transform:translate(-.12em,-.05em) rotate(-4deg)}}
+@keyframes fly-flap{0%,100%{transform:translateY(0) scaleX(1)}6%{transform:translateY(-.02em) scaleX(.25)}12%{transform:translateY(-.04em) scaleX(1)}18%{transform:translateY(-.05em) scaleX(.25)}24%{transform:translateY(-.06em) scaleX(1)}30%{transform:translateY(-.06em) scaleX(.3)}36%{transform:translateY(-.06em) scaleX(1)}60%{transform:translateY(-.01em) scaleX(.85)}80%{transform:translateY(.02em) scaleX(.95)}}
 .underline{display:block;width:min(340px,70vw);height:22px;margin:.3rem auto 0}
 .tagline{margin:1rem auto 0;max-width:30ch;font-size:clamp(1.1rem,2.6vw,1.4rem);font-weight:700;color:var(--ink-soft)}
 .hills{display:block;width:calc(100% + 40px);height:clamp(90px,14vw,190px);margin:clamp(28px,6vw,64px) -20px 0}

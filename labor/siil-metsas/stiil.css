@@ -1,0 +1,119 @@
+body {
+  margin: 0 auto;
+  max-width: 760px;
+  padding: 16px;
+  font-family: ui-rounded, "Nunito", system-ui, sans-serif;
+  color: #2b2340;
+  background: #f7fbff;
+}
+
+.tagasi {
+  font-weight: 800;
+  color: inherit;
+}
+
+#mets {
+  position: relative;
+  height: min(60vh, 420px);
+  overflow: hidden;
+  background: linear-gradient(#bfe6ff, #eaf8ff);
+  border: 3px solid #2b2340;
+  border-radius: 18px;
+}
+
+.puud {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.maa {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 22%;
+  background: #8fd66b;
+  border-top: 3px solid #5aa845;
+}
+
+.seen {
+  position: absolute;
+  bottom: 12%;
+  font-size: 28px;
+}
+.s1 { left: 18%; }
+.s2 { left: 70%; font-size: 22px; }
+
+/* The hedgehog wrapper is moved and flipped by siil.js */
+#siil {
+  position: absolute;
+  left: 0;
+  bottom: 6%;
+  width: 120px;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#siil svg {
+  display: block;
+  width: 100%;
+}
+
+.keha {
+  animation: kiik 0.4s ease-in-out infinite alternate;
+}
+.jalg {
+  fill: #5a3a22;
+  transform-box: fill-box;
+  transform-origin: top center;
+  animation: samm 0.4s ease-in-out infinite alternate;
+}
+.jalg.b {
+  animation-direction: alternate-reverse;
+}
+
+@keyframes kiik {
+  from { transform: translateY(0); }
+  to { transform: translateY(-2px); }
+}
+@keyframes samm {
+  from { transform: rotate(-22deg); }
+  to { transform: rotate(22deg); }
+}
+
+/* Curled up into a rolling ball after a tap */
+#siil.kerra svg {
+  animation: veere 1.4s ease-in-out;
+}
+#siil.kerra .jalg {
+  visibility: hidden;
+}
+#siil.kerra .keha {
+  animation: none;
+}
+@keyframes veere {
+  0% { transform: rotate(0) scale(1); }
+  50% { transform: rotate(360deg) scale(0.8); }
+  100% { transform: rotate(720deg) scale(1); }
+}
+
+.leht {
+  position: absolute;
+  top: -40px;
+  font-size: 24px;
+  animation: kukkumine 7s linear infinite;
+}
+.l1 { left: 8%; animation-delay: 0s; }
+.l2 { left: 30%; animation-delay: 2s; animation-duration: 9s; }
+.l3 { left: 52%; animation-delay: 4s; }
+.l4 { left: 74%; animation-delay: 1s; animation-duration: 8s; }
+.l5 { left: 90%; animation-delay: 5s; }
+
+@keyframes kukkumine {
+  0% { transform: translate(0, 0) rotate(0); }
+  25% { transform: translate(20px, 120px) rotate(90deg); }
+  50% { transform: translate(-15px, 240px) rotate(180deg); }
+  100% { transform: translate(10px, 480px) rotate(360deg); }
+}

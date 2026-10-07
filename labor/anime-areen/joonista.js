@@ -114,6 +114,50 @@ function hair(ctx, x, y) {
   ctx.beginPath();
   ctx.arc(cx, cy, 9, -2.4, -1.6);
   ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 12, -2.2, -1.85);
+  ctx.stroke();
+}
+
+// A comic-book impact burst with a sound word in it.
+function impact(ctx, x, y, size, word) {
+  star(ctx, x, y, size, size * 0.55, 10);
+  ctx.fillStyle = '#fff36b';
+  ctx.fill();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  ctx.font = `1000 ${Math.round(size * 0.45)}px ui-rounded, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#fff';
+  ctx.strokeText(word, x, y);
+  ctx.fillStyle = '#e8364f';
+  ctx.fillText(word, x, y);
+}
+
+// Anime focus lines from the edges of the screen, shown when you are hit.
+export function drawFocusLines(ctx, width, height, strength, time) {
+  if (strength <= 0) return;
+  ctx.save();
+  ctx.fillStyle = `rgba(29, 20, 48, ${0.55 * strength})`;
+  const cx = width / 2;
+  const cy = height / 2;
+  const far = Math.hypot(width, height);
+  const turn = Math.floor(time / 60);
+  for (let i = 0; i < 48; i += 1) {
+    const a = (i / 48) * Math.PI * 2 + ((i * 7 + turn) % 5) * 0.01;
+    const inner = far * (0.32 + (((i * 13 + turn) % 7) / 7) * 0.1);
+    const spread = 0.012 + (i % 3) * 0.006;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a) * inner, cy + Math.sin(a) * inner);
+    ctx.lineTo(cx + Math.cos(a - spread) * far, cy + Math.sin(a - spread) * far);
+    ctx.lineTo(cx + Math.cos(a + spread) * far, cy + Math.sin(a + spread) * far);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
 }
 
 function features(ctx, x, y, eyeColor, mood) {
@@ -132,31 +176,49 @@ function features(ctx, x, y, eyeColor, mood) {
     path(ctx, [[x + 0.5, y - 2.5], [x - 2, y], [x + 0.5, y + 2]]);
     ctx.stroke();
   } else {
-    for (const [ex, rx] of [[x + 4.5, 2.3], [x - 1, 1.7]]) {
+    // Big shiny anime eyes: a coloured iris that fades lighter at the
+    // bottom, two white sparkles and a thick upper lash line.
+    for (const [ex, rx] of [[x + 4.6, 2.6], [x - 1, 1.9]]) {
       ctx.beginPath();
-      ctx.ellipse(ex, y, rx, 3, 0, 0, Math.PI * 2);
+      ctx.ellipse(ex, y, rx, 3.9, 0, 0, Math.PI * 2);
       ctx.fillStyle = '#fff';
       ctx.fill();
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
+      const iris = ctx.createLinearGradient(0, y - 3, 0, y + 3.5);
+      iris.addColorStop(0, shade(eyeColor, 0.55));
+      iris.addColorStop(1, eyeColor);
       ctx.beginPath();
-      ctx.ellipse(ex + 0.3, y + 0.4, rx * 0.75, 2.4, 0, 0, Math.PI * 2);
-      ctx.fillStyle = eyeColor;
+      ctx.ellipse(ex + 0.3, y + 0.3, rx * 0.8, 3.3, 0, 0, Math.PI * 2);
+      ctx.fillStyle = iris;
       ctx.fill();
       ctx.beginPath();
-      ctx.ellipse(ex + 0.3, y + 0.6, rx * 0.35, 1.2, 0, 0, Math.PI * 2);
+      ctx.ellipse(ex + 0.3, y + 0.3, rx * 0.38, 1.6, 0, 0, Math.PI * 2);
       ctx.fillStyle = INK;
       ctx.fill();
-      ctx.beginPath();
-      ctx.arc(ex + 0.9, y - 1, 0.7, 0, Math.PI * 2);
       ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(ex + 0.9, y - 1.4, rx * 0.38, 0, Math.PI * 2);
       ctx.fill();
+      ctx.beginPath();
+      ctx.arc(ex - 0.5, y + 1.9, rx * 0.18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.ellipse(ex, y, rx + 0.2, 4, 0, Math.PI * 1.1, Math.PI * 1.95);
+      ctx.stroke();
     }
     ctx.lineWidth = 1.3;
-    path(ctx, [[x + 2.5, y - 4.6], [x + 7, y - 4]]);
+    path(ctx, [[x + 2.5, y - 6], [x + 7, y - 5.4]]);
     ctx.stroke();
-    path(ctx, [[x - 2.5, y - 4.4], [x + 0.5, y - 4.8]]);
+    path(ctx, [[x - 2.5, y - 5.8], [x + 0.5, y - 6.2]]);
     ctx.stroke();
+  }
+  // Pink blush on the cheeks.
+  ctx.fillStyle = 'rgba(255, 110, 150, 0.4)';
+  for (const bx of [x + 5.5, x - 2]) {
+    ctx.beginPath();
+    ctx.ellipse(bx, y + 4, 1.8, 1, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
   if (mood === 'shout' || mood === 'hurt') {
     ctx.beginPath();
@@ -245,6 +307,12 @@ export function drawFighter(ctx, character, x, y, options = {}) {
   }
   ctx.restore();
 
+  if (hurt > 0.45 && !down) {
+    ctx.save();
+    impact(ctx, x - facing * 18 * scale, y - 120 * scale, 26 * scale * (0.7 + hurt * 0.5), 'PAUH!');
+    ctx.restore();
+  }
+
   if (hp !== null) {
     const top = y - (down ? 40 : 140) * scale;
     ctx.save();
@@ -278,10 +346,38 @@ export function drawArena(ctx, width, height, time) {
   const horizon = 150;
   ctx.save();
   const sky = ctx.createLinearGradient(0, 0, 0, horizon);
-  sky.addColorStop(0, '#6fc3ff');
-  sky.addColorStop(1, '#ffe8d2');
+  sky.addColorStop(0, '#8f7bff');
+  sky.addColorStop(0.45, '#ff9ec7');
+  sky.addColorStop(1, '#ffd98a');
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, width, horizon);
+
+  // Big anime sun with slowly turning rays.
+  const sunX = width * 0.72;
+  const sunY = 92;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, width, horizon);
+  ctx.clip();
+  ctx.fillStyle = 'rgba(255, 246, 190, 0.35)';
+  for (let i = 0; i < 16; i += 1) {
+    const a = (i / 16) * Math.PI * 2 + time / 9000;
+    ctx.beginPath();
+    ctx.moveTo(sunX, sunY);
+    ctx.lineTo(sunX + Math.cos(a - 0.08) * 400, sunY + Math.sin(a - 0.08) * 400);
+    ctx.lineTo(sunX + Math.cos(a + 0.08) * 400, sunY + Math.sin(a + 0.08) * 400);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+  ctx.fillStyle = '#ffe96b';
+  ctx.beginPath();
+  ctx.arc(sunX, sunY, 44, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff8c8';
+  ctx.beginPath();
+  ctx.arc(sunX, sunY, 32, 0, Math.PI * 2);
+  ctx.fill();
 
   ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
   for (let i = 0; i < 5; i += 1) {
@@ -302,6 +398,22 @@ export function drawArena(ctx, width, height, time) {
   for (let x = 0; x < width; x += 80) ctx.quadraticCurveTo(x + 40, horizon - 28, x + 80, horizon);
   ctx.closePath();
   ctx.fill();
+
+  // A pink blossom tree at the edge of the arena.
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#6b3b4f';
+  ctx.lineWidth = 9;
+  path(ctx, [[46, horizon + 4], [50, horizon - 40], [38, horizon - 70]]);
+  ctx.stroke();
+  ctx.lineWidth = 5;
+  path(ctx, [[50, horizon - 40], [74, horizon - 66]]);
+  ctx.stroke();
+  for (const [bx, by, br, c] of [[30, -78, 24, '#ffb3d9'], [62, -86, 28, '#ff9fd0'], [86, -64, 20, '#ffc4e1'], [12, -58, 18, '#ffc4e1'], [48, -104, 20, '#ffd6ea']]) {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.arc(bx, horizon + by, br, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   // Wooden dojo floor in perspective, with a red ring.
   const floor = ctx.createLinearGradient(0, horizon, 0, height);

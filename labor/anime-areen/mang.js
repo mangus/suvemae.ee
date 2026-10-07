@@ -4,7 +4,7 @@
 // children's own character pictures are added.
 import { lab } from '../lab.js';
 import { clamp, moveFighter, attackHits, applyDamage, cleanCharacter } from './game-core.js';
-import { COLORS, drawFighter, drawArena } from './joonista.js';
+import { COLORS, drawFighter, drawArena, drawFocusLines } from './joonista.js';
 
 const W = 640;
 const H = 480;
@@ -326,6 +326,7 @@ function draw(now) {
       me: Boolean(f.mine),
     });
   }
+  drawFocusLines(ctx, W, H, me.down ? 0 : me.hurt, now);
 }
 
 function frame(now) {

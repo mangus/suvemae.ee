@@ -547,6 +547,71 @@
     ink(b, kraanikauss, true, r, 1.3, 0.4);
     dot(b, 687, 506, 4, SININE);
 
+    // ---------- Storybook ornaments: fine ink, ochre and vermilion curls ----------
+    // Egg-shaped curl with a spiral inside and a crown of tiny dots
+    const curl = (x, y, s, col, rot = 0) => {
+      const pts = [];
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        const rad = s * (1 + 0.45 * Math.cos(a));
+        pts.push([x + Math.cos(a + rot) * rad, y + Math.sin(a + rot) * rad * 0.8]);
+      }
+      const p = flat(b, pts, col, r, 0.4);
+      hatch(b, p, r, 2.5, 0.6, 0.45);
+      ink(b, p, true, r, 1.1, 0.3);
+      spiral(b, x, y, s * 0.7, 2, r, 0.8);
+      for (let i = 0; i < 5; i++) {
+        const a = rot + Math.PI * 0.6 + i * 0.4;
+        dot(b, x + Math.cos(a) * s * 1.9, y + Math.sin(a) * s * 1.5, 1.1, INK);
+      }
+    };
+    // Scalloped seam with a dot under every arch
+    const scallops = (x0, x1, y, size, col) => {
+      b.save();
+      b.strokeStyle = col;
+      b.lineWidth = 1;
+      b.globalAlpha = 0.85;
+      for (let x = x0; x + size * 2 <= x1; x += size * 2) {
+        b.beginPath();
+        b.arc(x + size, y, size, 0, Math.PI);
+        b.stroke();
+        dot(b, x + size, y + size * 0.45, 0.9, col);
+      }
+      b.restore();
+    };
+    // Wiry tree with a round, hatched crown and one red berry
+    const tree = (x, y, h, col) => {
+      ink(b, [[x, y], [x - 3, y - h * 0.3], [x + 2, y - h * 0.6], [x - 1, y - h * 0.85]], false, r, 1.6, 0.4);
+      ink(b, [[x + 1, y - h * 0.45], [x + 12, y - h * 0.6], [x + 16, y - h * 0.55]], false, r, 1, 0.3);
+      const crown = flat(b, ellipsePts(x, y - h, h * 0.38, h * 0.3, 16), col, r, 2);
+      hatch(b, crown, r, 3, 0.55, 0.5);
+      stipple(b, crown, r, 25, 0.6);
+      ink(b, crown, true, r, 1.4, 0.6);
+      spiral(b, x - h * 0.1, y - h, h * 0.16, 2.5, r, 1);
+      dot(b, x + 16, y - h * 0.55 - 3, 3, PUNANE);
+    };
+    // Puffy cloud of three bumps with a scalloped underside
+    const cloud = (x, y) => {
+      [[-14, 2, 10], [0, -4, 13], [15, 2, 10]].forEach(([dx, dy, rr]) => {
+        const p = flat(b, ellipsePts(x + dx, y + dy, rr, rr * 0.8, 12), VALGE, r, 0.8);
+        ink(b, p, true, r, 1, 0.4);
+      });
+      spiral(b, x, y - 4, 7, 2, r, 0.8);
+      scallops(x - 24, x + 26, y + 9, 3, INK);
+    };
+
+    [[170, 82], [420, 78], [640, 86]].forEach(([x, y]) => cloud(x, y));
+    scallops(18, 702, 116, 5, PUNANE);
+    scallops(175, 545, 405, 4, SINEP);
+    tree(120, 260, 60, SINEP);
+    tree(395, 330, 55, ROHE);
+    tree(480, 245, 50, KORALL);
+    curl(180, 300, 7, SINEP);
+    curl(300, 140, 6, PUNANE, 0.8);
+    curl(685, 280, 6, SINEP, 2);
+    curl(245, 442, 6, SINEP);
+    curl(585, 446, 6, PUNANE, 1);
+
     // Crochet-lace border: a chain of small loops with dots, rosettes in the corners
     b.save();
     b.strokeStyle = INK;

@@ -133,22 +133,6 @@ button:active { transform: translate(2px, 2px); box-shadow: none; }
 .valikud button:nth-child(3) { background: #f6dcd9; }
 .valikud button:disabled { opacity: .4; cursor: default; }
 .valikud button.oige { opacity: 1; background: #bfe3c0; }
-.valikud button.ise { background: #fffdf7; border-style: dashed; }
-.vastus { display: flex; flex-direction: column; gap: 7px; }
-.vastus textarea {
-  font: inherit;
-  font-size: 17px;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 9px 12px;
-  border: 1px solid var(--tint);
-  border-radius: 12px 16px 10px 18px;
-  background: #fffdf7;
-  color: var(--tint);
-  resize: vertical;
-}
-.vastus textarea:focus { outline: 2px dotted var(--meri); outline-offset: 2px; }
-.valikud .vastus button.vasta { align-self: flex-end; background: var(--ooker); text-align: center; }
 .valikud button.abi {
   align-self: flex-start;
   background: none;

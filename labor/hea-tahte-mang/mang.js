@@ -1161,7 +1161,7 @@
     lahendatud = false;
     const box = $('valikud');
     box.textContent = '';
-    // Three ready-made choices, and a fourth one where the player writes their own answer
+    // Three ready-made choices in random order
     shuffle(s.valikud.slice()).forEach(([t, ok]) => {
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -1170,31 +1170,6 @@
       btn.addEventListener('click', () => choose(ok));
       box.appendChild(btn);
     });
-    const ise = document.createElement('button');
-    ise.type = 'button';
-    ise.className = 'ise';
-    ise.textContent = '✏️ Kirjutan ise…';
-    ise.addEventListener('click', () => {
-      const vorm = document.createElement('form');
-      vorm.className = 'vastus';
-      const sisend = document.createElement('textarea');
-      sisend.rows = 2;
-      sisend.maxLength = 200;
-      sisend.placeholder = 'Kirjuta, mida sa ütled või teed…';
-      sisend.setAttribute('aria-label', 'Sinu vastus');
-      const vasta = document.createElement('button');
-      vasta.type = 'submit';
-      vasta.className = 'vasta';
-      vasta.textContent = 'Vasta';
-      vorm.append(sisend, vasta);
-      vorm.addEventListener('submit', (e) => { e.preventDefault(); kontrolli(sisend.value); });
-      sisend.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); kontrolli(sisend.value); }
-      });
-      ise.replaceWith(vorm);
-      sisend.focus();
-    });
-    box.appendChild(ise);
     $('tagasiside').classList.add('peidus');
     $('reegel').classList.add('peidus');
     $('edasi').classList.add('peidus');
@@ -1222,32 +1197,6 @@
     $('tagasiside').textContent = '♥ Super! ' + s.miks;
     $('tagasiside').className = 'tagasiside hea';
     soundGood();
-  }
-
-  // A typed answer: a heart when it fits, otherwise a kind hint and another try
-  function kontrolli(text) {
-    if (lahendatud || !current) return;
-    const s = current.event;
-    const fb = $('tagasiside');
-    const tulemus = hinda(text, s, current.name);
-    if (tulemus === 'tyhi') {
-      fb.textContent = 'Kirjuta enne oma vastus.';
-      fb.className = 'tagasiside';
-      return;
-    }
-    if (tulemus === 'hea') {
-      lukusta();
-      kiida(s);
-    } else if (tulemus === 'halb') {
-      fb.textContent = 'Hmm, see pole hea tahte moodi. ' + s.miks + ' Proovi uuesti!';
-      fb.className = 'tagasiside halb';
-      soundBad();
-    } else {
-      fb.textContent = 'Ma ei saanud päris aru. Kirjuta, mida sa teed või ütled. Vihje: ' + s.miks;
-      fb.className = 'tagasiside halb';
-      soundPop();
-    }
-    naitaReeglit(s);
   }
 
   // A ready-made choice: one try only

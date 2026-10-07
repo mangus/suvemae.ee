@@ -1,7 +1,9 @@
 // Broccoli rain: tap a falling broccoli, the stick figure walks over and
 // chops it with his knife. The pieces stay on the grass, and after ten
-// broccoli he walks around and eats them all. Round 2 needs 50 broccoli,
+// broccoli he walks around and eats them all. Round 2 needs 20 broccoli,
 // and chillies fall too: if he eats one, the costume bursts and it is over.
+// Round 3 needs 30, and twice a door appears: he must hide behind it
+// before a bird throws dynamite, or it is over too.
 
 const ala = document.querySelector('#ala');
 const koht = document.querySelector('#juku-koht');
@@ -10,8 +12,24 @@ const nupp = document.querySelector('#alusta');
 const sonum = document.querySelector('#sonum');
 const skoor = document.querySelector('#skoor');
 
-const EESMARGID = [10, 50]; // broccoli to chop in round 1 and round 2
-const TSILLI_OSA = 0.3; // share of chillies among the falling things in round 2
+// Round 3: the door to hide behind and the bird with dynamite.
+const uks = document.createElement('button');
+uks.type = 'button';
+uks.className = 'uks';
+uks.setAttribute('aria-label', 'Uks: mine peitu');
+uks.hidden = true;
+uks.innerHTML = '<img src="uks.svg" alt="" draggable="false">';
+ala.append(uks);
+const lind = document.createElement('div');
+lind.className = 'lind';
+lind.hidden = true;
+lind.setAttribute('aria-hidden', 'true');
+lind.innerHTML = '<img src="lind.svg" alt="" draggable="false">';
+ala.append(lind);
+
+const EESMARGID = [10, 20, 30]; // broccoli to chop in rounds 1, 2 and 3
+const TSILLI_OSA = 0.3; // share of chillies among the falling things from round 2 on
+const UKSI = 2; // doors in round 3
 const JUKU_LAIUS = 230; // stick figure box before scaling
 const JUKU_KORGUS = 330;
 const JALAD_Y = 317; // where the feet are inside the box
@@ -37,6 +55,10 @@ let eelmine = 0;
 let aeglased = 0; // how many recent frames came late
 let raund = 1;
 let eesmark = EESMARGID[0];
+let uksi = 0; // doors already survived in round 3
+let peidus = false;
+let minemas = false;
+let ukseX = 0;
 
 const brokolid = [];
 const jarjekord = [];
@@ -355,6 +377,7 @@ function mootmed() {
   koht.style.top = `${maa - JALAD_Y * s}px`;
   jukuX = piira(jukuX, 0, laius - JUKU_LAIUS * s);
   koht.style.left = `${jukuX}px`;
+  if (!uks.hidden) paigutaUks();
   for (const t of tykid) {
     if (t.maas) {
       t.x = piira(t.x, 6, laius - 6);
@@ -408,7 +431,7 @@ function joonistaTykk(t) {
 }
 
 function tekita() {
-  const tsilli = raund === 2 && Math.random() < TSILLI_OSA;
+  const tsilli = raund >= 2 && Math.random() < TSILLI_OSA;
   const el = document.createElement('button');
   el.type = 'button';
   el.className = tsilli ? 'brokoli tsilli' : 'brokoli';
@@ -564,11 +587,15 @@ async function soo() {
 
   hyppa();
   if (raund === 1) {
-    sonum.textContent = 'Kõht on täis! Nüüd 2. raund: 50 brokolit. Ära puuduta tsillisid! 🌶️';
+    sonum.textContent = 'Kõht on täis! Nüüd 2. raund: 20 brokolit. Ära puuduta tsillisid! 🌶️';
     nupp.textContent = '2. raund! 🌶️';
     raund = 2;
+  } else if (raund === 2) {
+    sonum.textContent = 'Super! Nüüd 3. raund: 30 brokolit. Kui uks ilmub, mine kiiresti peitu! 🚪';
+    nupp.textContent = '3. raund! 🚪';
+    raund = 3;
   } else {
-    sonum.textContent = 'VÕITSID! 50 brokolit ja ükski tsilli ei läinud kõhtu! 🏆';
+    sonum.textContent = 'VÕITSID! Kõik kolm raundi on läbi! 🏆';
     nupp.textContent = 'Mängi uuesti 🥦';
     raund = 1;
   }
@@ -614,7 +641,7 @@ async function sooTsilli(b) {
   lohka();
 }
 
-function lohka() {
+function lohka(teade = 'PAUK! Kriipsujuku sõi tsilli ja brokoli lõhkes! Mäng läbi. 🌶️💥') {
   juku.classList.remove('punane');
   juku.classList.add('lohkes');
   const cx = jukuX + 120 * s;
@@ -638,18 +665,151 @@ function lohka() {
     tykid.push(t);
     joonistaTykk(t);
   }
-  sonum.textContent = 'PAUK! Kriipsujuku sõi tsilli ja brokoli lõhkes! Mäng läbi. 🌶️💥';
+  sonum.textContent = teade;
   nupp.textContent = 'Proovi uuesti 🥦';
   nupp.hidden = false;
   raund = 1;
   olek = 'ootab';
 }
 
+// Round 3: a door appears, and he must hide behind it before the bird
+// throws dynamite.
+function paigutaUks() {
+  const h = JUKU_KORGUS * s * 1.05;
+  const w = h * 0.55;
+  uks.style.width = `${w}px`;
+  uks.style.height = `${h}px`;
+  uks.style.translate = `${ukseX - w / 2}px ${maa - h + 8}px`;
+}
+
+async function avaUks() {
+  olek = 'uks';
+  peidus = false;
+  minemas = false;
+  for (const muu of jarjekord.splice(0)) maandu(muu);
+  for (const b of brokolid) {
+    if (b.olek === 'kukub') maandu(b);
+  }
+  // The door appears on the side away from him, so he has to run.
+  const keskel = jukuX + (JUKU_LAIUS * s) / 2;
+  ukseX = keskel > laius / 2 ? laius * 0.18 : laius * 0.82;
+  paigutaUks();
+  uks.classList.remove('lahti', 'raputab');
+  uks.hidden = false;
+  sonum.textContent = 'Uks! Puuduta ust ja mine kiiresti peitu! 🚪';
+  hyyd('UKS! 🚪', ukseX, maa - JUKU_KORGUS * s * 1.05 - 20);
+  await oota(5000);
+  if (olek !== 'uks') return;
+
+  sonum.textContent = peidus ? 'Lind tuleb! Kriipsujuku on peidus. 🤫' : 'Lind tuleb! Kiiresti uksest sisse! 🐦';
+  const LENDAB = 3; // seconds for the bird to cross the sky
+  lind.style.transition = 'none';
+  lind.style.translate = '-90px 16px';
+  lind.hidden = false;
+  void lind.offsetWidth;
+  lind.style.transition = `translate ${LENDAB}s linear`;
+  lind.style.translate = `${laius + 90}px 16px`;
+
+  // Three dynamites; the middle one is aimed at him (or at the door).
+  const visked = [];
+  let eelAeg = 0;
+  for (const [i, aeg] of [0.7, 1.5, 2.3].entries()) {
+    await oota((aeg - eelAeg) * 1000);
+    eelAeg = aeg;
+    if (olek !== 'uks') return;
+    const lx = -90 + ((laius + 180) * aeg) / LENDAB + 35;
+    const sihitud = i === 1;
+    const sihtX = sihitud
+      ? (peidus ? ukseX : jukuX + (JUKU_LAIUS * s) / 2)
+      : 20 + Math.random() * (laius - 40);
+    visked.push(viska(lx, 50, sihtX, sihitud));
+  }
+  await Promise.all(visked);
+  await oota(800);
+  if (olek !== 'uks') return;
+  lind.hidden = true;
+  if (!peidus) {
+    lohka('PAUK! Dünamiit tabas kriipsujukut ja brokoli lõhkes! Mäng läbi. 🧨💥');
+    return;
+  }
+
+  // Safe: he comes out and the door goes away.
+  uks.classList.add('lahti');
+  juku.classList.remove('peidus');
+  await oota(400);
+  if (olek !== 'uks') return;
+  uks.hidden = true;
+  uks.classList.remove('lahti');
+  peidus = false;
+  uksi += 1;
+  hyppa();
+  sonum.textContent = 'Pääsesid! Püüa edasi! 🥦';
+  tekkeAeg = 0.5;
+  olek = 'kaib';
+}
+
+async function minePeitu() {
+  if (olek !== 'uks' || minemas || peidus) return;
+  minemas = true;
+  sonum.textContent = 'Kriipsujuku jookseb ukse juurde! 🏃';
+  uks.classList.add('lahti');
+  while (hoivatud) await oota(50);
+  if (olek !== 'uks') return;
+  await konni(ukseX - (JUKU_LAIUS * s) / 2, 420);
+  if (olek !== 'uks') return;
+  peidus = true;
+  juku.classList.add('peidus');
+  sonum.textContent = 'Peidus! 🤫';
+  await oota(300);
+  uks.classList.remove('lahti');
+}
+
+// The bird throws a dynamite from (x, y) down to the grass at sihtX.
+async function viska(x, y, sihtX, sihitud) {
+  const el = document.createElement('span');
+  el.className = 'dunamiit';
+  el.innerHTML = '<img src="dunamiit.svg" alt="" draggable="false">';
+  el.style.translate = `${x}px ${y}px`;
+  ala.append(el);
+  void el.offsetWidth;
+  el.style.transition = 'translate .8s ease-in, rotate .8s linear';
+  el.style.translate = `${sihtX}px ${maa - 40}px`;
+  el.style.rotate = `${Math.random() < 0.5 ? -360 : 360}deg`;
+  await oota(800);
+  el.remove();
+  pauh(sihtX, maa - 20);
+  if (!sihitud || olek !== 'uks') return;
+  if (peidus) {
+    uks.classList.remove('raputab');
+    void uks.offsetWidth;
+    uks.classList.add('raputab');
+  } else {
+    lohka('PAUK! Dünamiit tabas kriipsujukut ja brokoli lõhkes! Mäng läbi. 🧨💥');
+  }
+}
+
+function pauh(x, y) {
+  const el = document.createElement('span');
+  el.className = 'pauh';
+  el.style.left = `${x}px`;
+  el.style.top = `${y}px`;
+  el.addEventListener('animationend', () => el.remove());
+  ala.append(el);
+  hyyd('PAUH!', x, y - 50);
+}
+
 // Clear the field before a new round.
 function koristaVali() {
   for (const t of tykid.splice(0)) t.el.remove();
   for (const b of brokolid.splice(0)) b.el.remove();
-  juku.classList.remove('lohkes', 'punane');
+  for (const el of ala.querySelectorAll('.dunamiit, .pauh')) el.remove();
+  juku.classList.remove('lohkes', 'punane', 'peidus');
+  uks.hidden = true;
+  uks.classList.remove('lahti', 'raputab');
+  lind.hidden = true;
+  uksi = 0;
+  peidus = false;
+  minemas = false;
 }
 
 function samm(aeg) {
@@ -673,6 +833,7 @@ function samm(aeg) {
       tekita();
       tekkeAeg = raund === 1 ? 1.1 + Math.random() * 0.6 : 0.75 + Math.random() * 0.5;
     }
+    if (raund === 3 && uksi < UKSI && tykeldatud >= 10 * (uksi + 1)) avaUks();
   }
 
   for (const b of brokolid) {
@@ -711,11 +872,19 @@ nupp.addEventListener('click', () => {
   tekkeAeg = 0;
   olek = 'kaib';
   nupp.hidden = true;
-  sonum.textContent = raund === 1
-    ? 'Puuduta kukkuvat brokolit!'
-    : '2. raund! Püüa brokoleid, aga ära puuduta tsillisid! 🌶️';
+  sonum.textContent = [
+    'Puuduta kukkuvat brokolit!',
+    '2. raund! Püüa brokoleid, aga ära puuduta tsillisid! 🌶️',
+    '3. raund! Kui uks ilmub, puuduta ust ja mine peitu! 🚪'
+  ][raund - 1];
   hyppa();
 });
+
+uks.addEventListener('pointerdown', (event) => {
+  event.preventDefault();
+  minePeitu();
+});
+uks.addEventListener('click', () => minePeitu());
 
 juku.addEventListener('animationend', (event) => {
   if (event.animationName === 'huppa') juku.classList.remove('huppab');

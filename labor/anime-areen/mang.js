@@ -14,6 +14,12 @@ const MAX_HP = 100;
 const DAMAGE = 10;
 const ATTACK_COOLDOWN = 450;
 const RESPAWN_MS = 2500;
+// The fire character's super power: it flies up and shoots a fire pistol.
+const SUPER_COOLDOWN = 20000;
+const SUPER_MS = 2200;
+const SUPER_SHOT_MS = 600;
+const SUPER_DAMAGE = 25;
+const SUPER_REACH = [260, 60];
 const LIMITS = { v: COLORS.length, p: CHARACTERS.length };
 
 const $ = (id) => document.getElementById(id);
@@ -23,6 +29,7 @@ const elutekst = $('elutekst');
 const olek = $('olek');
 const voitja = $('voitja');
 const teade = $('teade');
+const superNupp = $('super');
 const ctx = areen.getContext('2d');
 
 const KEYMAP = {
@@ -32,12 +39,15 @@ const KEYMAP = {
   ArrowRight: 'right', KeyD: 'right',
 };
 
-const me = { c: { v: Math.floor(Math.random() * COLORS.length), p: Math.floor(Math.random() * CHARACTERS.length) }, x: 0, y: 0, f: 1, hp: MAX_HP, atk: 0, hurt: 0, down: false, walking: false };
+const me = { c: { v: Math.floor(Math.random() * COLORS.length), p: Math.floor(Math.random() * CHARACTERS.length) }, x: 0, y: 0, f: 1, hp: MAX_HP, atk: 0, hurt: 0, sup: 0, down: false, walking: false };
 const others = new Map();
 const keys = new Set();
 let tuba = null;
 let wins = 0;
 let lastAttack = -Infinity;
+let lastSuper = -Infinity;
+let superWasReady = true;
+let superText = '';
 let dpr = 1;
 let lastFrame = performance.now();
 let lastSent = 0;
@@ -107,7 +117,7 @@ function showStatus() {
 function receive(message, from) {
   if (!message || typeof message !== 'object') return;
   if (message.t === 'hi') {
-    const other = others.get(from) ?? { atk: 0, hurt: 0, movedAt: 0, walking: false };
+    const other = others.get(from) ?? { atk: 0, hurt: 0, sup: 0, movedAt: 0, walking: false };
     other.c = cleanCharacter(message.c, LIMITS);
     other.x = other.dx = num(message.x, 0, W, W / 2);
     other.y = other.dy = num(message.y, 0, MOVE_AREA.height, MOVE_AREA.height / 2);
@@ -119,7 +129,7 @@ function receive(message, from) {
     return;
   }
   if (message.t === 'hit') {
-    getHit(from, num(message.d, 1, 20, DAMAGE));
+    getHit(from, num(message.d, 1, SUPER_DAMAGE, DAMAGE));
     return;
   }
   if (message.t === 'ko') {
@@ -139,6 +149,8 @@ function receive(message, from) {
     other.movedAt = performance.now();
   } else if (message.t === 'a') {
     other.atk = 1;
+  } else if (message.t === 's') {
+    other.sup = 1;
   } else if (message.t === 'hp') {
     const hp = num(message.hp, 0, MAX_HP, other.hp);
     if (hp < other.hp) other.hurt = 1;
@@ -185,6 +197,29 @@ function attack() {
   }
 }
 
+function canUseSuper() {
+  return CHARACTERS[me.c.p]?.power === 'fire';
+}
+
+// Flies up at once and fires a moment later, from wherever it is by then.
+function superPower() {
+  if (me.down || !canUseSuper()) return;
+  const now = performance.now();
+  if (now - lastSuper < SUPER_COOLDOWN) return;
+  lastSuper = now;
+  superWasReady = false;
+  me.sup = 1;
+  send({ t: 's' });
+  setTimeout(() => {
+    if (me.down) return;
+    sound('super');
+    if (!tuba?.connected) return;
+    for (const [id, other] of others) {
+      if (!other.down && attackHits({ x: me.x, y: me.y, facing: me.f }, other, ...SUPER_REACH)) tuba.sendTo(id, { t: 'hit', d: SUPER_DAMAGE });
+    }
+  }, SUPER_SHOT_MS);
+}
+
 // Keyboard and touch
 
 addEventListener('keydown', (event) => {
@@ -195,6 +230,9 @@ addEventListener('keydown', (event) => {
   } else if (event.code === 'Space') {
     event.preventDefault();
     if (!event.repeat) attack();
+  } else if (event.code === 'KeyE') {
+    event.preventDefault();
+    if (!event.repeat) superPower();
   }
 });
 addEventListener('keyup', (event) => {
@@ -224,6 +262,10 @@ $('runnak').addEventListener('pointerdown', (event) => {
   event.preventDefault();
   attack();
 });
+superNupp.addEventListener('pointerdown', (event) => {
+  event.preventDefault();
+  superPower();
+});
 document.querySelector('.puutenupud').addEventListener('contextmenu', (event) => event.preventDefault());
 
 // Choosing a character; the others see the change right away.
@@ -231,6 +273,7 @@ document.querySelector('.puutenupud').addEventListener('contextmenu', (event) =>
 const choices = document.querySelectorAll('.tegelane');
 function showChoice() {
   for (const button of choices) button.setAttribute('aria-pressed', String(Number(button.dataset.p) === me.c.p));
+  superNupp.hidden = !canUseSuper();
 }
 for (const button of choices) {
   button.addEventListener('click', () => {
@@ -255,7 +298,7 @@ for (const type of ['pointerdown', 'click', 'keydown']) addEventListener(type, u
 
 function sound(kind) {
   if (!audio || audio.state !== 'running') return;
-  const [type, from, to, length] = { punch: ['triangle', 420, 110, 0.09], hit: ['sawtooth', 200, 60, 0.18] }[kind];
+  const [type, from, to, length] = { punch: ['triangle', 420, 110, 0.09], hit: ['sawtooth', 200, 60, 0.18], super: ['sawtooth', 320, 45, 0.45] }[kind];
   const t = audio.currentTime;
   const osc = audio.createOscillator();
   const gain = audio.createGain();
@@ -275,6 +318,21 @@ function updateHud() {
   elu.style.width = `${me.hp}%`;
   elutekst.textContent = me.hp;
   voitja.textContent = `Võite: ${wins}`;
+}
+
+// The SUPER button counts down the seconds until the power is ready again.
+function showSuper(now) {
+  if (!canUseSuper()) return;
+  const left = Math.ceil((SUPER_COOLDOWN - (now - lastSuper)) / 1000);
+  if (left <= 0 && !superWasReady) {
+    superWasReady = true;
+    flash('🔥 Supervõime on jälle valmis!');
+  }
+  const text = left > 0 ? `🔥 ${left}` : '🔥 SUPER';
+  if (text === superText) return;
+  superText = text;
+  superNupp.textContent = text;
+  superNupp.classList.toggle('laeb', left > 0);
 }
 
 function flash(text) {
@@ -306,10 +364,12 @@ function update(now, dt) {
   }
   me.atk = Math.max(0, me.atk - dt / 300);
   me.hurt = Math.max(0, me.hurt - dt / 400);
+  me.sup = Math.max(0, me.sup - dt / SUPER_MS);
   const follow = Math.min(1, dt / 80);
   for (const other of others.values()) {
     other.atk = Math.max(0, other.atk - dt / 300);
     other.hurt = Math.max(0, other.hurt - dt / 400);
+    other.sup = Math.max(0, other.sup - dt / SUPER_MS);
     other.dx += (other.x - other.dx) * follow;
     other.dy += (other.y - other.dy) * follow;
     other.walking = now - other.movedAt < 150;
@@ -320,6 +380,7 @@ function update(now, dt) {
     sentPosition = position;
     tuba.send({ t: 'm', x: me.x, y: me.y, f: me.f });
   }
+  showSuper(now);
 }
 
 function draw(now) {
@@ -333,6 +394,7 @@ function draw(now) {
       scale: 0.8 + 0.3 * (f.dy / MOVE_AREA.height),
       attack: f.atk,
       hurt: f.hurt,
+      flight: f.sup,
       down: f.down,
       walking: f.walking,
       time: now + f.dx * 7,

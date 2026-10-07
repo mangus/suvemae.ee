@@ -11,6 +11,8 @@ assert.deepEqual(moved, { x: 241, y: 36 });
 assert.equal(attackHits({ x: 100, y: 100, facing: 1 }, { x: 154, y: 105 }), true);
 assert.equal(attackHits({ x: 100, y: 100, facing: 1 }, { x: 30, y: 100 }), false);
 assert.equal(attackHits({ x: 100, y: 100, facing: -1 }, { x: 45, y: 100 }), true);
+assert.equal(attackHits({ x: 100, y: 100, facing: 1 }, { x: 330, y: 150 }), false);
+assert.equal(attackHits({ x: 100, y: 100, facing: 1 }, { x: 330, y: 150 }, 260, 60), true);
 
 assert.deepEqual(applyDamage(30, 12), { health: 18, knockedOut: false });
 assert.deepEqual(applyDamage(8, 12), { health: 0, knockedOut: true });

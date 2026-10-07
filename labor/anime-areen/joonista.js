@@ -325,7 +325,20 @@ function knives(ctx, swing) {
   }
 }
 
-function drawPicture(ctx, hero, { punch, attack, hurt, breath, step, time }) {
+// The fire character's super power: a chunky fire pistol held out in front
+// while it flies, and a long blast of fire shot from it a moment later.
+const SUPER_SHOT = 0.27;
+
+function firePistol(ctx, x, y) {
+  shape(ctx, [[x, y - 5], [x + 24, y - 5], [x + 24, y + 2], [x + 9, y + 2], [x + 6, y + 12], [x - 1, y + 12], [x, y + 2]], '#e8364f');
+  shape(ctx, [[x + 20, y - 7], [x + 27, y - 7], [x + 27, y + 4], [x + 20, y + 4]], '#ffc92f');
+}
+
+function fireBeam(ctx, x, y, length, time) {
+  for (let k = 0; k < 3; k += 1) flame(ctx, x + (k * length) / 3, y, length / 3, 15, time + k * 170);
+}
+
+function drawPicture(ctx, hero, { punch, attack, hurt, breath, step, time, flight }) {
   const { picture } = hero;
   const h = hero.height;
   const w = (h * picture.naturalWidth) / picture.naturalHeight;
@@ -336,8 +349,8 @@ function drawPicture(ctx, hero, { punch, attack, hurt, breath, step, time }) {
     ctx.shadowColor = hero.glow;
     ctx.shadowBlur = 24 * attack;
   }
-  // The fire wings breathe a little, as if they were flapping.
-  if (hero.power === 'fire') ctx.scale(1 + Math.sin(time / 260) * 0.03, 1);
+  // The fire wings breathe a little, as if they were flapping; in flight they flap fast.
+  if (hero.power === 'fire') ctx.scale(1 + (flight > 0 ? Math.sin(time / 60) * 0.1 : Math.sin(time / 260) * 0.03), 1);
   ctx.drawImage(picture, -w / 2, -h, w, h);
   ctx.restore();
   if (attack > 0.05) {
@@ -347,6 +360,11 @@ function drawPicture(ctx, hero, { punch, attack, hurt, breath, step, time }) {
     else if (hero.power === 'scythe') slash(ctx, 1 - attack);
     else knives(ctx, 1 - attack);
     ctx.restore();
+  }
+  if (flight > 0) {
+    firePistol(ctx, 24, -80 + breath);
+    const shot = 1 - flight - SUPER_SHOT;
+    if (shot > 0 && flight > 0.08) fireBeam(ctx, 51, -81 + breath, 210 * Math.min(1, shot / 0.1), time);
   }
 }
 
@@ -396,7 +414,7 @@ function standIn(ctx, color, lean, breath, step, punch, attack, mood) {
 
 // Draws one fighter standing with its feet at (x, y).
 export function drawFighter(ctx, character, x, y, options = {}) {
-  const { facing = 1, scale = 1, attack = 0, hurt = 0, time = 0, walking = false, label = '', hp = null, me = false, down = false } = options;
+  const { facing = 1, scale = 1, attack = 0, hurt = 0, time = 0, walking = false, label = '', hp = null, me = false, down = false, flight = 0 } = options;
   const color = COLORS[character.v] ?? COLORS[0];
   const hero = CHARACTERS[character.p] ?? CHARACTERS[0];
   const pictured = hasPicture(hero);
@@ -404,6 +422,8 @@ export function drawFighter(ctx, character, x, y, options = {}) {
   const step = walking && !down ? Math.sin(time / 85) : 0;
   const breath = down ? 0 : Math.sin(time / 420) * 1.2;
   const lean = punch * 5 - hurt * 5;
+  // Flying up during the super power and landing again at its end.
+  const lift = down ? 0 : 70 * Math.min(1, (1 - flight) / 0.15, flight / 0.15);
   const mood = down ? 'down' : hurt > 0.4 ? 'hurt' : punch > 0.3 ? 'shout' : '';
 
   ctx.save();
@@ -422,6 +442,7 @@ export function drawFighter(ctx, character, x, y, options = {}) {
     ctx.ellipse(0, 0, 28, 8, 0, 0, Math.PI * 2);
     ctx.stroke();
   }
+  ctx.translate(0, -lift);
   ctx.scale(facing, 1);
   if (down) {
     ctx.translate(0, -5);
@@ -429,18 +450,18 @@ export function drawFighter(ctx, character, x, y, options = {}) {
   }
   if (hurt > 0 && Math.floor(time / 70) % 2 === 0) ctx.globalAlpha = 0.5;
 
-  if (pictured) drawPicture(ctx, hero, { punch, attack, hurt, breath, step, time });
+  if (pictured) drawPicture(ctx, hero, { punch, attack, hurt, breath, step, time, flight });
   else standIn(ctx, color, lean, breath, step, punch, attack, mood);
   ctx.restore();
 
   if (hurt > 0.45 && !down) {
     ctx.save();
-    impact(ctx, x - facing * 18 * scale, y - 120 * scale, 26 * scale * (0.7 + hurt * 0.5), 'PAUH!');
+    impact(ctx, x - facing * 18 * scale, y - (120 + lift) * scale, 26 * scale * (0.7 + hurt * 0.5), 'PAUH!');
     ctx.restore();
   }
 
   if (hp !== null) {
-    const top = y - (down ? 40 : pictured ? hero.height + 15 : 140) * scale;
+    const top = y - (lift + (down ? 40 : pictured ? hero.height + 15 : 140)) * scale;
     ctx.save();
     ctx.fillStyle = INK;
     ctx.fillRect(x - 21, top, 42, 7);

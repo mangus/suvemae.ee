@@ -14,9 +14,8 @@ export function moveFighter(position, direction, elapsedMs, arena) {
   };
 }
 
-export function attackHits(attacker, target) {
-  const reachX = 72;
-  const reachY = 48;
+// reachX and reachY say how far the blow goes; the fire pistol reaches further.
+export function attackHits(attacker, target, reachX = 72, reachY = 48) {
   const dx = target.x - attacker.x;
   const dy = Math.abs(target.y - attacker.y);
   const pointsForward = attacker.facing >= 0 ? dx >= 10 && dx <= reachX : dx <= -10 && dx >= -reachX;

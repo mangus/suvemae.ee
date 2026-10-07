@@ -53,7 +53,7 @@ const JL_Y = -70;
 const JL_LAIUS = 370;
 const JL_KORGUS = 330;
 const KARVU = 90; // fewer, thicker strands keep slow computers smooth
-const OSAD = 6; // segments per strand
+const OSAD = 14; // segments per strand, enough for round curls
 const juuksevarvid = ['#8d4b1f', '#7a3f17', '#9c5826', '#a8632d'];
 const juuksepaksus = [2.6, 3.2, 2.9, 3.5]; // one width per colour, so a colour's strands are drawn together
 const vaikne = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -74,16 +74,23 @@ function teeJuuksed() {
     // Butterfly cut: short face-framing layers over long back layers, ends flipped out.
     const lyhike = i % 5 < 2;
     const vajumine = lyhike ? 1 : 0.8 + (0.2 * Math.abs(fii)) / 105;
+    // Curls eat up length, so the strands are a bit longer than they look.
     const pikkus = lyhike
-      ? (42 + (22 * Math.abs(fii)) / 105) * (0.85 + Math.random() * 0.3)
-      : (120 + (60 * Math.abs(fii)) / 105) * (0.85 + Math.random() * 0.3);
+      ? (50 + (26 * Math.abs(fii)) / 105) * (0.85 + Math.random() * 0.3)
+      : (140 + (70 * Math.abs(fii)) / 105) * (0.85 + Math.random() * 0.3);
     const pool = fii >= 0 ? 1 : -1;
     const algus = valja + 67 * pool; // mostly along the head, with a little lift
     const kaar = (lyhike ? 35 : 20) * -pool; // soft outward flip at the ends
+    // Curls: each strand bends back and forth, looser near the roots, rounder at the ends.
+    const lokiFaas = Math.random() * 6.3;
+    const lokiSamm = 1.3 + Math.random() * 0.5;
+    const lokiSuurus = 55 + Math.random() * 25;
     const puhke = [];
     for (let k = 0; k < OSAD; k++) {
-      const ots = Math.max(0, (k - (OSAD - 3)) / 2);
-      puhke.push(algus + (alla - algus) * vajumine * ((k + 0.5) / OSAD) ** 0.7 + kaar * ots);
+      const f = (k + 0.5) / OSAD;
+      const ots = Math.max(0, (f - 0.6) / 0.3);
+      const lokk = lokiSuurus * Math.min(1, 0.35 + f) * Math.sin(k * lokiSamm + lokiFaas);
+      puhke.push(algus + (alla - algus) * vajumine * f ** 0.7 + kaar * ots + lokk);
     }
     const keskmine = (puhke[OSAD >> 1] * Math.PI) / 180;
     karvad.push({

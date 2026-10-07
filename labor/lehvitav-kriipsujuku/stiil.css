@@ -13,12 +13,11 @@ body {
   min-height: 100vh;
   margin: 0;
   overflow-x: hidden;
-  background: linear-gradient(#8fe3ff 0 72%, #8ee28c 72%);
+  background: linear-gradient(#bfefff, #fff7c7);
 }
 
 main {
   width: min(100%, 760px);
-  min-height: 100vh;
   margin: auto;
   padding: 1rem;
 }
@@ -37,31 +36,66 @@ main {
   box-shadow: 3px 3px 0 #263238;
 }
 
-.lava {
-  position: relative;
-  display: grid;
-  min-height: calc(100vh - 6rem);
-  place-items: center;
-  align-content: center;
-  gap: .8rem;
-  text-align: center;
+.pais {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  margin: .6rem 0;
 }
 
 h1 {
   margin: 0;
-  font-size: clamp(2.2rem, 10vw, 4.5rem);
+  font-size: clamp(1.8rem, 8vw, 3rem);
   color: #7b2cbf;
   text-shadow: 3px 3px 0 #fff;
 }
 
+.skoor {
+  padding: .3rem .8rem;
+  border: 3px solid #263238;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 1.25rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+/* The play field: sky, grass, falling broccoli and the stick figure. */
+.ala {
+  position: relative;
+  height: clamp(340px, 60vh, 560px);
+  overflow: hidden;
+  border: 4px solid #263238;
+  border-radius: 22px;
+  background: linear-gradient(#8fe3ff, #d4f6ff);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.muru {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 56px;
+  border-top: 4px solid #5cb85c;
+  background: #8ee28c;
+}
+
+.all {
+  text-align: center;
+}
+
 p {
   min-height: 1.6em;
-  margin: .2rem 0;
-  font-size: clamp(1.1rem, 5vw, 1.5rem);
+  margin: .6rem 0;
+  font-size: clamp(1.1rem, 5vw, 1.4rem);
   font-weight: 800;
 }
 
-button {
+.nupp {
   min-height: 52px;
   padding: .75rem 1.1rem;
   border: 3px solid #263238;
@@ -69,29 +103,110 @@ button {
   background: #ffdd35;
   color: #263238;
   font: inherit;
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 900;
   box-shadow: 4px 4px 0 #263238;
   cursor: pointer;
   touch-action: manipulation;
 }
 
-button:active {
+.nupp:active {
   translate: 3px 3px;
   box-shadow: 1px 1px 0 #263238;
 }
 
-button:focus-visible,
-.tagasi:focus-visible {
+.nupp:focus-visible,
+.tagasi:focus-visible,
+.brokoli:focus-visible {
   outline: 5px solid #ff4f87;
   outline-offset: 3px;
 }
+
+.brokoli {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.brokoli img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.brokoli.pyutud {
+  filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 9px #ffef5a);
+  animation: vingu .3s ease-in-out infinite alternate;
+  cursor: default;
+}
+
+.brokoli.maandus {
+  pointer-events: none;
+  animation: lirts .5s ease-out forwards;
+}
+
+.tykk {
+  position: absolute;
+  top: -7px;
+  left: -7px;
+  z-index: 3;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #263238;
+  border-radius: 50%;
+  background: #3fa63a;
+  pointer-events: none;
+}
+
+.tykk.vars {
+  top: -8px;
+  left: -4px;
+  width: 8px;
+  height: 16px;
+  border-radius: 4px;
+  background: #a5d66b;
+}
+
+.hyyd {
+  position: absolute;
+  z-index: 4;
+  translate: -50% -50%;
+  color: #ff4f87;
+  font-size: 1.6rem;
+  font-weight: 900;
+  text-shadow: 2px 2px 0 #fff;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: hyyd .8s ease-out forwards;
+}
+
+.juku-koht {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: 230px;
+  height: 330px;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.pilv { z-index: 0; }
 
 .juku {
   position: relative;
   width: 230px;
   height: 330px;
-  margin: .4rem 0;
   transform-origin: 50% 100%;
 }
 
@@ -129,6 +244,17 @@ button:focus-visible,
   border-radius: 0 0 50% 50%;
 }
 
+/* Open mouth while eating. */
+.juku.soob .suu {
+  left: 26px;
+  bottom: 10px;
+  width: 24px;
+  height: 24px;
+  border: 6px solid #e53965;
+  border-radius: 50%;
+  background: #7a1730;
+}
+
 .keha,
 .kasi-paigal,
 .kasi-lehvitab,
@@ -151,6 +277,10 @@ button:focus-visible,
   left: 116px;
   height: 104px;
   rotate: 58deg;
+}
+
+.juku.loob .kasi-paigal {
+  animation: loo .45s ease-in-out;
 }
 
 .kasi-lehvitab {
@@ -232,12 +362,6 @@ button:focus-visible,
   z-index: 1;
 }
 
-@keyframes tilgu {
-  0% { translate: 0 0; opacity: 0; }
-  15% { opacity: 1; }
-  100% { translate: 0 26px; opacity: 0; }
-}
-
 .jalg {
   top: 218px;
   left: 116px;
@@ -246,6 +370,9 @@ button:focus-visible,
 
 .jalg-vasak { rotate: 28deg; }
 .jalg-parem { rotate: -28deg; }
+
+.juku.konnib .jalg-vasak { animation: samm-vasak .3s ease-in-out infinite alternate; }
+.juku.konnib .jalg-parem { animation: samm-parem .3s ease-in-out infinite alternate; }
 
 .juku.huppab {
   animation: huppa .65s ease;
@@ -281,12 +408,35 @@ button:focus-visible,
   bottom: 3px;
 }
 
-.pilv-uks { top: 9%; left: 2%; }
-.pilv-kaks { top: 25%; right: 1%; scale: .7; }
+.pilv-uks { top: 12%; left: 4%; }
+.pilv-kaks { top: 26%; right: 3%; scale: .7; }
+
+@keyframes tilgu {
+  0% { translate: 0 0; opacity: 0; }
+  15% { opacity: 1; }
+  100% { translate: 0 26px; opacity: 0; }
+}
 
 @keyframes lehvita {
   from { rotate: -128deg; }
   to { rotate: -88deg; }
+}
+
+@keyframes loo {
+  0% { rotate: 58deg; }
+  40% { rotate: 150deg; }
+  70% { rotate: 25deg; }
+  100% { rotate: 58deg; }
+}
+
+@keyframes samm-vasak {
+  from { rotate: 28deg; }
+  to { rotate: -10deg; }
+}
+
+@keyframes samm-parem {
+  from { rotate: -28deg; }
+  to { rotate: 10deg; }
 }
 
 @keyframes huppa {
@@ -295,9 +445,19 @@ button:focus-visible,
   70% { translate: 0 0; scale: .96 1.04; }
 }
 
-@media (max-height: 650px) {
-  .juku { scale: .72; margin: -2.5rem 0; }
-  .lava { gap: .35rem; }
+@keyframes vingu {
+  from { scale: 1; }
+  to { scale: 1.12; }
+}
+
+@keyframes lirts {
+  to { scale: 1.4 .3; opacity: 0; }
+}
+
+@keyframes hyyd {
+  0% { scale: .4; opacity: 1; }
+  30% { scale: 1.2; }
+  100% { scale: 1; opacity: 0; transform: translateY(-40px); }
 }
 
 @media (prefers-reduced-motion: reduce) {

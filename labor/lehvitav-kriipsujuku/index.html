@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Rõõmus kriipsujuku hoiab käes rohelise zombilimaga nuga, lehvitab sulle ja hüppab nupuvajutuse peale.">
+  <meta name="description" content="Taevast sajab brokoleid: püüa need kinni, kriipsujuku tükeldab need zombinoaga ja sööb lõpus tükid ära.">
   <title>Lehvitav kriipsujuku</title>
   <link rel="stylesheet" href="stiil.css">
   <script src="juku.js" defer></script>
@@ -12,38 +12,47 @@
   <main>
     <a class="tagasi" href="../">← Tagasi laborisse</a>
 
-    <section class="lava" aria-labelledby="pealkiri">
+    <header class="pais">
+      <h1 id="pealkiri">Tere! 👋</h1>
+      <span class="skoor" id="skoor">🥦 0 / 10</span>
+    </header>
+
+    <section class="ala" id="ala" aria-labelledby="pealkiri">
       <div class="pilv pilv-uks" aria-hidden="true"></div>
       <div class="pilv pilv-kaks" aria-hidden="true"></div>
-      <h1 id="pealkiri">Tere! 👋</h1>
+      <div class="muru" aria-hidden="true"></div>
 
-      <div class="juku" id="juku" role="img" aria-label="Rõõmus kriipsujuku, kes lehvitab ja hoiab käes rohelise limaga nuga">
-        <div class="pea">
-          <span class="silm vasak"></span>
-          <span class="silm parem"></span>
-          <span class="suu"></span>
+      <div class="juku-koht" id="juku-koht">
+        <div class="juku" id="juku" role="img" aria-label="Kriipsujuku, kes lehvitab ja hoiab käes rohelise limaga nuga">
+          <div class="pea">
+            <span class="silm vasak"></span>
+            <span class="silm parem"></span>
+            <span class="suu"></span>
+          </div>
+          <div class="keha"></div>
+          <div class="kasi-paigal">
+            <span class="nuga" aria-hidden="true">
+              <span class="tera"></span>
+              <span class="lima"></span>
+              <span class="tilk tilk-uks"></span>
+              <span class="tilk tilk-kaks"></span>
+              <span class="pide"></span>
+            </span>
+            <span class="kabal"></span>
+          </div>
+          <div class="kasi-lehvitab">
+            <span class="kabal"></span>
+          </div>
+          <div class="jalg jalg-vasak"></div>
+          <div class="jalg jalg-parem"></div>
         </div>
-        <div class="keha"></div>
-        <div class="kasi-paigal">
-          <span class="nuga" aria-hidden="true">
-            <span class="tera"></span>
-            <span class="lima"></span>
-            <span class="tilk tilk-uks"></span>
-            <span class="tilk tilk-kaks"></span>
-            <span class="pide"></span>
-          </span>
-          <span class="kabal"></span>
-        </div>
-        <div class="kasi-lehvitab">
-          <span class="kabal"></span>
-        </div>
-        <div class="jalg jalg-vasak"></div>
-        <div class="jalg jalg-parem"></div>
       </div>
-
-      <p id="sonum" aria-live="polite">Kriipsujuku lehvitab sulle!</p>
-      <button id="tervita" type="button">Tervita kriipsujukut!</button>
     </section>
+
+    <div class="all">
+      <p id="sonum" aria-live="polite">Vajuta „Alusta!” ja püüa taevast sadavaid brokoleid!</p>
+      <button class="nupp" id="alusta" type="button">Alusta! 🥦</button>
+    </div>
   </main>
 </body>
 </html>

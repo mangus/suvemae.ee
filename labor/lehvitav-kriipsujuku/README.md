@@ -1,13 +1,16 @@
 # Lehvitav kriipsujuku
 
-Rõõmus kriipsujuku lehvitab külastajale. Teises käes hoiab ta zombinuga, millelt tilgub rohelist zombilima. Nupule vajutades hüppab ta õhku ja tervitab.
+Rõõmus kriipsujuku lehvitab ühe käega. Teises käes hoiab ta zombinuga, millelt tilgub rohelist zombilima. Taevast sajab brokoleid!
 
-## Kuidas kasutada
+## Kuidas mängida
 
-Ava leht ja vajuta nuppu „Tervita kriipsujukut!”.
+1. Vajuta „Alusta!”.
+2. Puuduta kukkuvat brokolit. Siis on see püütud.
+3. Kriipsujuku kõnnib brokoli juurde ja lööb seda noaga. Brokoli plahvatab ja tükid kukuvad murule.
+4. Kui 10 brokolit on tükkideks, sööb kriipsujuku kõik tükid ära.
 
 Autor: Saarmad
 
 Made with the help of the Suvemäe labor [AI agent on mintbot.ai](https://mintbot.ai/).
 
-Kõik kujundid ja animatsioonid on tehtud selle projekti HTML-i ja CSS-iga. Väliseid materjale ei kasutata.
+Kõik kujundid ja animatsioonid, ka brokoli pilt `brokoli.svg`, on tehtud selle projekti jaoks. Väliseid materjale ei kasutata.

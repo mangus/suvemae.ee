@@ -1,6 +1,6 @@
 # Lehvitav kriipsujuku
 
-Rõõmus kriipsujuku lehvitab külastajale. Nupule vajutades hüppab ta õhku ja tervitab.
+Rõõmus kriipsujuku lehvitab külastajale. Teises käes hoiab ta zombinuga, millelt tilgub rohelist zombilima. Nupule vajutades hüppab ta õhku ja tervitab.
 
 ## Kuidas kasutada
 

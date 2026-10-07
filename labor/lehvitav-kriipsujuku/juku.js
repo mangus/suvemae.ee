@@ -5,7 +5,8 @@ const sonum = document.querySelector('#sonum');
 const tervitused = [
   'Kriipsujuku ütleb: tere-tere! 👋',
   'Nii tore sind näha! 😊',
-  'Kriipsujuku lehvitab eriti kiiresti! ✨'
+  'Kriipsujuku lehvitab eriti kiiresti! ✨',
+  'Zombid, hoidke eemale! 🧟💚'
 ];
 
 let tervituseNumber = 0;

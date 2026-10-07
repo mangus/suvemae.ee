@@ -172,6 +172,72 @@ button:focus-visible,
   background: #ffe09b;
 }
 
+/* Zombie knife held in the still hand; the arm is rotated 58deg, so the knife turns back to point up. */
+.nuga {
+  position: absolute;
+  left: calc(50% - 7px);
+  bottom: -13px;
+  width: 14px;
+  height: 76px;
+  transform-origin: 50% 85%;
+  rotate: -73deg;
+  scale: 1.35;
+}
+
+.tera {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 14px;
+  height: 56px;
+  border: 3px solid #263238;
+  border-radius: 100% 2px 3px 3px / 70% 2px 3px 3px;
+  background: #e4ebf2;
+}
+
+.lima {
+  position: absolute;
+  top: 6px;
+  left: 2px;
+  width: 9px;
+  height: 30px;
+  border-radius: 70% 40% 60% 50%;
+  background: #6fdc2f;
+}
+
+.tilk {
+  position: absolute;
+  width: 7px;
+  height: 9px;
+  border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+  background: #6fdc2f;
+  animation: tilgu 1.6s ease-in infinite;
+}
+
+.tilk-uks { top: 30px; left: -4px; }
+.tilk-kaks { top: 22px; left: 10px; animation-delay: .8s; }
+
+.pide {
+  position: absolute;
+  bottom: 0;
+  left: 1px;
+  width: 12px;
+  height: 22px;
+  border: 3px solid #263238;
+  border-radius: 4px;
+  background: #a0522d;
+}
+
+.kasi-paigal .kabal {
+  z-index: 1;
+}
+
+@keyframes tilgu {
+  0% { translate: 0 0; opacity: 0; }
+  15% { opacity: 1; }
+  100% { translate: 0 26px; opacity: 0; }
+}
+
 .jalg {
   top: 218px;
   left: 116px;
@@ -236,5 +302,6 @@ button:focus-visible,
 
 @media (prefers-reduced-motion: reduce) {
   .kasi-lehvitab { animation-duration: 2s; }
+  .tilk { animation: none; }
   .juku.huppab { animation: none; }
 }

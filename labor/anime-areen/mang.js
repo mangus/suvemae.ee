@@ -1,10 +1,10 @@
 // Anime Areen: a realtime fighting game for several players in one shared
 // room. Each player keeps track of their own health; an attacker only tells
-// the target that it was hit. Every fighter is the fire character the
-// children drew; more of their characters will be added later.
+// the target that it was hit. Every player picks one of the characters the
+// children drew; more of them will be added later.
 import { lab } from '../lab.js';
 import { clamp, moveFighter, attackHits, applyDamage, cleanCharacter } from './game-core.js';
-import { COLORS, drawFighter, drawArena, drawFocusLines } from './joonista.js';
+import { COLORS, CHARACTERS, drawFighter, drawArena, drawFocusLines } from './joonista.js';
 
 const W = 640;
 const H = 480;
@@ -14,7 +14,7 @@ const MAX_HP = 100;
 const DAMAGE = 10;
 const ATTACK_COOLDOWN = 450;
 const RESPAWN_MS = 2500;
-const LIMITS = { v: COLORS.length };
+const LIMITS = { v: COLORS.length, p: CHARACTERS.length };
 
 const $ = (id) => document.getElementById(id);
 const areen = $('areen');
@@ -32,7 +32,7 @@ const KEYMAP = {
   ArrowRight: 'right', KeyD: 'right',
 };
 
-const me = { c: { v: Math.floor(Math.random() * COLORS.length) }, x: 0, y: 0, f: 1, hp: MAX_HP, atk: 0, hurt: 0, down: false, walking: false };
+const me = { c: { v: Math.floor(Math.random() * COLORS.length), p: Math.floor(Math.random() * CHARACTERS.length) }, x: 0, y: 0, f: 1, hp: MAX_HP, atk: 0, hurt: 0, down: false, walking: false };
 const others = new Map();
 const keys = new Set();
 let tuba = null;
@@ -225,6 +225,21 @@ $('runnak').addEventListener('pointerdown', (event) => {
   attack();
 });
 document.querySelector('.puutenupud').addEventListener('contextmenu', (event) => event.preventDefault());
+
+// Choosing a character; the others see the change right away.
+
+const choices = document.querySelectorAll('.tegelane');
+function showChoice() {
+  for (const button of choices) button.setAttribute('aria-pressed', String(Number(button.dataset.p) === me.c.p));
+}
+for (const button of choices) {
+  button.addEventListener('click', () => {
+    me.c.p = Number(button.dataset.p);
+    showChoice();
+    send(hello());
+  });
+}
+showChoice();
 
 // Sound starts only after the first tap, click or key press.
 

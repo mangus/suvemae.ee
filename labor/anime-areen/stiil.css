@@ -27,6 +27,11 @@ header > p:last-child { margin: 0.8rem auto; font-weight: 700; }
 button { border: 3px solid #1d1430; color: #1d1430; font: inherit; font-weight: 1000; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button:active, button.vajutatud { transform: translateY(3px); filter: brightness(0.9); }
 
+.valik { display: flex; justify-content: center; gap: 12px; margin: 0 0 14px; }
+.tegelane { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 108px; padding: 6px 6px 8px; border-radius: 18px; background: #fff; box-shadow: 0 5px #1d1430; }
+.tegelane img { height: 88px; }
+.tegelane[aria-pressed='true'] { background: #ffe96b; outline: 3px solid #ff4f9a; outline-offset: 2px; }
+
 .manguala { position: relative; overflow: hidden; border: 4px solid #1d1430; border-radius: 24px; background: #f6d6a2; box-shadow: 8px 10px 0 #1d1430; }
 .hud { min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: #1d1430; color: white; font-size: 0.82rem; font-weight: 900; }
 .eluriba { width: min(28vw, 220px); height: 20px; overflow: hidden; border: 2px solid #fff; border-radius: 999px; background: #5b426e; }
@@ -56,6 +61,7 @@ kbd { padding: 2px 6px; border: 2px solid #1d1430; border-radius: 6px; backgroun
   body { padding: 8px; }
   .tagasi { font-size: 0.86rem; }
   header > p:last-child { font-size: 0.9rem; }
+  .tegelane img { height: 72px; }
   .manguala { border-width: 3px; border-radius: 18px; box-shadow: 5px 7px 0 #1d1430; }
   .hud { flex-wrap: wrap; gap: 4px 7px; font-size: 0.7rem; }
   #olek { order: 3; flex-basis: 100%; }

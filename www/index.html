@@ -26,7 +26,7 @@ a{color:inherit}
 .d-star{top:30px;left:6%;width:clamp(42px,6vw,66px);transform:rotate(-12deg)}
 .d-plane{top:46%;left:7%;width:clamp(72px,8vw,104px)}
 .d-squiggle{top:56%;right:7%;width:clamp(92px,10vw,132px)}
-.d-ladybug{bottom:clamp(34px,6vw,96px);left:18%;width:clamp(46px,5.5vw,70px);animation:crawl 8s ease-in-out infinite,peek 37s linear -2s infinite}
+.d-ladybug{bottom:clamp(34px,6vw,96px);left:18%;width:clamp(46px,5.5vw,70px);animation:crawl 8s ease-in-out infinite,walk-d 37s ease-in-out -2s infinite}
 .d-ladybug svg{display:block;width:100%;height:auto;transform:rotate(24deg)}
 @keyframes crawl{0%,100%{transform:translate(0,0)}25%{transform:translate(36px,-8px)}50%{transform:translate(72px,0)}75%{transform:translate(36px,8px)}}
 /* Speech bubbles: good bugs cheer on learning, bad bugs tempt to laziness */
@@ -41,7 +41,7 @@ a{color:inherit}
 h1{margin:0;font-size:clamp(3.4rem,13vw,7.5rem);line-height:1;font-weight:900;letter-spacing:-.01em;text-shadow:3px 4px 0 rgba(43,35,64,.1)}
 h1 span span{display:inline-block;color:var(--c);transform:rotate(var(--r))}
 h1 .has-fly{position:relative}
-.fly{position:absolute;left:50%;top:55%;width:0;height:0;pointer-events:none;animation:fly-orbit 7s linear infinite,peek 29s linear -14s infinite}
+.fly{position:absolute;left:50%;top:55%;width:0;height:0;pointer-events:none;animation:fly-orbit 7s linear infinite,walk-u 29s ease-in-out -14s infinite}
 .fly svg{position:absolute;left:-.16em;top:-.78em;width:.32em;height:auto;animation:fly-flap .22s ease-in-out infinite alternate}
 @keyframes fly-orbit{to{transform:rotate(360deg)}}
 @keyframes fly-flap{to{transform:scaleX(.35)}}
@@ -82,7 +82,7 @@ main{max-width:1000px;margin:0 auto;padding:0 20px}
 .frame small{font-size:.92rem;font-weight:700;color:var(--ink-soft)}
 footer{padding:26px 20px 34px;text-align:center;color:var(--ink-soft);font-size:.98rem;border-top:3px dashed #eadfc4}
 footer p{margin:.2rem 0}
-.d-bee{position:absolute;top:24%;left:0;width:clamp(56px,7vw,84px);pointer-events:none;animation:bee-fly 18s ease-in-out infinite,peek 43s linear -30s infinite}
+.d-bee{position:absolute;top:24%;left:0;width:clamp(56px,7vw,84px);pointer-events:none;animation:bee-fly 18s ease-in-out infinite}
 .d-bee svg{display:block;width:100%;height:auto;animation:bee-bob .5s ease-in-out infinite alternate}
 .bee-wing{transform-box:fill-box;transform-origin:50% 100%;animation:bee-flap .07s linear infinite alternate}
 .bee-buzz{position:absolute;top:-.4em;right:100%;font-weight:900;font-size:clamp(.9rem,1.8vw,1.2rem);color:#d95a00;white-space:nowrap;transform:rotate(-10deg);animation:bee-buzz .25s steps(2) infinite}
@@ -90,20 +90,23 @@ footer p{margin:.2rem 0}
 @keyframes bee-bob{to{transform:translateY(-7px) rotate(-5deg)}}
 @keyframes bee-flap{to{transform:scaleY(.3)}}
 @keyframes bee-buzz{50%{transform:rotate(-14deg) translate(2px,-3px)}}
-/* Bugs come and go; different cycle lengths make the mix on screen look random */
-@keyframes peek{0%,62%,100%{opacity:0}6%,56%{opacity:1}}
+/* Bugs leave over an edge and come back; different cycle lengths make the mix on screen look random.
+   The translate property stacks with each bug's own transform animation. */
+@keyframes walk-l{0%,65%,100%{translate:-100vw 0}10%,55%{translate:0 0}}
+@keyframes walk-u{0%,65%,100%{translate:0 -100vh}10%,55%{translate:0 0}}
+@keyframes walk-d{0%,65%,100%{translate:0 100vh}10%,55%{translate:0 0}}
 .say-bad{background:#ece6f3;color:var(--ink-soft);border-style:dashed}
-.d-mosquito{top:clamp(64px,9vw,120px);left:24%;width:clamp(52px,6.5vw,80px);pointer-events:none;animation:mosq-drift 6s ease-in-out infinite,peek 23s linear -9s infinite}
+.d-mosquito{top:clamp(64px,9vw,120px);left:24%;width:clamp(52px,6.5vw,80px);pointer-events:none;animation:mosq-drift 6s ease-in-out infinite,walk-u 23s ease-in-out -9s infinite}
 .d-mosquito svg{display:block;width:100%;height:auto}
 .mosq-wing{transform-box:fill-box;transform-origin:50% 100%;animation:bee-flap .09s linear infinite alternate}
 @keyframes mosq-drift{0%,100%{transform:translate(0,0)}30%{transform:translate(22px,10px)}60%{transform:translate(-14px,16px)}80%{transform:translate(8px,-6px)}}
-.d-tick{bottom:clamp(70px,11vw,170px);left:4%;width:clamp(44px,5vw,64px);pointer-events:none;animation:tick-crawl 12s ease-in-out infinite,peek 31s linear -20s infinite}
+.d-tick{bottom:clamp(70px,11vw,170px);left:4%;width:clamp(44px,5vw,64px);pointer-events:none;animation:tick-crawl 12s ease-in-out infinite,walk-l 31s ease-in-out -20s infinite}
 .d-tick .say{left:0;transform:none}
 .d-tick .say::after{left:22px}
 .d-tick svg{display:block;width:100%;height:auto;transform-origin:50% 90%;animation:tick-snooze 3.5s ease-in-out infinite}
 @keyframes tick-crawl{0%,100%{transform:translate(0,0)}40%{transform:translate(18px,-30px)}70%{transform:translate(34px,-6px)}}
 @keyframes tick-snooze{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg) translateY(2px)}}
-@media (max-width:720px){.d-plane,.d-squiggle{display:none}.d-tick{left:42%;bottom:6px}.d-tick .say{display:none}}
+@media (max-width:720px){.d-plane,.d-squiggle{display:none}.d-tick{left:42%;bottom:6px}.d-tick .say,.d-bear .say{display:none}}
 @media (prefers-reduced-motion:reduce){.fly,.fly svg,.rays,.d-ladybug,.d-mosquito,.mosq-wing,.d-tick,.d-tick svg,.d-bear svg,.d-bee,.d-bee svg,.bee-wing,.bee-buzz{animation:none}.d-bee{left:12%}.door,.frame{transition:none}}
 </style>
 </head>

@@ -40,6 +40,118 @@ const tykid = [];
 const oota = (ms) => new Promise((valmis) => setTimeout(valmis, ms));
 const piira = (v, min, max) => Math.min(Math.max(v, min), max);
 
+// Hair: many thin strands on a canvas, each swung by a small spring.
+const pea = juku.querySelector('.pea');
+const juukseLouend = document.createElement('canvas');
+juukseLouend.className = 'juuksed';
+juukseLouend.setAttribute('aria-hidden', 'true');
+juku.append(juukseLouend);
+const jl = juukseLouend.getContext('2d');
+const JL_X = -70; // canvas box inside the figure, matches .juuksed
+const JL_Y = -70;
+const JL_LAIUS = 370;
+const JL_KORGUS = 330;
+const KARVU = 160;
+const OSAD = 6; // segments per strand
+const juuksevarvid = ['#8d4b1f', '#7a3f17', '#9c5826', '#a8632d'];
+const vaikne = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const karvad = [];
+let juukseMoot = 0;
+let peaEelmine = null;
+
+function teeJuuksed() {
+  const r = pea.offsetWidth / 2;
+  const kx = pea.offsetLeft + r - JL_X;
+  const ky = pea.offsetTop + r - JL_Y;
+  for (let i = 0; i < KARVU; i++) {
+    const fii = (Math.random() * 2 - 1) * 105; // 0 is the top of the head
+    const nurk = (fii * Math.PI) / 180;
+    const juur = r - 5 - Math.random() * 7;
+    const valja = 180 + fii; // pointing straight out of the head
+    const alla = fii >= 0 ? 360 : 0; // pointing down on the same side
+    const vajumine = 0.8 + (0.2 * Math.abs(fii)) / 105; // long hair falls down
+    const pikkus = (95 + (70 * Math.abs(fii)) / 105) * (0.8 + Math.random() * 0.4);
+    const puhke = [];
+    for (let k = 0; k < OSAD; k++) {
+      puhke.push(valja + (alla - valja) * vajumine * ((k + 0.5) / OSAD) ** 0.7);
+    }
+    const keskmine = (puhke[OSAD >> 1] * Math.PI) / 180;
+    karvad.push({
+      x: kx + Math.sin(nurk) * juur,
+      y: ky - Math.cos(nurk) * juur,
+      puhke,
+      osa: pikkus / OSAD,
+      cos: Math.cos(keskmine),
+      sin: Math.sin(keskmine),
+      jaikus: 45 + Math.random() * 30,
+      nihe: 0,
+      kiirus: 0,
+      faas: Math.random() * 6.3,
+      paks: 1.6 + Math.random() * 1.4,
+      varv: juuksevarvid[i % juuksevarvid.length],
+    });
+  }
+}
+
+function liigutaJuukseid(dt, aeg) {
+  // Head motion in figure units; strands lag behind it and swing back.
+  const kast = pea.getBoundingClientRect();
+  const x = (kast.left + kast.width / 2) / s;
+  const y = (kast.top + kast.height / 2) / s;
+  let vx = 0;
+  let vy = 0;
+  let dvx = 0;
+  let dvy = 0;
+  if (peaEelmine && dt > 0) {
+    vx = (x - peaEelmine.x) / dt;
+    vy = (y - peaEelmine.y) / dt;
+    if (Math.hypot(vx, vy) > 3000) {
+      vx = 0; // a resize, not a real move
+      vy = 0;
+    }
+    dvx = vx - peaEelmine.vx;
+    dvy = vy - peaEelmine.vy;
+  }
+  peaEelmine = { x, y, vx, vy };
+
+  const t = aeg / 1000;
+  for (const k of karvad) {
+    const tuul = vaikne ? 0 : 5 * Math.sin(t * 1.3 + k.faas) + 2.5 * Math.sin(t * 2.9 + k.faas * 2);
+    const siht = tuul + 1.7 * (vx * k.cos + vy * k.sin);
+    k.kiirus += 0.45 * (dvx * k.cos + dvy * k.sin);
+    k.kiirus += (k.jaikus * (siht - k.nihe) - 4 * k.kiirus) * dt;
+    k.kiirus = piira(k.kiirus, -900, 900);
+    k.nihe = piira(k.nihe + k.kiirus * dt, -70, 70);
+  }
+
+  const moot = s * (window.devicePixelRatio || 1);
+  if (moot !== juukseMoot) {
+    juukseMoot = moot;
+    juukseLouend.width = Math.round(JL_LAIUS * moot);
+    juukseLouend.height = Math.round(JL_KORGUS * moot);
+  }
+  jl.setTransform(moot, 0, 0, moot, 0, 0);
+  jl.clearRect(0, 0, JL_LAIUS, JL_KORGUS);
+  jl.lineCap = 'round';
+  for (const k of karvad) {
+    let px = k.x;
+    let py = k.y;
+    jl.strokeStyle = k.varv;
+    for (let i = 0; i < OSAD; i++) {
+      const a = ((k.puhke[i] + k.nihe * ((i + 1) / OSAD) ** 1.5) * Math.PI) / 180;
+      const nx = px - Math.sin(a) * k.osa;
+      const ny = py + Math.cos(a) * k.osa;
+      jl.lineWidth = k.paks * (1 - i / (OSAD + 2));
+      jl.beginPath();
+      jl.moveTo(px, py);
+      jl.lineTo(nx, ny);
+      jl.stroke();
+      px = nx;
+      py = ny;
+    }
+  }
+}
+
 function mootmed() {
   laius = ala.clientWidth;
   korgus = ala.clientHeight;
@@ -288,6 +400,7 @@ function samm(aeg) {
     joonistaTykk(t);
   }
 
+  liigutaJuukseid(dt, aeg);
   requestAnimationFrame(samm);
 }
 
@@ -309,6 +422,7 @@ juku.addEventListener('animationend', (event) => {
 window.addEventListener('resize', mootmed);
 
 mootmed();
+teeJuuksed();
 jukuX = (laius - JUKU_LAIUS * s) / 2;
 koht.style.left = `${jukuX}px`;
 requestAnimationFrame(samm);

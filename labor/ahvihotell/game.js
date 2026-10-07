@@ -46,6 +46,15 @@ const SHOP = [
   { id: 'kubar', slot: 'head', name: 'Kübar', icon: '🎩', price: 60 },
   { id: 'keep', slot: 'back', name: 'Supermantel', icon: '🦸', price: 100 },
   { id: 'kroon', slot: 'head', name: 'Kroon', icon: '👑', price: 150 },
+  { id: 'teksad', slot: 'legs', name: 'Teksapüksid', icon: '👖', price: 15, color: '#3f6fb5' },
+  { id: 'lyhikesed', slot: 'legs', name: 'Lühikesed püksid', icon: '🩳', price: 20, color: '#43a047' },
+  { id: 'punased', slot: 'legs', name: 'Punased püksid', icon: '👖', price: 25, color: '#d32f2f' },
+  { id: 'triibuline', slot: 'top', name: 'Triibuline särk', icon: '👕', price: 30 },
+  { id: 'tahesark', slot: 'top', name: 'Tähega särk', icon: '⭐', price: 40 },
+  { id: 'pusa', slot: 'top', name: 'Kapuutsiga pusa', icon: '🧥', price: 50 },
+  { id: 'tossud', slot: 'feet', name: 'Valged tossud', icon: '👟', price: 20 },
+  { id: 'saapad', slot: 'feet', name: 'Saapad', icon: '🥾', price: 35 },
+  { id: 'helkivad', slot: 'feet', name: 'Helkivad tossud', icon: '✨', price: 70 },
 ];
 
 let W = 320;
@@ -257,11 +266,12 @@ function drawHuman(g, look) {
   const shirt = SHIRTS[look.s][0];
   const body = BODIES[look.b].id;
   const has = (id) => look.w.includes(id);
-  const hat = look.w.some((id) => SHOP.find((s) => s.id === id).slot === 'head');
+  const worn = (slot) => SHOP.find((s) => s.slot === slot && look.w.includes(s.id));
+  const hat = !!worn('head');
   if (has('keep')) poly(g, [46, 54, 82, 54, 98, 118, 30, 118], '#d32f2f');
   if (body === 'robot') drawRobot(g, shirt, hat);
   else if (body === 'kummitus') drawGhost(g, shirt);
-  else drawPerson(g, shirt, body === 'tulnukas' ? '#7ee06e' : SKINS[look.k], body === 'tulnukas', hat);
+  else drawPerson(g, shirt, body === 'tulnukas' ? '#7ee06e' : SKINS[look.k], body === 'tulnukas', hat, worn);
   if (has('sall')) {
     g.fillStyle = '#ffeb3b'; g.fillRect(52, 52, 24, 7); g.fillRect(67, 58, 7, 16);
     g.fillStyle = '#e53935';
@@ -286,12 +296,24 @@ function drawHuman(g, look) {
   }
 }
 
-function drawPerson(g, shirt, skin, alien, hat) {
-  g.fillStyle = '#2b3a67';
-  g.fillRect(50, 94, 12, 26);
-  g.fillRect(66, 94, 12, 26);
-  blob(g, 55, 121, 9, 4, '#1b1b1b');
-  blob(g, 73, 121, 9, 4, '#1b1b1b');
+// Trousers, a shirt style and shoes are worn by people and aliens.
+function drawPerson(g, shirt, skin, alien, hat, worn) {
+  const legs = worn('legs');
+  const short = legs && legs.id === 'lyhikesed';
+  g.fillStyle = legs ? legs.color : '#2b3a67';
+  g.fillRect(50, 94, 12, short ? 12 : 26);
+  g.fillRect(66, 94, 12, short ? 12 : 26);
+  if (short) {
+    g.fillStyle = skin;
+    g.fillRect(52, 106, 8, 14);
+    g.fillRect(68, 106, 8, 14);
+  }
+  if (legs && legs.id === 'teksad') {
+    g.fillStyle = 'rgba(255,255,255,0.35)';
+    g.fillRect(55, 96, 1.5, 22);
+    g.fillRect(71, 96, 1.5, 22);
+  }
+  drawShoes(g, worn('feet'));
   g.lineCap = 'round';
   g.strokeStyle = shirt;
   g.lineWidth = 9;
@@ -300,8 +322,7 @@ function drawPerson(g, shirt, skin, alien, hat) {
   blob(g, 38, 95, 5, 5, skin);
   blob(g, 90, 95, 5, 5, skin);
   poly(g, [46, 56, 82, 56, 85, 98, 43, 98], shirt);
-  g.fillStyle = 'rgba(255,255,255,0.25)';
-  g.fillRect(45, 74, 39, 5);
+  drawTop(g, worn('top'));
   g.fillStyle = skin;
   g.fillRect(59, 46, 10, 12);
   if (alien) {
@@ -331,6 +352,55 @@ function drawPerson(g, shirt, skin, alien, hat) {
   }
   g.lineWidth = 1.8;
   g.beginPath(); g.arc(64, 42, 5, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+}
+
+function drawShoes(g, shoe) {
+  const id = shoe ? shoe.id : '';
+  for (const x of [55, 73]) {
+    if (id === 'saapad') {
+      g.fillStyle = '#6d4c41';
+      g.fillRect(x - 6, 110, 12, 10);
+      blob(g, x, 121, 9, 4, '#5d4037');
+    } else if (id === 'tossud') {
+      blob(g, x, 121, 9, 4, '#ffffff');
+      g.fillStyle = '#e53935';
+      g.fillRect(x - 5, 120, 10, 2);
+    } else if (id === 'helkivad') {
+      blob(g, x, 121, 9, 4, '#ff4fa0');
+      blob(g, x - 4, 122, 1.6, 1.6, '#4fd2ff');
+      blob(g, x, 122.5, 1.6, 1.6, '#ffd23b');
+      blob(g, x + 4, 122, 1.6, 1.6, '#5dff6e');
+    } else {
+      blob(g, x, 121, 9, 4, '#1b1b1b');
+    }
+  }
+}
+
+function drawTop(g, top) {
+  const id = top ? top.id : '';
+  if (id === 'triibuline') {
+    g.fillStyle = 'rgba(255,255,255,0.6)';
+    for (let y = 62; y < 96; y += 8) g.fillRect(47, y, 34, 3);
+  } else if (id === 'tahesark') {
+    const pts = [];
+    for (let k = 0; k < 10; k++) {
+      const r = k % 2 ? 4.5 : 11;
+      const a = -Math.PI / 2 + k * Math.PI / 5;
+      pts.push(64 + r * Math.cos(a), 77 + r * Math.sin(a));
+    }
+    poly(g, pts, '#ffd23b');
+  } else if (id === 'pusa') {
+    // Hood around the neck, a front pocket and two strings.
+    poly(g, [46, 56, 82, 56, 76, 66, 52, 66], 'rgba(0,0,0,0.25)');
+    g.fillStyle = 'rgba(0,0,0,0.18)';
+    g.fillRect(52, 82, 24, 11);
+    g.fillStyle = '#ffffff';
+    g.fillRect(58, 64, 2, 10);
+    g.fillRect(68, 64, 2, 10);
+  } else {
+    g.fillStyle = 'rgba(255,255,255,0.25)';
+    g.fillRect(45, 74, 39, 5);
+  }
 }
 
 function drawRobot(g, shirt, hat) {
@@ -413,7 +483,7 @@ function humanSprite(look) {
 function cleanLook(l) {
   const o = l && typeof l === 'object' ? l : {};
   const idx = (v, n) => (Number.isInteger(v) && v >= 0 && v < n ? v : 0);
-  const w = Array.isArray(o.w) ? o.w.filter((id) => SHOP.some((s) => s.id === id)).slice(0, 4) : [];
+  const w = Array.isArray(o.w) ? o.w.filter((id) => SHOP.some((s) => s.id === id)).slice(0, 8) : [];
   return { s: idx(o.s, SHIRTS.length), k: idx(o.k, SKINS.length), b: idx(o.b, BODIES.length), w };
 }
 const STORE = 'ahvihotell-mina';

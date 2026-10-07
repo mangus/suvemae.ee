@@ -1741,6 +1741,57 @@ function drawMini() {
   mctx.stroke();
 }
 
+// ---------- The 3D picture, painted pixel by pixel ----------
+// Each frame is painted into one buffer in plain JavaScript and shown with a single putImageData.
+// Some phone browsers flickered or showed see-through walls with hundreds of thin drawImage strips
+// per frame; one finished picture looks the same in every browser.
+let frameImg = null;
+let frameBuf = null;
+let vignette = null; // how strongly the dark edge covers each pixel
+
+function newFrame() {
+  if (frameImg && frameImg.width === W && frameImg.height === H) return;
+  frameImg = ctx.createImageData(W, H);
+  frameBuf = new Uint32Array(frameImg.data.buffer);
+  vignette = new Float32Array(W * H);
+  const r0 = H * 0.25;
+  const r1 = Math.max(W, H) * 0.75;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) vignette[y * W + x] = 0.9 * clamp((Math.hypot(x + 0.5 - W / 2, y + 0.5 - H / 2) - r0) / (r1 - r0), 0, 1);
+  }
+}
+
+const rgb = (r, g, b) => (0xff000000 | (b << 16) | (g << 8) | r) >>> 0;
+
+// The pixels of a picture drawn in code, read once and kept.
+const pixelCache = new WeakMap();
+function pixelsOf(c) {
+  let px = pixelCache.get(c);
+  if (!px) {
+    px = new Uint32Array(c.getContext('2d').getImageData(0, 0, c.width, c.height).data.buffer);
+    pixelCache.set(c, px);
+  }
+  return px;
+}
+
+// Paints column tx of a square picture (size pixels a side) into screen column x, stretched over h rows from row top.
+// alpha fades it; add brightens what is already there, like light, instead of covering it.
+function paintColumn(px, size, tx, x, top, h, alpha, add) {
+  const y0 = Math.max(0, Math.ceil(top - 0.5));
+  const y1 = Math.min(H, Math.ceil(top + h - 0.5));
+  for (let y = y0, o = y0 * W + x; y < y1; y++, o += W) {
+    const ty = ((y + 0.5 - top) * size / h) | 0;
+    const c = px[(ty < size ? ty : size - 1) * size + tx];
+    const k = ((c >>> 24) / 255) * alpha;
+    if (k <= 0) continue;
+    if (k >= 1 && !add) { frameBuf[o] = c; continue; }
+    const d = frameBuf[o];
+    const j = add ? 1 : 1 - k;
+    frameBuf[o] = rgb(Math.min(255, (d & 255) * j + (c & 255) * k), Math.min(255, ((d >> 8) & 255) * j + ((c >> 8) & 255) * k),
+      Math.min(255, ((d >> 16) & 255) * j + ((c >> 16) & 255) * k));
+  }
+}
+
 // flip mirrors the picture, so a monkey seen from the side can face left or right.
 function drawSprite(lv, size, wx, wy, scale, lift, view, flip) {
   const sx = wx - view.x;
@@ -1753,14 +1804,14 @@ function drawSprite(lv, size, wx, wy, scale, lift, view, flip) {
   const sz = unit * scale;
   const bottom = view.horizon + unit / 2 - lift * unit;
   const left = screenX - sz / 2;
-  const img = lv[Math.round(clamp(view.light(depth) + lampAt(wx, wy), 0, 1) * (LEVELS - 1))];
+  const px = pixelsOf(lv[Math.round(clamp(view.light(depth) + lampAt(wx, wy), 0, 1) * (LEVELS - 1))]);
   const x0 = Math.max(0, Math.floor(left));
   const x1 = Math.min(W - 1, Math.floor(left + sz));
   for (let x = x0; x <= x1; x++) {
     if (depth >= zbuf[x]) continue;
     let tx = clamp(Math.floor(((x - left) / sz) * size), 0, size - 1);
     if (flip) tx = size - 1 - tx;
-    ctx.drawImage(img, tx, 0, 1, size, x, bottom - sz, 1, sz);
+    paintColumn(px, size, tx, x, bottom - sz, sz, 1, false);
   }
 }
 
@@ -1794,15 +1845,12 @@ function drawGlow(img, size, wx, wy, scale, lift, view, alpha, add) {
   const left = screenX - sz / 2;
   const x0 = Math.max(0, Math.floor(left));
   const x1 = Math.min(W - 1, Math.floor(left + sz));
-  ctx.globalAlpha = Math.min(1, alpha);
-  if (add) ctx.globalCompositeOperation = 'lighter';
+  const px = pixelsOf(img);
   for (let x = x0; x <= x1; x++) {
     if (depth >= zbuf[x]) continue;
     const tx = clamp(Math.floor(((x - left) / sz) * size), 0, size - 1);
-    ctx.drawImage(img, tx, 0, 1, size, x, bottom - sz, 1, sz);
+    paintColumn(px, size, tx, x, bottom - sz, sz, Math.min(1, alpha), add);
   }
-  ctx.globalAlpha = 1;
-  ctx.globalCompositeOperation = 'source-over';
 }
 
 // ---------- Floor: a red hotel runner with a gold border along the walls ----------
@@ -1839,8 +1887,6 @@ for (let mask = 0; mask < 16; mask++) {
 }
 let floorMap = null;
 let floorMask = null;
-let floorImg = null;
-let floorBuf = null;
 
 function drawFloor(cam, dirX, dirY, planeX, planeY, horizon, light) {
   if (floorMap !== map) {
@@ -1850,11 +1896,7 @@ function drawFloor(cam, dirX, dirY, planeX, planeY, horizon, light) {
       floorMask[y * MW + x] = wall(x - 1, y) | (wall(x + 1, y) << 1) | (wall(x, y - 1) << 2) | (wall(x, y + 1) << 3);
     }
   }
-  if (!floorImg || floorImg.width !== W || floorImg.height !== H) {
-    floorImg = ctx.createImageData(W, H);
-    floorBuf = new Uint32Array(floorImg.data.buffer);
-  }
-  const y0 = Math.floor(horizon) + 1;
+  const y0 = Math.max(0, Math.floor(horizon) + 1);
   for (let y = y0; y < H; y++) {
     const dist = K / (2 * (y + 0.5 - horizon));
     const lev = Math.round(clamp(light(dist) * 0.85 + 0.05, 0, 1) * (FLOOR_LV - 1));
@@ -1867,10 +1909,9 @@ function drawFloor(cam, dirX, dirY, planeX, planeY, horizon, light) {
       const cx = Math.floor(wx);
       const cy = Math.floor(wy);
       const m = cx >= 0 && cy >= 0 && cx < MW && cy < MH ? floorMask[cy * MW + cx] : 15;
-      floorBuf[o + x] = floorTiles[m][lev][((((wy - cy) * FT) | 0) * FT) + (((wx - cx) * FT) | 0)];
+      frameBuf[o + x] = floorTiles[m][lev][((((wy - cy) * FT) | 0) * FT) + (((wx - cx) * FT) | 0)];
     }
   }
-  ctx.putImageData(floorImg, 0, 0, 0, y0, W, H - y0);
 }
 
 // Draws the hotel through the eyes of cam: me, or the friend I am watching.
@@ -1892,22 +1933,25 @@ function wallHit(ox, oy, rdx, rdy, bx, by) {
   return enter;
 }
 
-function render(cam) {
+// dim darkens the whole picture, from 0 (not at all) to 1 (black).
+function render(cam, dim = 0) {
   const dirX = Math.cos(cam.a);
   const dirY = Math.sin(cam.a);
   const planeX = -dirY * FOV;
   const planeY = dirX * FOV;
   // cam.p looks up (+) or down (-) by moving the horizon.
-  const horizon = H / 2 + (cam.p || 0) * H * 0.4 + Math.sin(cam.walk) * 2.5;
+  const horizon = H / 2 + (cam.p || 0) * H * 0.4 + Math.sin(cam.walk || 0) * 2.5;
   const light = (d) => clamp(1.2 - d / 5.5, 0, 1) * flick;
   // Some old bulbs keep flickering on their own.
   for (const l of lamps) l.f = flick * (l.bad && Math.sin(time * 17 + l.ph) * Math.sin(time * 5.3 + l.ph) > 0.35 ? 0.15 : 1);
 
-  const g = ctx.createLinearGradient(0, 0, 0, horizon);
-  g.addColorStop(0, '#161528');
-  g.addColorStop(1, '#0e1020');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, horizon);
+  newFrame();
+  // The ceiling fades from dark violet at the top to dark blue at the horizon.
+  const ceiling = clamp(Math.floor(horizon) + 1, 0, H);
+  for (let y = 0; y < ceiling; y++) {
+    const t = clamp((y + 0.5) / horizon, 0, 1);
+    frameBuf.fill(rgb(22 - 8 * t, 21 - 5 * t, 40 - 8 * t), y * W, (y + 1) * W);
+  }
   drawFloor(cam, dirX, dirY, planeX, planeY, horizon, light);
 
   for (let x = 0; x < W; x++) {
@@ -1954,13 +1998,25 @@ function render(cam) {
     if ((side === 0 && rdx > 0) || (side === 1 && rdy < 0)) tx = TEX - tx - 1;
     const lineH = K / perp;
     const top = horizon - lineH / 2;
-    ctx.drawImage(texFor(hx, hy), tx, 0, 1, TEX, x, top, 1, lineH);
     // The open tile in front of the wall decides which lamps light it.
     const front = Math.floor(py - rdy * 0.02) * MW + Math.floor(px - rdx * 0.02);
     const lit = lampAt(cam.x + perp * rdx, cam.y + perp * rdy, front);
     const shade = 1 - clamp(light(perp) + lit, 0, 1) * (side ? 0.72 : 1);
-    if (shade > 0.02) { ctx.fillStyle = `rgba(14,16,30,${shade.toFixed(2)})`; ctx.fillRect(x, top, 1, lineH); }
-    if (lit > 0.03) { ctx.fillStyle = `rgba(255,160,70,${(lit * 0.2).toFixed(2)})`; ctx.fillRect(x, top, 1, lineH); }
+    // The wallpaper fades into the blue darkness and turns warm near a lamp.
+    const dark = shade > 0.02 ? shade : 0;
+    const warm = lit > 0.03 ? lit * 0.2 : 0;
+    const m = (1 - dark) * (1 - warm);
+    const ar = 14 * dark * (1 - warm) + 255 * warm;
+    const ag = 16 * dark * (1 - warm) + 160 * warm;
+    const ab = 30 * dark * (1 - warm) + 70 * warm;
+    const tex = pixelsOf(texFor(hx, hy));
+    const y0 = Math.max(0, Math.ceil(top - 0.5));
+    const y1 = Math.min(H, Math.ceil(top + lineH - 0.5));
+    for (let y = y0, o = y0 * W + x; y < y1; y++, o += W) {
+      const ty = ((y + 0.5 - top) * TEX / lineH) | 0;
+      const c = tex[(ty < TEX ? ty : TEX - 1) * TEX + tx];
+      frameBuf[o] = rgb((c & 255) * m + ar, ((c >> 8) & 255) * m + ag, ((c >> 16) & 255) * m + ab);
+    }
     zbuf[x] = perp;
   }
 
@@ -1989,11 +2045,17 @@ function render(cam) {
     else drawSprite(gemSprites[e.color][Math.floor((time * 1.5 + e.phase) * GEM_TURNS / (Math.PI / 4)) % GEM_TURNS], 64, e.x, e.y, 0.3, 0.2 + Math.sin(time * 3 + e.phase) * 0.05, view);
   }
 
-  const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.25, W / 2, H / 2, Math.max(W, H) * 0.75);
-  vg.addColorStop(0, 'rgba(0,0,0,0)');
-  vg.addColorStop(1, `rgba(${Math.round(140 * danger)},0,0,0.9)`);
-  ctx.fillStyle = vg;
-  ctx.fillRect(0, 0, W, H);
+  // Dark edges that turn red when a monkey is near.
+  const keep = 1 - dim;
+  const red = (Math.round(140 * danger) / 0.9) * keep;
+  for (let i = 0; i < frameBuf.length; i++) {
+    const v = vignette[i];
+    if (v === 0 && keep === 1) continue;
+    const p = frameBuf[i];
+    const j = (1 - v) * keep;
+    frameBuf[i] = rgb((p & 255) * j + red * v * v, ((p >> 8) & 255) * j, ((p >> 16) & 255) * j);
+  }
+  ctx.putImageData(frameImg, 0, 0);
 
   const showMini = power > 0 && !dead;
   if (mini.hidden === showMini) mini.hidden = !showMini;
@@ -2106,9 +2168,7 @@ function drawScare(t) {
   }
   // C: breathing behind me, then the view turns around by itself.
   const turn = clamp((t - 1) / 0.5, 0, 1);
-  render({ ...player, a: scareA0 + (Math.PI * (1 - Math.cos(turn * Math.PI))) / 2 });
-  ctx.fillStyle = `rgba(0,0,0,${0.15 + turn * 0.25})`;
-  ctx.fillRect(0, 0, W, H);
+  render({ ...player, a: scareA0 + (Math.PI * (1 - Math.cos(turn * Math.PI))) / 2 }, 0.15 + turn * 0.25);
 }
 
 function drawOver(dt) {

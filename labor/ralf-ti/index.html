@@ -6,7 +6,7 @@
 <title>Ralf TI</title>
 <meta name="description" content="Ralf TI aitab Suvemäe õpilastel õppida lühikeste videote, mälukaartide ja lihtsa tekstiga.">
 <link rel="stylesheet" href="stiil.css">
-<script src="ralf.js" defer></script>
+<script type="module" src="ralf.js"></script>
 </head>
 <body>
 <a class="tagasi" href="../">← labor</a>
@@ -30,21 +30,36 @@
   </svg>
   <div>
     <h1>Ralf TI</h1>
-    <p id="jutt" class="mull">Tere! Mina olen Ralf. Aitan sul õppida. Vali teema!</p>
+    <p id="jutt" class="mull" aria-live="polite">Tere! Mina olen Ralf. Laen tunde…</p>
   </div>
 </header>
 
 <section>
-  <h2>1. Mida tahad õppida?</h2>
+  <h2>🔎 Küsi Ralfilt</h2>
   <form id="kusi" class="kusi">
-    <input id="kysimus" maxlength="60" placeholder="Kirjuta teema, nt planeedid" aria-label="Teema">
+    <input id="kysimus" maxlength="60" placeholder="Kirjuta teema, nt murrud" aria-label="Teema">
     <button type="submit">Küsi Ralfilt</button>
   </form>
+  <div id="leiud" class="nupud"></div>
+</section>
+
+<section>
+  <h2>1. Vali aine</h2>
+  <div id="ained" class="nupud"></div>
+</section>
+
+<section id="klassi-osa" hidden>
+  <h2>2. Vali klass</h2>
+  <div id="klassid" class="nupud"></div>
+</section>
+
+<section id="teema-osa" hidden>
+  <h2>3. Vali teema</h2>
   <div id="teemad" class="nupud"></div>
 </section>
 
 <section id="viisid" hidden>
-  <h2>2. Kuidas tahad õppida?</h2>
+  <h2>4. Kuidas tahad õppida?</h2>
   <div class="nupud">
     <button type="button" data-viis="video">🎬 Lühike video</button>
     <button type="button" data-viis="kaardid">🃏 Mälukaardid</button>

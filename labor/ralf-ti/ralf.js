@@ -1,85 +1,17 @@
-// Ralf TI: a friendly study helper. All lessons are written here, no outside requests.
+// Ralf TI: a friendly study helper. All lessons live in the ained/ folder, no outside requests.
+// Navigation: subject -> grade -> topic -> learning mode (video, flashcards, easy text).
 
-const TEEMAD = [
-  {
-    nimi: 'Päikesesüsteem',
-    emoji: '🪐',
-    sonad: ['päike', 'paike', 'planeet', 'kosmos', 'maa', 'kuu', 'jupiter', 'tähed', 'tahed'],
-    video: [
-      ['☀️', 'Päike on täht. See on suur ja kuum gaasipall.'],
-      ['🪐', 'Päikese ümber tiirleb kaheksa planeeti.'],
-      ['🌍', 'Maa on Päikesest kolmas planeet.'],
-      ['📅', 'Ühe tiiru ümber Päikese teeb Maa ühe aastaga.'],
-      ['🌕', 'Kuu tiirleb ümber Maa ja peegeldab Päikese valgust.']
-    ],
-    kaardid: [
-      ['Mis on Päike?', 'Täht, suur ja kuum gaasipall.'],
-      ['Mitu planeeti tiirleb ümber Päikese?', 'Kaheksa.'],
-      ['Mis on kõige suurem planeet?', 'Jupiter.'],
-      ['Mitmes planeet on Maa?', 'Kolmas.'],
-      ['Miks Kuu öösel helendab?', 'Ta peegeldab Päikese valgust.']
-    ],
-    tekst: [
-      'Päike on täht. See on väga suur ja kuum gaasipall. Päike annab meile valgust ja soojust.',
-      'Päikese ümber tiirleb kaheksa planeeti. Päikesele kõige lähemal on Merkuur. Kõige suurem on Jupiter.',
-      'Maa on Päikesest kolmas planeet. Ühe tiiru ümber Päikese teeb Maa ühe aastaga.',
-      'Kuu tiirleb ümber Maa. Kuu ise ei helenda. Ta peegeldab Päikese valgust.'
-    ]
-  },
-  {
-    nimi: 'Vee ringkäik',
-    emoji: '💧',
-    sonad: ['vesi', 'vee', 'vihm', 'pilv', 'aur', 'meri', 'lumi', 'ringkäik', 'ringkaik'],
-    video: [
-      ['☀️', 'Päike soojendab vett meres ja järvedes.'],
-      ['♨️', 'Vesi aurustub ja tõuseb auruna õhku.'],
-      ['☁️', 'Üleval on külm. Aurust saavad pisikesed tilgad ja pilved.'],
-      ['🌧️', 'Kui tilgad lähevad raskeks, sajab vihma või lund.'],
-      ['🏞️', 'Jõed viivad vee tagasi merre. Ring algab uuesti!']
-    ],
-    kaardid: [
-      ['Mis soojendab vett meres?', 'Päike.'],
-      ['Mis juhtub soojenenud veega?', 'See aurustub ja tõuseb õhku.'],
-      ['Millest tekivad pilved?', 'Pisikestest veetilkadest.'],
-      ['Millal sajab vihma?', 'Kui pilve tilgad lähevad raskeks.'],
-      ['Kuidas jõuab vesi tagasi merre?', 'Jõgede kaudu.']
-    ],
-    tekst: [
-      'Päike soojendab vett meres, järvedes ja jõgedes. Soe vesi aurustub. Aur tõuseb õhku.',
-      'Üleval on õhk külm. Aur jahtub ja muutub pisikesteks tilkadeks. Tilkadest saavad pilved.',
-      'Kui tilgad lähevad suureks ja raskeks, sajab vihma. Talvel sajab lund.',
-      'Vesi voolab jõgedesse. Jõed viivad vee tagasi merre. Siis algab ringkäik uuesti.'
-    ]
-  },
-  {
-    nimi: 'Taimed',
-    emoji: '🌱',
-    sonad: ['taim', 'lill', 'puu', 'leht', 'juur', 'fotosüntees', 'fotosuntees', 'hapnik'],
-    video: [
-      ['🌱', 'Taim vajab kasvamiseks valgust, vett ja õhku.'],
-      ['🥕', 'Juured imevad mullast vett.'],
-      ['🌿', 'Vars viib vee üles lehtedeni.'],
-      ['🍃', 'Lehed teevad päikesevalguse abil taimele toitu.'],
-      ['💨', 'Samal ajal annab taim õhku hapnikku, mida me hingame.']
-    ],
-    kaardid: [
-      ['Mida vajab taim kasvamiseks?', 'Valgust, vett ja õhku.'],
-      ['Mida teevad juured?', 'Imevad mullast vett.'],
-      ['Mida teeb vars?', 'Viib vee lehtedeni.'],
-      ['Kus teeb taim endale toitu?', 'Lehtedes.'],
-      ['Mida annab taim õhku?', 'Hapnikku.']
-    ],
-    tekst: [
-      'Taim vajab kasvamiseks valgust, vett ja õhku.',
-      'Juured on mulla sees. Nad imevad mullast vett. Vars viib vee üles lehtedeni.',
-      'Lehtedes teeb taim päikesevalguse abil endale toitu. Seda nimetatakse fotosünteesiks.',
-      'Samal ajal annab taim õhku hapnikku. Meie hingame seda hapnikku sisse.'
-    ]
-  }
+// Subject files in ained/, in the order their buttons are shown.
+const AINE_FAILID = [
+  'eesti-keel', 'kirjandus', 'matemaatika', 'inglise-keel', 'loodusopetus',
+  'bioloogia', 'geograafia', 'fuusika', 'keemia', 'inimeseopetus',
+  'ajalugu', 'uhiskonnaopetus', 'kunst', 'muusika'
 ];
 
 const $ = (id) => document.getElementById(id);
 const ralf = $('ralf');
+let ained = [];
+let aine = null;
 let teema = null;
 let raagibTaimer = 0;
 
@@ -91,37 +23,128 @@ function utle(tekst) {
   raagibTaimer = setTimeout(() => ralf.classList.remove('raagib'), 1200);
 }
 
-// Topic buttons
-const teemaNupud = TEEMAD.map((t) => {
-  const nupp = document.createElement('button');
-  nupp.type = 'button';
-  nupp.textContent = t.emoji + ' ' + t.nimi;
-  nupp.addEventListener('click', () => valiTeema(t));
-  $('teemad').append(nupp);
-  return nupp;
-});
+function nupp(tekst, kuhu, tegevus) {
+  const n = document.createElement('button');
+  n.type = 'button';
+  n.textContent = tekst;
+  n.addEventListener('click', tegevus);
+  kuhu.append(n);
+  return n;
+}
+
+function margi(kast, valitud) {
+  [...kast.children].forEach((n) => n.classList.toggle('valitud', n === valitud));
+}
+
+const klassideJarjekord = (a) => Object.keys(a.klassid).sort((x, y) => x - y);
+
+// Load every subject; one broken file must not break the others.
+async function laeAined() {
+  const tulemused = await Promise.allSettled(
+    AINE_FAILID.map((f) => import('./ained/' + f + '.js'))
+  );
+  ained = tulemused.filter((t) => t.status === 'fulfilled').map((t) => t.value.default);
+  ained.forEach((a) => {
+    a.nupp = nupp(a.emoji + ' ' + a.nimi, $('ained'), () => valiAine(a));
+  });
+  utle('Tere! Mina olen Ralf. Aitan sul õppida. Vali aine või kirjuta, mida tahad õppida!');
+}
+
+function valiAine(a) {
+  aine = a;
+  margi($('ained'), a.nupp);
+  const kast = $('klassid');
+  kast.replaceChildren();
+  klassideJarjekord(a).forEach((k) => {
+    nupp(k + '. klass', kast, (e) => valiKlass(k, e.currentTarget));
+  });
+  $('klassi-osa').hidden = false;
+  $('teema-osa').hidden = true;
+  $('viisid').hidden = true;
+  peidaOsad();
+  utle(a.emoji + ' ' + a.nimi + '! Mis klassis sa käid?');
+}
+
+function valiKlass(k, klassiNupp) {
+  margi($('klassid'), klassiNupp);
+  const kast = $('teemad');
+  kast.replaceChildren();
+  aine.klassid[k].forEach((t) => {
+    t.nupp = nupp(t.emoji + ' ' + t.nimi, kast, () => valiTeema(t));
+  });
+  $('teema-osa').hidden = false;
+  $('viisid').hidden = true;
+  peidaOsad();
+  utle(k + '. klass. Vali teema!');
+}
 
 function valiTeema(t) {
   teema = t;
-  TEEMAD.forEach((x, i) => teemaNupud[i].classList.toggle('valitud', x === t));
+  margi($('teemad'), t.nupp);
   peidaOsad();
   $('viisid').hidden = false;
   utle('Super! Õpime teemat "' + t.nimi + '". Kuidas tahad õppida?');
+  $('viisid').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// "Ask Ralf": find a topic by keywords
+// Jump straight to a topic found by search.
+function avaTeema(leid) {
+  valiAine(leid.aine);
+  const i = klassideJarjekord(leid.aine).indexOf(leid.klass);
+  valiKlass(leid.klass, $('klassid').children[i]);
+  valiTeema(leid.teema);
+}
+
+// --- "Ask Ralf": search all topics by keywords ---
+const lihtne = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const KODUTOO = /kodutoo|kirjuta mulle|tee minu|tee mu |lahenda mulle|essee/;
+
+function otsi(paring) {
+  const sonad = lihtne(paring).split(/[^a-z0-9]+/).filter((s) => s.length >= 3);
+  const leiud = [];
+  ained.forEach((a) => {
+    Object.entries(a.klassid).forEach(([k, teemad]) => {
+      teemad.forEach((t) => {
+        const votmed = t.sonad.map(lihtne)
+          .concat(lihtne(t.nimi).split(/[^a-z0-9]+/).filter((s) => s.length >= 4));
+        let punktid = 0;
+        sonad.forEach((s) => {
+          if (votmed.some((v) => s.startsWith(v) || (s.length >= 4 && v.startsWith(s)))) punktid++;
+        });
+        if (punktid) leiud.push({ aine: a, klass: k, teema: t, punktid });
+      });
+    });
+  });
+  return leiud.sort((x, y) => y.punktid - x.punktid).slice(0, 8);
+}
+
 $('kusi').addEventListener('submit', (e) => {
   e.preventDefault();
-  const s = $('kysimus').value.toLowerCase();
-  if (!s.trim()) {
-    utle('Kirjuta enne midagi! Näiteks "vihm" või "planeedid".');
+  const paring = $('kysimus').value;
+  const kast = $('leiud');
+  kast.replaceChildren();
+  if (!paring.trim()) {
+    utle('Kirjuta enne midagi! Näiteks "murrud" või "planeedid".');
     return;
   }
-  const leitud = TEEMAD.find((t) => t.sonad.some((sona) => s.includes(sona)));
-  if (leitud) {
-    valiTeema(leitud);
+  const leiud = otsi(paring);
+  const kodutoo = KODUTOO.test(lihtne(paring));
+  if (leiud.length === 1 && !kodutoo) {
+    avaTeema(leiud[0]);
+    return;
+  }
+  leiud.forEach((l) => {
+    nupp(l.teema.emoji + ' ' + l.teema.nimi + ' (' + l.aine.nimi + ', ' + l.klass + '. kl)', kast, () => {
+      kast.replaceChildren();
+      avaTeema(l);
+    });
+  });
+  if (kodutoo) {
+    utle('Kodutööd ma sinu eest ei tee, aga aitan sul teema selgeks saada! Siis saad ise hakkama.');
+  } else if (leiud.length) {
+    utle('Leidsin mitu teemat. Vali, mida mõtlesid!');
   } else {
-    utle('Hmm, seda ma veel ei oska. Vali mõni teema nuppude alt!');
+    utle('Hmm, seda ma veel ei oska. Vali aine nuppude alt!');
   }
 });
 
@@ -134,11 +157,11 @@ function peidaOsad() {
   document.querySelectorAll('[data-viis]').forEach((n) => n.classList.remove('valitud'));
 }
 
-document.querySelectorAll('[data-viis]').forEach((nupp) => {
-  nupp.addEventListener('click', () => {
-    const viis = nupp.dataset.viis;
+document.querySelectorAll('[data-viis]').forEach((n) => {
+  n.addEventListener('click', () => {
+    const viis = n.dataset.viis;
     peidaOsad();
-    nupp.classList.add('valitud');
+    n.classList.add('valitud');
     $(viis).hidden = false;
     if (viis === 'video') alustaVideo();
     if (viis === 'kaardid') alustaKaardid();
@@ -264,3 +287,5 @@ function naitaTeksti() {
   });
   utle('Loe rahulikult. Lühikesed laused on kergem meelde jätta!');
 }
+
+laeAined();

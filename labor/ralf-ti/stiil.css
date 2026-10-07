@@ -201,3 +201,27 @@ button.valitud {
   .pea { flex-direction: column; text-align: center; }
   .ralf { width: 90px; }
 }
+
+/* Steps: subject, grade, topic */
+[hidden] {
+  display: none !important;
+}
+
+#ained button,
+#teemad button,
+#leiud button {
+  border-radius: 16px;
+}
+
+#klassid button {
+  background: #5ec8f2;
+  color: #2b2340;
+}
+
+#klassid button.valitud {
+  background: #ffc933;
+}
+
+#kaart-nr {
+  font-weight: 800;
+}

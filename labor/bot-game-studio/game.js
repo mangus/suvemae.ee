@@ -1,9 +1,9 @@
-// Bot Game Studio: pick ideas for a robot helper, squash bugs, publish, reach 500 players.
+// Bot Game Studio: pick ideas for a robot helper, squash bugs, publish, reach 10000 players.
 import { lab } from '../lab.js';
 
 const studio = lab();
 
-const GOAL = 500;
+const GOAL = 10000;
 const BUILD_MS = 3500;
 const PUBLISH_MS = 1500;
 const START_ENERGY = 10;
@@ -11,7 +11,8 @@ const TANK_GROWTH = 3; // more credit space for every published idea
 const ENERGY_EVERY = 1.5; // seconds per credit
 const BUG_CHANCE = 0.4;
 const MAX_BUGS = 6;
-const BEST_KEY = 'bot-game-studio-best';
+const BEST_KEY = 'bot-game-studio-best-10000';
+const BOARD = 'goal10000'; // own table, so old 500-player times don't mix in
 
 const IDEAS = [
   { id: 'sky', icon: '🎨', name: 'Paint a sky', fun: 5, cost: 1, needs: [], code: 'sky.color = "light blue";' },
@@ -37,6 +38,24 @@ const IDEAS = [
   { id: 'levels', icon: '🗺️', name: 'Add more levels', fun: 20, cost: 4, needs: ['boss'], code: 'levels.push(level2, level3);' },
   { id: 'castle', icon: '🏰', name: 'Build a castle', fun: 25, cost: 5, needs: ['levels'], code: 'level3.add(new Castle());' },
   { id: 'friends', icon: '🤝', name: 'Play with friends', fun: 30, cost: 5, needs: ['scores', 'castle'], code: 'room.join("friends");' },
+  { id: 'moon', icon: '🌙', name: 'Add a moon', fun: 10, cost: 2, needs: ['sun'], code: 'sky.add(new Moon());' },
+  { id: 'snow', icon: '❄️', name: 'Make it snow', fun: 15, cost: 3, needs: ['clouds'], code: 'weather.snow = true;' },
+  { id: 'fish', icon: '🐟', name: 'Add a fish pond', fun: 15, cost: 3, needs: ['trees'], code: 'ground.dig("pond").add(fish);' },
+  { id: 'dance', icon: '💃', name: 'Make the hero dance', fun: 20, cost: 3, needs: ['music', 'hero'], code: 'hero.dance(music.beat);' },
+  { id: 'car', icon: '🚗', name: 'Add a car', fun: 20, cost: 4, needs: ['house'], code: 'road.drive(new Car("red"));' },
+  { id: 'storm', icon: '⛈️', name: 'Add a thunderstorm', fun: 20, cost: 4, needs: ['snow'], code: 'weather.thunder({ every: 5 });' },
+  { id: 'shield', icon: '🛡️', name: 'Give the hero a shield', fun: 20, cost: 4, needs: ['hearts'], code: 'hero.shield = 100;' },
+  { id: 'magic', icon: '🪄', name: 'Add a magic wand', fun: 25, cost: 4, needs: ['hat'], code: 'hero.cast("sparkle spell");' },
+  { id: 'treasure', icon: '💎', name: 'Hide treasure', fun: 25, cost: 4, needs: ['coins'], code: 'world.hide(new Gem("blue"));' },
+  { id: 'ufo', icon: '🛸', name: 'Add a flying saucer', fun: 25, cost: 5, needs: ['stars'], code: 'sky.add(new Saucer());' },
+  { id: 'dino', icon: '🦖', name: 'Add a friendly dino', fun: 30, cost: 5, needs: ['pet'], code: 'let dino = new Dino("friendly");' },
+  { id: 'store', icon: '🛍️', name: 'Add a game shop', fun: 30, cost: 5, needs: ['treasure'], code: 'shop.sell("hats", "skins");' },
+  { id: 'crown', icon: '👑', name: 'Crown for the winner', fun: 30, cost: 5, needs: ['scores', 'boss'], code: 'onWin(() => hero.wear("crown"));' },
+  { id: 'unicorn', icon: '🦄', name: 'Add a unicorn', fun: 40, cost: 6, needs: ['rainbow', 'dino'], code: 'let unicorn = new Unicorn();' },
+  { id: 'space', icon: '🪐', name: 'Add a space level', fun: 40, cost: 6, needs: ['levels', 'ufo'], code: 'levels.push(spaceLevel);' },
+  { id: 'languages', icon: '🌐', name: 'Many languages', fun: 40, cost: 6, needs: ['friends'], code: 'game.speak("et", "en", "fi");' },
+  { id: 'party', icon: '🥳', name: 'Party mode', fun: 60, cost: 8, needs: ['friends', 'fireworks', 'dance'], code: 'party.start({ confetti: true });' },
+  { id: 'park', icon: '🎡', name: 'Theme park level', fun: 80, cost: 10, needs: ['space', 'unicorn', 'party'], code: 'levels.push(themePark);' },
 ];
 
 // Shop upgrades: every level costs twice as much as the one before
@@ -343,7 +362,7 @@ function win(now) {
   $('best').textContent = best && secs >= best ? `Your best: ${best} s` : best ? 'New personal best! 🌟' : '';
   $('win').hidden = false;
   [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.2), i * 150));
-  say('WOW! 500 players love your game! 🎉');
+  say(`WOW! ${GOAL} players love your game! 🎉`);
   renderCards();
 }
 
@@ -355,7 +374,7 @@ async function showScores() {
     return li;
   };
   try {
-    const top = await studio.topScores(10, { order: 'asc' });
+    const top = await studio.topScores(10, { order: 'asc', board: BOARD });
     list.replaceChildren(...(top.length ? top.map((s) => row(`${s.name} · ${s.score} s`)) : [row('Nobody yet. Be the first!')]));
   } catch {
     list.replaceChildren(row('Could not load the table right now.'));
@@ -370,7 +389,7 @@ $('save').addEventListener('click', async () => {
   }
   $('save').disabled = true;
   try {
-    await studio.addScore(name, state.score);
+    await studio.addScore(name, state.score, BOARD);
     $('saved').textContent = 'Saved! 🏆';
     await showScores();
   } catch {
@@ -477,6 +496,14 @@ function draw(t, now) {
     }
   }
 
+  if (has('moon')) label('🌙', W * 0.9, H * 0.12, H * 0.1, 'center');
+  if (has('space')) label('🪐', W * 0.75, H * 0.1, H * 0.1, 'center');
+  if (has('storm')) label('⛈️', W * 0.45, H * 0.12, H * 0.1, 'center');
+  if (has('ufo')) label('🛸', W * 0.5 + Math.sin(t) * W * 0.3, H * 0.22, H * 0.1, 'center');
+  if (has('snow')) {
+    for (let i = 0; i < 8; i += 1) label('❄️', W * (0.06 + i * 0.12) + Math.sin(t + i) * 8, (t * 40 + i * 37) % H, H * 0.04, 'center');
+  }
+
   if (has('bird')) label('🐦', ((t * 50) % (W + 80)) - 40, H * 0.3 + Math.sin(t * 5) * 8, H * 0.08, 'center');
 
   const ground = H * 0.82;
@@ -495,6 +522,17 @@ function draw(t, now) {
     label('🌳', W * 0.06, ground - H * 0.09, H * 0.2, 'center');
     label('🌳', W * 0.42, ground - H * 0.07, H * 0.15, 'center');
   }
+
+  if (has('park')) {
+    label('🎡', W * 0.3, ground - H * 0.2, H * 0.3, 'center');
+    label('🎢', W * 0.12, ground - H * 0.12, H * 0.2, 'center');
+  }
+  if (has('fish')) label('🐟', W * 0.52 + Math.sin(t * 2) * 10, ground + H * 0.1, H * 0.06, 'center');
+  if (has('treasure')) label('💎', W * 0.7, ground + H * 0.08, H * 0.06, 'center');
+  if (has('car')) label('🚗', ((t * 60) % (W + 80)) - 40, ground + H * 0.12, H * 0.08, 'center');
+  if (has('store')) label('🛍️', W * 0.68, ground - H * 0.05, H * 0.09, 'center');
+  if (has('dino')) label('🦖', W * 0.4, ground - H * 0.08, H * 0.14, 'center');
+  if (has('unicorn')) label('🦄', W * 0.55 + Math.sin(t) * W * 0.05, ground - H * 0.08, H * 0.13, 'center');
 
   if (has('house')) label('🏠', W * 0.62, ground - H * 0.08, H * 0.17, 'center');
 
@@ -540,9 +578,13 @@ function draw(t, now) {
     const r = H * 0.07;
     const hop = (phase) => (has('jump') ? Math.abs(Math.sin(t * 3 + phase)) * H * 0.25 : 0);
     if (has('friends')) drawFace(W * 0.1, ground - r - hop(1), r, '#ff8fc7');
+    const heroX = W * 0.22 + (has('dance') ? Math.sin(t * 6) * r * 0.5 : 0);
     const heroY = ground - r - hop(0);
-    drawFace(W * 0.22, heroY, r, '#ffc933');
-    if (has('hat')) label('🎩', W * 0.22, heroY - r * 1.1, r * 1.2, 'center');
+    drawFace(heroX, heroY, r, '#ffc933');
+    if (has('hat')) label('🎩', heroX, heroY - r * 1.1, r * 1.2, 'center');
+    if (has('crown')) label('👑', heroX, heroY - r * (has('hat') ? 2.1 : 1.1), r, 'center');
+    if (has('magic')) label('🪄', heroX - r * 1.2, heroY, r, 'center');
+    if (has('shield')) label('🛡️', heroX + r * 1.2, heroY, r, 'center');
     if (has('pet')) label('🐶', W * 0.33, ground - r * 0.7 - hop(0.6) * 0.5, r * 1.4, 'center');
   }
 
@@ -551,6 +593,11 @@ function draw(t, now) {
       const y = H * 0.65 - ((t * 30 + i * 40) % (H * 0.5));
       label('♪', W * 0.3 + i * W * 0.06, y, H * 0.09, 'center', '#8c6cf2');
     }
+  }
+
+  if (has('languages')) label('🌐', W * 0.5, H * 0.93, H * 0.06, 'center');
+  if (has('party')) {
+    for (let i = 0; i < 10; i += 1) label(i % 2 ? '🎊' : '🎉', W * ((i * 0.11 + t * 0.05) % 1), H * ((i * 0.17 + t * 0.2) % 1), H * 0.05, 'center');
   }
 
   if (has('hearts')) label('❤️❤️❤️', 10, H * 0.93, H * 0.06);

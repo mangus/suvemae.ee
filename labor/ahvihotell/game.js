@@ -1342,6 +1342,12 @@ function chooseNext(m, field) {
   const opts = [];
   for (const [dx, dy] of DIRS) if (!wall(m.tx + dx, m.ty + dy)) opts.push([m.tx + dx, m.ty + dy]);
   if (!opts.length) return;
+  // Keep out of tiles where another monkey is or is heading, so monkeys never bump into each other.
+  // Only in a dead end with no free tile may a monkey share one.
+  const taken = (x, y) => monkeys.some((o) => o !== m &&
+    ((o.tx === x && o.ty === y) || (Math.floor(o.x) === x && Math.floor(o.y) === y)));
+  const free = opts.filter(([x, y]) => !taken(x, y));
+  if (free.length) opts.splice(0, opts.length, ...free);
   let next;
   if (here > 6 && Math.random() < m.wander) {
     const fwd = opts.filter(([x, y]) => x !== m.px || y !== m.py);

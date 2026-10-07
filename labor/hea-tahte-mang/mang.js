@@ -345,137 +345,161 @@
       }
     }
 
-    // Garden path through the middle
-    const tee = [[-10, 380], [120, 350], [240, 395], [360, 365], [480, 400], [600, 360], [730, 385]];
-    b.save();
-    b.strokeStyle = '#f2d58c';
-    b.lineWidth = 34;
-    b.lineCap = 'round';
-    smoothPath(b, tee, false);
-    b.stroke();
-    b.restore();
-    ink(b, tee.map(([x, y]) => [x, y - 17]), false, r, 1, 0.8);
-    ink(b, tee.map(([x, y]) => [x, y + 17]), false, r, 1, 0.8);
+    // House plan, laid out like the Suvemäe school plan
+    const PORAND = '#f6e7bd';
+    const tuba = (x, y, w, h, fill) => {
+      const p = flat(b, rectPts(x, y, w, h), fill, r, 1.5);
+      hatch(b, p, r, 7, 0.8, 0.3);
+      ink(b, p, true, r, 1.8, 0.8);
+      return p;
+    };
+    const nimi = (t, x, y, rot = 0) => label(b, t, x, y, rot, PUNANE, 16);
 
-    // Klass (top left): blackboard and desks
-    const klass = flat(b, rectPts(28, 40, 300, 255), '#f6dc95', r, 2);
-    hatch(b, klass, r, 7, 0.8, 0.35);
-    ink(b, klass, true, r, 1.8, 1);
-    const tahvel = flat(b, rectPts(70, 62, 210, 44, 3), '#2f3b36', r, 1);
+    // Corridor between the top and the bottom rooms
+    const koridor = flat(b, rectPts(196, 270, 508, 80), PORAND, r, 1);
+    stipple(b, koridor, r, 90, 0.5);
+
+    tuba(16, 78, 180, 626, '#c6e0e4');      // Spordisaal
+    tuba(206, 78, 166, 192, '#f4b49d');     // Kohtumistuba
+    tuba(382, 78, 158, 192, '#f6dc95');     // Lõpuklass
+    tuba(550, 78, 154, 192, '#d9e6b8');     // Õpetajate tuba
+    tuba(206, 350, 120, 354, '#f7cdbd');    // Lastetuba
+    tuba(336, 350, 210, 354, '#f6dc95');    // Suur tuba
+    tuba(556, 350, 148, 250, '#c6e0e4');    // Loov tuba
+    tuba(556, 610, 148, 94, '#ece3f2');     // WC
+
+    // Doorways: gaps in the walls
+    b.fillStyle = PORAND;
+    [[289, 265], [461, 265], [627, 265], [266, 345], [441, 345], [630, 345]].forEach(([x, y]) => {
+      b.fillRect(x - 17, y - 1, 34, 12);
+      ink(b, [[x - 17, y - 3], [x - 17, y + 13]], false, r, 1.6, 0.3);
+      ink(b, [[x + 17, y - 3], [x + 17, y + 13]], false, r, 1.6, 0.3);
+    });
+    b.fillStyle = PORAND;
+    b.fillRect(190, 292, 12, 38);
+    b.fillRect(612, 598, 36, 14);
+
+    // Spordisaal: court lines, balls and a hoop
+    ink(b, [[18, 390], [194, 392]], false, r, 1.2, 0.6);
+    ink(b, ellipsePts(106, 391, 46, 46, 18), true, r, 1.2, 0.8);
+    [[60, 190, PUNANE], [150, 560, SININE], [70, 470, SINEP]].forEach(([x, y, col]) => {
+      const p = flat(b, ellipsePts(x, y, 15, 15, 12), col, r, 0.8);
+      hatch(b, p, r, 3, 0.6, 0.5);
+      ink(b, p, true, r, 1.4, 0.4);
+      spiral(b, x, y, 8, 2, r, 0.9);
+    });
+    const korv = flat(b, rectPts(76, 664, 60, 8, 2), PUNANE, r, 0.5);
+    ink(b, korv, true, r, 1.4, 0.3);
+    for (let i = 0; i < 4; i++) ink(b, [[80 + i * 17, 664], [86 + i * 13, 640]], false, r, 0.8, 0.3);
+    nimi('Spordisaal', 106, 120, -0.05);
+
+    // Kohtumistuba: a round table with chairs
+    const kLaud = flat(b, ellipsePts(289, 185, 44, 28, 16), SINEP, r, 1.5);
+    hatch(b, kLaud, r, 4, 0.55, 0.5);
+    ink(b, kLaud, true, r, 1.6, 0.6);
+    spiral(b, 289, 185, 12, 2, r, 1);
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      const p = flat(b, ellipsePts(289 + Math.cos(a) * 64, 185 + Math.sin(a) * 44, 11, 9, 10), [PUNANE, SININE, VALGE][i % 3], r, 0.8);
+      ink(b, p, true, r, 1.2, 0.4);
+    }
+    nimi('Kohtumistuba', 289, 104, 0.03);
+
+    // Lõpuklass: blackboard and desks
+    const tahvel = flat(b, rectPts(402, 92, 118, 30, 3), '#2f3b36', r, 1);
     ink(b, tahvel, true, r, 1.6, 0.5);
     b.save();
-    b.strokeStyle = 'rgba(255,255,255,.8)';
-    b.lineWidth = 1.4;
-    smoothPath(b, [[90, 92], [98, 74], [108, 92], [116, 76], [126, 92]], false);
-    b.stroke();
-    b.font = KIRI.replace('20px', '15px');
+    b.font = KIRI.replace('20px', '13px');
     b.fillStyle = 'rgba(255,255,255,.85)';
-    b.fillText('2 + 3 = 5', 160, 90);
+    b.fillText('2 + 3 = 5', 430, 112);
     b.restore();
-    const lauaVarvid = [PUNANE, SININE, VALGE];
     for (let i = 0; i < 2; i++) {
-      for (let k = 0; k < 3; k++) {
-        const lauda = flat(b, rectPts(62 + k * 88, 140 + i * 72, 62, 34, 3), SINEP, r, 1);
+      for (let k = 0; k < 2; k++) {
+        const lauda = flat(b, rectPts(402 + k * 66, 138 + i * 48, 50, 26, 3), SINEP, r, 1);
         hatch(b, lauda, r, 3.5, 0.6, 0.5);
-        ink(b, lauda, true, r, 1.5, 0.5);
-        const raamat = flat(b, rectPts(80 + k * 88, 146 + i * 72, 22, 16, 2), lauaVarvid[(i + k) % 3], r, 0.6);
+        ink(b, lauda, true, r, 1.4, 0.5);
+        const raamat = flat(b, rectPts(416 + k * 66, 143 + i * 48, 18, 13, 2), [PUNANE, SININE][(i + k) % 2], r, 0.6);
         ink(b, raamat, true, r, 1, 0.3);
       }
     }
-    label(b, 'Klass', 280, 270, -0.06, PUNANE);
+    nimi('Lõpuklass', 461, 250, -0.04);
 
-    // Suvemäe ring (top right): a round little planet with cushions
-    const ring = flat(b, ellipsePts(545, 172, 132, 122, 22), '#f4b49d', r, 3);
-    hatch(b, ring, r, 5, 0.65, 0.45);
-    stipple(b, ring, r, 140, 0.7);
-    ink(b, ring, true, r, 1.8, 1.2);
-    const paike = flat(b, ellipsePts(545, 172, 26, 26, 14), SINEP, r, 1);
-    ink(b, paike, true, r, 1.5, 0.5);
-    spiral(b, 545, 172, 18, 2.5, r, 1.2);
-    const padjad = [PUNANE, SINEP, SININE, VALGE, ROHE, KORALL];
+    // Õpetajate tuba: table with cups and a plant
+    const oLaud = flat(b, rectPts(572, 130, 110, 48, 3), VALGE, r, 1);
+    hatch(b, oLaud, r, 4, 0.5, 0.4);
+    ink(b, oLaud, true, r, 1.5, 0.5);
+    [592, 627, 662].forEach((x, i) => {
+      const p = flat(b, rectPts(x - 7, 145, 14, 14, 2), [PUNANE, SINEP, SININE][i], r, 0.5);
+      ink(b, p, true, r, 1.1, 0.3);
+      ink(b, [[x, 141], [x - 3, 133], [x + 2, 126]], false, r, 0.9, 0.4);
+    });
+    curlPlant(b, 686, 248, 26, KORALL, r);
+    nimi('Õpetajate tuba', 627, 104, 0.03);
+
+    // Corridor: the Suvemäe name in the house colours, and two potted plants
+    const tahed = ['S', 'u', 'v', 'e', 'm', 'ä', 'e'];
+    const varvid = [PUNANE, SININE, KORALL, ROHE, PUNANE, SININE, KORALL];
+    tahed.forEach((t, i) => label(b, t, 380 + i * 24, 308 + Math.sin(i) * 5, (r() - 0.5) * 0.4, varvid[i], i === 0 ? 30 : 24));
+    spiral(b, 360, 318, 6, 1.5, r, 1);
+    spiral(b, 552, 318, 6, 1.5, r, 1);
+    curlPlant(b, 222, 340, 20, PUNANE, r);
+    curlPlant(b, 690, 340, 20, SINEP, r);
+
+    // Lastetuba: toy blocks and a kite
+    const klotsid = [PUNANE, SINEP, SININE, VALGE, ROHE, KORALL];
     for (let i = 0; i < 9; i++) {
-      const a = (i / 9) * Math.PI * 2;
-      const px = 545 + Math.cos(a) * 82;
-      const py = 172 + Math.sin(a) * 74;
-      const p = flat(b, ellipsePts(px, py, 14, 12, 10), padjad[i % 6], r, 1);
+      const x = 222 + (i % 3) * 28 + (i > 5 ? 14 : 0);
+      const y = 640 - Math.floor(i / 3) * 22;
+      const p = flat(b, rectPts(x, y, 26, 20, 2), klotsid[i % 6], r, 0.8);
+      hatch(b, p, r, 2.5, 0.6, 0.5);
+      ink(b, p, true, r, 1.2, 0.4);
+    }
+    const tuulelohe = flat(b, [[266, 430], [292, 462], [266, 510], [240, 462]], KORALL, r, 1.5);
+    hatch(b, tuulelohe, r, 3.5, 0.5, 0.5);
+    ink(b, tuulelohe, true, r, 1.5, 0.5);
+    ink(b, [[266, 432], [266, 508]], false, r, 0.9, 0.3);
+    ink(b, [[242, 462], [290, 462]], false, r, 0.9, 0.3);
+    ink(b, [[266, 510], [255, 532], [274, 550], [262, 570]], false, r, 1.2, 1);
+    spiral(b, 262, 578, 7, 1.6, r, 1);
+    nimi('Lastetuba', 266, 378, -0.04);
+
+    // Suur tuba: the Suvemäe circle with cushions
+    const ring = flat(b, ellipsePts(441, 535, 86, 80, 22), '#f4b49d', r, 3);
+    hatch(b, ring, r, 5, 0.65, 0.45);
+    stipple(b, ring, r, 100, 0.7);
+    ink(b, ring, true, r, 1.8, 1.2);
+    const paike = flat(b, ellipsePts(441, 535, 22, 22, 14), SINEP, r, 1);
+    ink(b, paike, true, r, 1.5, 0.5);
+    spiral(b, 441, 535, 15, 2.5, r, 1.2);
+    const padjad = [PUNANE, SINEP, SININE, VALGE, ROHE, KORALL];
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      const p = flat(b, ellipsePts(441 + Math.cos(a) * 58, 535 + Math.sin(a) * 52, 12, 10, 10), padjad[i % 6], r, 1);
       hatch(b, p, r, 3, 0.55, 0.5);
       ink(b, p, true, r, 1.4, 0.5);
     }
-    label(b, 'Suvemäe ring', 545, 312, 0.04, PUNANE);
+    nimi('Suur tuba', 441, 378, 0.03);
 
-    // Mänguala (bottom left): toy blocks and a kite
-    const mang = flat(b, rectPts(32, 430, 292, 255), '#c6e0e4', r, 2);
-    hatch(b, mang, r, 7, 0.8, 0.35);
-    ink(b, mang, true, r, 1.8, 1);
-    const klotsid = [PUNANE, SINEP, SININE, VALGE, ROHE, KORALL];
-    for (let i = 0; i < 9; i++) {
-      const x = 70 + (i % 3) * 30 + (i > 5 ? 15 : 0);
-      const y = 600 - Math.floor(i / 3) * 22;
-      const p = flat(b, rectPts(x, y, 28, 20, 2), klotsid[i % 6], r, 0.8);
-      hatch(b, p, r, 2.5, 0.6, 0.5);
-      ink(b, p, true, r, 1.2, 0.4);
-      dot(b, x + 8, y + 7, 2.5, 'rgba(255,250,240,.7)');
-      dot(b, x + 20, y + 7, 2.5, 'rgba(255,250,240,.7)');
-    }
-    const tuulelohe = flat(b, [[240, 470], [272, 505], [240, 560], [208, 505]], KORALL, r, 1.5);
-    hatch(b, tuulelohe, r, 3.5, 0.5, 0.5);
-    ink(b, tuulelohe, true, r, 1.5, 0.5);
-    ink(b, [[240, 472], [240, 558]], false, r, 0.9, 0.3);
-    ink(b, [[210, 505], [270, 505]], false, r, 0.9, 0.3);
-    ink(b, [[240, 560], [228, 585], [250, 605], [236, 628]], false, r, 1.2, 1);
-    dot(b, 229, 586, 4, PUNANE);
-    dot(b, 249, 606, 4, SININE);
-    spiral(b, 236, 636, 7, 1.6, r, 1);
-    label(b, 'Mänguala', 120, 462, -0.05, PUNANE);
+    // Loov tuba: an easel with a curly painting and a palette
+    ink(b, [[612, 520], [630, 410], [648, 520]], false, r, 1.6, 0.4);
+    const molbert = flat(b, rectPts(594, 420, 72, 62, 3), VALGE, r, 1);
+    ink(b, molbert, true, r, 1.5, 0.5);
+    dot(b, 614, 440, 7, PUNANE);
+    dot(b, 640, 455, 9, SINEP);
+    dot(b, 620, 466, 5, SININE);
+    spiral(b, 640, 455, 7, 2, r, 0.9);
+    const palett = flat(b, ellipsePts(630, 560, 38, 20, 14), '#e7c79a', r, 1);
+    ink(b, palett, true, r, 1.4, 0.5);
+    [[612, 555, PUNANE], [628, 550, SININE], [645, 556, SINEP], [636, 568, ROHE]].forEach(([x, y, col]) => dot(b, x, y, 4.5, col));
+    nimi('Loov tuba', 630, 378, -0.03);
 
-    // Köök (bottom right): table with plates, a sink and a steaming pot
-    const kook = flat(b, rectPts(394, 440, 296, 248), '#d9e6b8', r, 2);
-    hatch(b, kook, r, 7, 0.8, 0.35);
-    ink(b, kook, true, r, 1.8, 1);
-    const laud = flat(b, ellipsePts(530, 590, 82, 46, 16), SINEP, r, 2);
-    hatch(b, laud, r, 4, 0.55, 0.5);
-    ink(b, laud, true, r, 1.6, 0.6);
-    for (let i = 0; i < 4; i++) {
-      const a = (i / 4) * Math.PI * 2 + 0.4;
-      const px = 530 + Math.cos(a) * 52;
-      const py = 590 + Math.sin(a) * 26;
-      const p = flat(b, ellipsePts(px, py, 12, 9, 10), VALGE, r, 0.8);
-      ink(b, p, true, r, 1, 0.3);
-      dot(b, px, py, 4, i % 2 ? PUNANE : ROHE);
-    }
-    const kraanikauss = flat(b, rectPts(600, 465, 70, 40, 3), '#b9c4c9', r, 1);
-    hatch(b, kraanikauss, r, 3, 0.5, 0.5);
-    ink(b, kraanikauss, true, r, 1.5, 0.5);
-    ink(b, [[636, 468], [636, 458], [646, 458]], false, r, 2, 0.3);
-    const vesi = flat(b, ellipsePts(636, 488, 18, 9, 10), SININE, r, 1);
-    ink(b, vesi, true, r, 0.9, 0.3);
-    const pott = flat(b, rectPts(625, 610, 40, 30, 3), PUNANE, r, 1);
-    hatch(b, pott, r, 3, 0.5, 0.5);
-    ink(b, pott, true, r, 1.5, 0.5);
-    ink(b, [[625, 616], [617, 616]], false, r, 1.6, 0.3);
-    ink(b, [[665, 616], [673, 616]], false, r, 1.6, 0.3);
-    for (let i = 0; i < 3; i++) {
-      const sx = 634 + i * 11;
-      ink(b, [[sx, 605], [sx - 4, 596], [sx + 3, 588], [sx - 2, 580]], false, r, 1, 0.5);
-    }
-    label(b, 'Köök', 450, 470, 0.05, PUNANE);
-
-    // Hallway: the Suvemäe name in the house colours
-    const tahed = ['S', 'u', 'v', 'e', 'm', 'ä', 'e'];
-    const varvid = [PUNANE, SININE, KORALL, ROHE, PUNANE, SININE, KORALL];
-    tahed.forEach((t, i) => label(b, t, 288 + i * 24, 372 + Math.sin(i) * 5, (r() - 0.5) * 0.4, varvid[i], i === 0 ? 34 : 28));
-    ink(b, [[296, 396], [340, 404], [390, 404], [440, 394]], false, r, 1.6, 0.8);
-    spiral(b, 288, 392, 6, 1.5, r, 1);
-    spiral(b, 448, 390, 6, 1.5, r, 1);
-
-    // Curly flowers along the garden path
-    const lilleVarvid = [PUNANE, SINEP, SININE, KORALL];
-    for (let i = 0; i < 12; i++) {
-      const x = 30 + r() * 660;
-      const y = 330 + r() * 95;
-      if (x > 260 && x < 470) continue;
-      curlPlant(b, x, y, 14 + r() * 12, lilleVarvid[i % 4], r);
-    }
+    // WC: a sink and a toilet
+    label(b, 'WC', 584, 636, 0, PUNANE, 16);
+    const kraanikauss = flat(b, rectPts(646, 626, 44, 26, 3), '#b9c4c9', r, 1);
+    ink(b, kraanikauss, true, r, 1.4, 0.4);
+    dot(b, 668, 640, 6, SININE);
+    const pott = flat(b, ellipsePts(600, 676, 13, 16, 12), VALGE, r, 0.6);
+    ink(b, pott, true, r, 1.4, 0.4);
   })();
 
   // ---------- Characters ----------

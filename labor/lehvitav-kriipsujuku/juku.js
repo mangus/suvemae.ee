@@ -52,7 +52,8 @@ const JL_X = -70; // canvas box inside the figure, matches .juuksed
 const JL_Y = -70;
 const JL_LAIUS = 370;
 const JL_KORGUS = 330;
-const KARVU = 90; // fewer, thicker strands keep slow computers smooth
+const KARVU = 125; // fewer, thicker strands keep slow computers smooth
+const TUKK = 26; // short fringe strands over the forehead
 const OSAD = 14; // segments per strand, enough for round curls
 const juuksevarvid = ['#8d4b1f', '#7a3f17', '#9c5826', '#a8632d'];
 const juuksepaksus = [2.6, 3.2, 2.9, 3.5]; // one width per colour, so a colour's strands are drawn together
@@ -65,6 +66,37 @@ function teeJuuksed() {
   const r = pea.offsetWidth / 2;
   const kx = pea.offsetLeft + r - JL_X;
   const ky = pea.offsetTop + r - JL_Y;
+  // Fringe first, so it survives when slow computers drop half of the hair.
+  for (let j = 0; j < TUKK; j++) {
+    const fii = -42 + (84 * (j + 0.5)) / TUKK + (Math.random() - 0.5) * 4;
+    const nurk = (fii * Math.PI) / 180;
+    const juur = r - 6;
+    const x = kx + Math.sin(nurk) * juur;
+    const y = ky - Math.cos(nurk) * juur;
+    const pikkus = Math.max(8, ky - 24 - y) * (0.9 + Math.random() * 0.2); // ends above the eyes
+    const kald = -fii * 0.3; // fans out a little at the sides
+    const puhke = [];
+    for (let k = 0; k < OSAD; k++) {
+      const f = (k + 0.5) / OSAD;
+      puhke.push(kald - 25 * Math.sign(fii || 1) * f ** 3); // tips curl softly outwards
+    }
+    const keskmine = (puhke[OSAD >> 1] * Math.PI) / 180;
+    karvad.push({
+      x,
+      y,
+      puhke,
+      osa: pikkus / OSAD,
+      cos: Math.cos(keskmine),
+      sin: Math.sin(keskmine),
+      jaikus: 110 + Math.random() * 30, // stiff, so the fringe stays off the eyes
+      nihe: 0,
+      kiirus: 0,
+      faas: Math.random() * 6.3,
+      toon: j % juuksevarvid.length,
+      px: new Float32Array(OSAD + 1),
+      py: new Float32Array(OSAD + 1),
+    });
+  }
   for (let i = 0; i < KARVU; i++) {
     const fii = (Math.random() * 2 - 1) * 105; // 0 is the top of the head
     const nurk = (fii * Math.PI) / 180;
@@ -400,7 +432,8 @@ function samm(aeg) {
 
   // On a computer that keeps missing frames, thin the hair out by half once.
   aeglased = vahe > 0.034 ? aeglased + 1 : Math.max(0, aeglased - 1);
-  if (aeglased > 60 && karvad.length > KARVU / 2) karvad.length = KARVU / 2;
+  const pooled = TUKK + Math.floor(KARVU / 2);
+  if (aeglased > 60 && karvad.length > pooled) karvad.length = pooled;
 
   if (olek === 'kaib') {
     tekkeAeg -= dt;

@@ -51,7 +51,7 @@ const JL_X = -70; // canvas box inside the figure, matches .juuksed
 const JL_Y = -70;
 const JL_LAIUS = 370;
 const JL_KORGUS = 330;
-const KARVU = 160;
+const KARVU = 180;
 const OSAD = 6; // segments per strand
 const juuksevarvid = ['#8d4b1f', '#7a3f17', '#9c5826', '#a8632d'];
 const vaikne = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -69,11 +69,19 @@ function teeJuuksed() {
     const juur = r - 5 - Math.random() * 7;
     const valja = 180 + fii; // pointing straight out of the head
     const alla = fii >= 0 ? 360 : 0; // pointing down on the same side
-    const vajumine = 0.8 + (0.2 * Math.abs(fii)) / 105; // long hair falls down
-    const pikkus = (95 + (70 * Math.abs(fii)) / 105) * (0.8 + Math.random() * 0.4);
+    // Butterfly cut: short face-framing layers over long back layers, ends flipped out.
+    const lyhike = i % 5 < 2;
+    const vajumine = lyhike ? 1 : 0.8 + (0.2 * Math.abs(fii)) / 105;
+    const pikkus = lyhike
+      ? (42 + (22 * Math.abs(fii)) / 105) * (0.85 + Math.random() * 0.3)
+      : (120 + (60 * Math.abs(fii)) / 105) * (0.85 + Math.random() * 0.3);
+    const pool = fii >= 0 ? 1 : -1;
+    const algus = valja + 67 * pool; // mostly along the head, with a little lift
+    const kaar = (lyhike ? 35 : 20) * -pool; // soft outward flip at the ends
     const puhke = [];
     for (let k = 0; k < OSAD; k++) {
-      puhke.push(valja + (alla - valja) * vajumine * ((k + 0.5) / OSAD) ** 0.7);
+      const ots = Math.max(0, (k - (OSAD - 3)) / 2);
+      puhke.push(algus + (alla - algus) * vajumine * ((k + 0.5) / OSAD) ** 0.7 + kaar * ots);
     }
     const keskmine = (puhke[OSAD >> 1] * Math.PI) / 180;
     karvad.push({

@@ -1,0 +1,30 @@
+// Run with node shop.test.cjs. No dependencies or game network calls.
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const source = fs.readFileSync(`${__dirname}/game.js`, 'utf8');
+const catalog = source.slice(source.indexOf('const SHIRTS'), source.indexOf('let W ='));
+const profile = source.slice(source.indexOf('function cleanLook'), source.indexOf('// ---------- Sound'));
+const context = vm.createContext({ localStorage: { getItem: () => null, setItem() {} } });
+vm.runInContext(`${catalog}\n${profile}\nglobalThis.api = {BODIES, SHOP, me, cleanLook, loadProfile, profileCode, readCode, mask};`, context);
+const { BODIES, SHOP } = context.api;
+assert.deepEqual(Array.from(BODIES.slice(0, 4), b => b.id), ['inimene', 'robot', 'kummitus', 'tulnukas']);
+assert.deepEqual(Array.from(SHOP.slice(0, 27), s => s.id), ['lips','myts','sall','prillid','kubar','keep','kroon','teksad','lyhikesed','sinisedlyhikesed','roosadlyhikesed','punased','mustad','roosad','lillad','kollased','triibuline','tahesark','pusa','tossud','punasedtossud','sinisedtossud','rohelisedtossud','roosadtossud','kuldsedtossud','saapad','helkivad']);
+const bodies = ['Kass','Dinosaurus','Konn','Lumememm','Võlur'];
+const accessories = {'Jänesekõrvad':'head','Kõrvaklapid':'head','Lillepärg':'head','Ümmargused prillid':'eyes','Ujumisprillid':'eyes','Kikilips':'neck','Medal':'neck','Seljakott':'back','Tiivad':'back','Taskulamp':'hand','Banaan':'hand','Õhupall':'hand'};
+for (const name of bodies) assert.ok(BODIES.some(b => b.name === name), `Missing body: ${name}`);
+for (const [name, slot] of Object.entries(accessories)) assert.ok(SHOP.some(s => s.name === name && s.slot === slot), `Missing accessory: ${name}`);
+assert.equal(BODIES.length, 9);
+assert.equal(SHOP.length, 39);
+console.log('PASS: all 17 requested entries and legacy catalog indices');
+const { me, cleanLook, loadProfile, profileCode, readCode } = context.api;
+const plain = value => JSON.parse(JSON.stringify(value));
+const equipped = ['janesekorvad','ymmarprillid','kikilips','tiivad','teksad','triibuline','tossud','ohupall'];
+assert.deepEqual(plain(cleanLook({b:8,w:['janesekorvad','janesekorvad','myts',...equipped.slice(1), 'banaan', 'bad']}).w), equipped, 'Network look keeps one valid item per slot including hand');
+Object.assign(me, {nick:'Ilves 12', gems:123, owned:SHOP.map(s=>s.id), bodies:BODIES.slice(1).map(b=>b.id), body:8, shirt:11, skin:3, paint:9, wear:equipped, best:100});
+const restored = loadProfile(readCode(profileCode()));
+assert.deepEqual(plain({...restored, wear:restored.wear.slice().sort()}), plain({...me, wear:me.wear.slice().sort()}), 'Full 39-bit ownership and eight equipped slots round trip');
+for (let b=0;b<BODIES.length;b++) { me.body=b; assert.equal(loadProfile(readCode(profileCode())).body,b); }
+assert.equal(readCode(profileCode()+'X'), null);
+assert.deepEqual(plain(cleanLook({b:999,s:-1,k:NaN,c:Infinity,w:[{},'nope'] })),{b:0,s:0,k:0,c:0,w:[]});
+console.log('PASS: profile round trips and multiplayer sanitation');

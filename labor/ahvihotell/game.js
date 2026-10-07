@@ -910,6 +910,9 @@ function initAudio() {
   master = ac.createGain();
   master.gain.value = 0.7;
   master.connect(ac.destination);
+  musicBus = ac.createGain();
+  musicBus.gain.value = 0;
+  musicBus.connect(master);
   const hum = ac.createOscillator();
   const hf = ac.createBiquadFilter();
   const hg = ac.createGain();
@@ -950,6 +953,98 @@ function noise(dur, vol, freq) {
   src.connect(f).connect(g).connect(master);
   src.start(t);
 }
+// ---------- Menu music: our own heavy loop, played while a menu is open ----------
+
+const MENU_SCREENS = ['start', 'rooms', 'wait', 'shop', 'card'];
+const STEP = 60 / 140 / 4; // sixteenth notes at 140 bpm
+// Riff in E minor: semitones above low E for each sixteenth, -1 = rest.
+const RIFF = [0, 0, -1, 0, 0, -1, 3, -1, 0, 0, -1, 0, 5, -1, 6, 5,
+  0, 0, -1, 0, 0, -1, 3, -1, 0, 0, -1, 0, 7, -1, 6, 3];
+const KICK = [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0];
+const SNARE = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1];
+let musicBus = null;
+let menuOn = false;
+let nextStep = 0;
+let stepN = 0;
+let fuzz = null;
+let hiss = null;
+
+function musicNoise() {
+  if (!hiss) {
+    hiss = ac.createBuffer(1, ac.sampleRate * 0.3, ac.sampleRate);
+    const d = hiss.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  const src = ac.createBufferSource();
+  src.buffer = hiss;
+  return src;
+}
+// A distorted power chord, like a heavy guitar.
+function chug(semi, t) {
+  if (!fuzz) {
+    fuzz = new Float32Array(256);
+    for (let i = 0; i < 256; i++) fuzz[i] = Math.tanh(6 * (i / 128 - 1));
+  }
+  const f = 82.4 * 2 ** (semi / 12);
+  const shaper = ac.createWaveShaper();
+  const lp = ac.createBiquadFilter();
+  const g = ac.createGain();
+  shaper.curve = fuzz;
+  lp.type = 'lowpass'; lp.frequency.value = 1500;
+  g.gain.setValueAtTime(0.16, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + STEP * 1.6);
+  for (const [m, type] of [[1, 'sawtooth'], [1.5, 'square'], [0.5, 'sawtooth']]) {
+    const o = ac.createOscillator();
+    o.type = type; o.frequency.value = f * m;
+    o.connect(shaper);
+    o.start(t); o.stop(t + STEP * 1.7);
+  }
+  shaper.connect(lp).connect(g).connect(musicBus);
+}
+function drumKick(t) {
+  const o = ac.createOscillator();
+  const g = ac.createGain();
+  o.frequency.setValueAtTime(150, t);
+  o.frequency.exponentialRampToValueAtTime(40, t + 0.15);
+  g.gain.setValueAtTime(0.7, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+  o.connect(g).connect(musicBus);
+  o.start(t); o.stop(t + 0.25);
+}
+function hit(t, vol, freq, dur) {
+  const src = musicNoise();
+  const f = ac.createBiquadFilter();
+  const g = ac.createGain();
+  f.type = 'highpass'; f.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  src.connect(f).connect(g).connect(musicBus);
+  src.start(t); src.stop(t + dur + 0.02);
+}
+// Schedules the loop a little ahead; fades out when a game starts or the tab is hidden.
+function musicTick() {
+  if (!ac || !musicBus) return;
+  const want = menuOn && ac.state === 'running' && !document.hidden;
+  const now = ac.currentTime;
+  musicBus.gain.setTargetAtTime(want ? 0.45 : 0, now, 0.25);
+  if (!want) { stepN = 0; nextStep = 0; return; }
+  if (nextStep < now) nextStep = now + 0.05;
+  while (nextStep < now + 0.25) {
+    const i = stepN % RIFF.length;
+    const j = stepN % KICK.length;
+    if (RIFF[i] >= 0) chug(RIFF[i], nextStep);
+    if (KICK[j]) drumKick(nextStep);
+    if (SNARE[j]) hit(nextStep, 0.35, 1500, 0.14);
+    if (j % 2 === 0) hit(nextStep, 0.06, 7000, 0.04);
+    nextStep += STEP;
+    stepN++;
+  }
+}
+setInterval(musicTick, 80);
+// Browsers allow sound only after a tap or a key, so the menu music starts then.
+document.addEventListener('pointerdown', () => initAudio());
+document.addEventListener('keydown', () => initAudio());
+
 const sfx = {
   gem() { tone(1046, 0.12, 'triangle', 0.12, 1568); },
   ball() { tone(300, 0.6, 'sine', 0.25, 1200); tone(450, 0.6, 'triangle', 0.1, 1800); },
@@ -2209,6 +2304,7 @@ setInterval(() => {
 const SCREENS = ['start', 'rooms', 'wait', 'shop', 'card', 'win', 'over'];
 function showScreen(id) {
   for (const s of SCREENS) $(s).hidden = s !== id;
+  menuOn = MENU_SCREENS.includes(id);
   for (const e of document.querySelectorAll('.walletNum')) e.textContent = me.gems;
 }
 

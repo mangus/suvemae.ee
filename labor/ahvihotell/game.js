@@ -1244,6 +1244,7 @@ let roomCode = '';
 let roomsKey = '';
 const members = new Map(); // waiting room: id -> look
 const ads = new Map();     // lobby: code -> { n, c, t }
+const banned = new Set();  // rooms whose leader sent me out; hidden from my list
 
 function openLobby() {
   if (lobby || !labApi) return;
@@ -1267,6 +1268,19 @@ function closeLobby() {
   if (lobby) lobby.close();
   lobby = null;
   ads.clear();
+}
+
+function leaderId() {
+  if (!room || room.id === null) return null;
+  return [String(room.id), ...members.keys()].sort()[0];
+}
+
+// The room leader can send a player out of the waiting room.
+function kick(id) {
+  if (state !== 'wait' || !room || !room.connected || !isLeader() || !members.has(id)) return;
+  room.send({ t: 'out', id });
+  members.delete(id);
+  drawWait();
 }
 
 function isLeader() {
@@ -1349,6 +1363,16 @@ function onRoomMessage(data, id) {
     if (state === 'wait') { members.set(id, cleanLook(data.k)); drawWait(); }
   } else if (data.t === 'start') {
     if (state === 'wait' && Array.isArray(data.ids)) startTeam(num(data.seed, 1) >>> 0, data.ids.slice(0, MAX_PLAYERS).map(String));
+  } else if (data.t === 'out') {
+    // Only the room leader may send someone out of the waiting room.
+    if (state !== 'wait' || id !== leaderId()) return;
+    if (String(data.id) === String(room.id)) {
+      banned.add(roomCode);
+      roomRefused('Toa juht saatis sind toast välja.');
+    } else {
+      members.delete(String(data.id));
+      drawWait();
+    }
   } else if (data.t === 'busy' || data.t === 'full') {
     if (state === 'wait') roomRefused(data.t === 'busy' ? 'Selles toas käib mäng juba.' : 'See tuba on juba täis.');
   } else if (inGame()) onGameMessage(data, id);
@@ -1441,7 +1465,7 @@ function drawRooms() {
   if (state !== 'rooms') return;
   const now = performance.now();
   for (const [code, ad] of ads) if (now - ad.t > 4500) ads.delete(code);
-  const free = [...ads].filter(([, ad]) => ad.n < MAX_PLAYERS).sort((a, b) => a[0].localeCompare(b[0]));
+  const free = [...ads].filter(([code, ad]) => ad.n < MAX_PLAYERS && !banned.has(code)).sort((a, b) => a[0].localeCompare(b[0]));
   const key = free.map(([code, ad]) => `${code}:${ad.n}:${ad.c.join('')}`).join('|');
   if (key !== roomsKey) {
     roomsKey = key;
@@ -1470,15 +1494,20 @@ function drawWait() {
   if (state !== 'wait' || !room) return;
   const list = $('waitList');
   list.textContent = '';
-  const all = [[myLook(), 'Sina'], ...[...members.values()].map((l) => [l, ''])];
-  for (const [look, label] of all) {
+  const ok = room.connected;
+  const lead = ok && isLeader();
+  const all = [[null, myLook(), 'Sina'], ...[...members].map(([id, l]) => [id, l, ''])];
+  for (const [id, look, label] of all) {
     const li = el('li');
     li.append(avatar(look), el('span', '', `${SHIRTS[look.s][1]} ${label}`.trim()));
+    if (lead && id !== null) {
+      const b = el('button', 'kick', '❌ Viska välja');
+      b.addEventListener('click', () => kick(id));
+      li.append(b);
+    }
     list.append(li);
   }
   $('waitCount').textContent = all.length;
-  const ok = room.connected;
-  const lead = ok && isLeader();
   $('goBtn').hidden = !lead;
   $('waitMsg').textContent = !ok ? 'Ühendan…'
     : lead ? (all.length < 2 ? 'Sina oled toa juht. Oota sõpru või alusta kohe!' : 'Kõik valmis? Vajuta Alusta!')

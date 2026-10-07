@@ -50,3 +50,4 @@ html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-
 .item button.wearing { background: #ffd23b; color: #3a2400; box-shadow: 0 3px 0 #b8901a; }
 #team { font-size: 16px; }
 #spec { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: rgba(80, 0, 0, .75); padding: 8px 18px; border-radius: 18px; font-weight: 700; text-align: center; pointer-events: none; }
+.players .kick { margin: 6px 0 0; font-size: 14px; padding: 6px 10px; background: #ff3b6b; color: #fff; box-shadow: 0 3px 0 #a01a3a; }

@@ -24,8 +24,9 @@ a{color:inherit}
 @keyframes spin{to{transform:rotate(360deg)}}
 .doodle{position:absolute;height:auto}
 /* Tiny flowers on the front hill: each grows from nothing, opens its bud, blooms, then droops, browns and sinks away.
-   Every flower has its own cycle length (--t) and start (--d), so some are always growing while others wilt. */
-.flowers{position:absolute;left:0;right:0;bottom:calc(clamp(90px,14vw,190px)*.17);height:0;pointer-events:none}
+   Every flower has its own cycle length (--t) and start (--d), so some are always growing while others wilt.
+   They sit in front of every character (above the monkey's z-index 4), so the ones on the hill walk among the flowers. */
+.flowers{position:absolute;z-index:5;left:0;right:0;bottom:calc(clamp(90px,14vw,190px)*.17);height:0;pointer-events:none}
 .fl{position:absolute;bottom:var(--y,0);left:var(--x);width:calc(var(--k,1)*clamp(15px,2vw,24px));height:auto;overflow:visible;transform-origin:50% 100%;animation:fl-life var(--t) ease-in-out var(--d) infinite backwards}
 .fl-head{transform-box:view-box;transform-origin:20px 34px;animation:fl-head var(--t) ease-in-out var(--d) infinite backwards}
 .fl-p{fill:var(--c);animation:fl-p var(--t) ease-in-out var(--d) infinite backwards}

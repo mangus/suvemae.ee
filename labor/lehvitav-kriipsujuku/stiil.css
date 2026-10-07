@@ -222,6 +222,30 @@ p {
   z-index: 2;
 }
 
+/* Spiky hair: five strands fanned along the top of the head. */
+.juuksed {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+}
+
+.juus {
+  position: absolute;
+  bottom: 0;
+  left: -5px;
+  width: 10px;
+  height: 30px;
+  border-radius: 999px;
+  background: #8d4b1f;
+  transform-origin: 50% 100%;
+}
+
+.juus:nth-child(1) { translate: -25px 8px; rotate: -38deg; height: 24px; }
+.juus:nth-child(2) { translate: -12px 2px; rotate: -18deg; }
+.juus:nth-child(3) { height: 36px; }
+.juus:nth-child(4) { translate: 12px 2px; rotate: 18deg; }
+.juus:nth-child(5) { translate: 25px 8px; rotate: 38deg; height: 24px; }
+
 .silm {
   position: absolute;
   top: 28px;

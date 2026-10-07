@@ -35,6 +35,15 @@ const NET_STEP = 1 / 15; // send our position 15 times a second
 const SHIRTS = [['#e53935', '🔴'], ['#fb8c00', '🟠'], ['#fdd835', '🟡'], ['#43a047', '🟢'], ['#1e88e5', '🔵'], ['#8e24aa', '🟣'],
   ['#ec407a', '🌸'], ['#26c6da', '🌊'], ['#c0ca33', '🍋'], ['#8d6e63', '🟤'], ['#fafafa', '⚪'], ['#37474f', '⚫']];
 const SKINS = ['#f6d3b3', '#e2b08a', '#b47b52', '#70472c'];
+// Robots, ghosts and aliens can be painted; colour 0 is each body's own colour.
+const BODY_COLORS = ['', '#e53935', '#ff9800', '#fdd835', '#43a047', '#00bcd4', '#1e88e5', '#8e24aa', '#f06292', '#37474f'];
+const BODY_BASE = { robot: '#c3ccd6', kummitus: '#ecf2ff', tulnukas: '#7ee06e' };
+const bodyPaint = (c, id) => BODY_COLORS[c] || BODY_BASE[id];
+// The same colour made lighter (f > 1) or darker (f < 1).
+function shade(hex, f, a = 1) {
+  const v = [1, 3, 5].map((i) => Math.max(0, Math.min(255, Math.round(parseInt(hex.slice(i, i + 2), 16) * f))));
+  return `rgba(${v.join(',')},${a})`;
+}
 const BODIES = [
   { id: 'inimene', name: 'Inimene', icon: '🧍', price: 0 },
   { id: 'robot', name: 'Robot', icon: '🤖', price: 60 },
@@ -359,9 +368,10 @@ function drawHuman(g, look) {
   const worn = (slot) => SHOP.find((s) => s.slot === slot && look.w.includes(s.id));
   const hat = !!worn('head');
   if (has('keep')) poly(g, [46, 54, 82, 54, 98, 118, 30, 118], '#d32f2f');
-  if (body === 'robot') drawRobot(g, shirt, hat);
-  else if (body === 'kummitus') drawGhost(g, shirt);
-  else drawPerson(g, shirt, body === 'tulnukas' ? '#7ee06e' : SKINS[look.k], body === 'tulnukas', hat, worn);
+  const paint = bodyPaint(look.c, body);
+  if (body === 'robot') drawRobot(g, shirt, hat, paint);
+  else if (body === 'kummitus') drawGhost(g, shirt, paint);
+  else drawPerson(g, shirt, body === 'tulnukas' ? paint : SKINS[look.k], body === 'tulnukas', hat, worn);
   if (has('sall')) {
     g.fillStyle = '#ffeb3b'; g.fillRect(52, 52, 24, 7); g.fillRect(67, 58, 7, 16);
     g.fillStyle = '#e53935';
@@ -429,7 +439,7 @@ function drawPerson(g, shirt, skin, alien, hat, worn) {
     blob(g, 71, 36, 5, 3.5, '#101010');
     blob(g, 56, 35, 1.5, 1, '#ffffff');
     blob(g, 70, 35, 1.5, 1, '#ffffff');
-    g.strokeStyle = '#2e6b28';
+    g.strokeStyle = shade(skin, 0.4);
   } else {
     const hair = '#3a2414';
     blob(g, 64, 36, 15, 16, skin);
@@ -494,21 +504,21 @@ function drawTop(g, top) {
   }
 }
 
-function drawRobot(g, shirt, hat) {
-  g.fillStyle = '#8f9aa6';
+function drawRobot(g, shirt, hat, paint) {
+  g.fillStyle = shade(paint, 0.73);
   g.fillRect(51, 94, 11, 24);
   g.fillRect(66, 94, 11, 24);
   g.fillStyle = '#4a525c';
   g.fillRect(48, 116, 16, 6);
   g.fillRect(64, 116, 16, 6);
   g.lineCap = 'round';
-  g.strokeStyle = '#a7b1bc';
+  g.strokeStyle = shade(paint, 0.86);
   g.lineWidth = 8;
   g.beginPath(); g.moveTo(46, 62); g.lineTo(37, 90); g.stroke();
   g.beginPath(); g.moveTo(82, 62); g.lineTo(91, 90); g.stroke();
   blob(g, 37, 94, 5, 5, '#6c7680');
   blob(g, 91, 94, 5, 5, '#6c7680');
-  g.fillStyle = '#c3ccd6';
+  g.fillStyle = shade(paint, 1);
   g.fillRect(44, 56, 40, 40);
   g.fillStyle = shirt;
   g.fillRect(51, 63, 26, 18);
@@ -526,7 +536,7 @@ function drawRobot(g, shirt, hat) {
   g.fillStyle = '#7d8792';
   g.fillRect(44, 30, 4, 10);
   g.fillRect(80, 30, 4, 10);
-  g.fillStyle = '#d6dee7';
+  g.fillStyle = shade(paint, 1.1);
   g.fillRect(48, 20, 32, 30);
   g.fillStyle = '#1a1a2e';
   g.fillRect(51, 30, 26, 10);
@@ -537,8 +547,8 @@ function drawRobot(g, shirt, hat) {
 }
 
 // A sheet ghost with a wavy hem; it is a little see-through.
-function drawGhost(g, shirt) {
-  const sheet = 'rgba(236, 242, 255, 0.88)';
+function drawGhost(g, shirt, paint) {
+  const sheet = shade(paint, 1, 0.88);
   g.fillStyle = sheet;
   g.beginPath();
   g.moveTo(44, 36);
@@ -593,7 +603,7 @@ const MONKEY_POSES = [-1, -0.5, 0, 0.5, 1];
 const monkeySprites = [0, 1, 2].map((v) => MONKEY_POSES.map((p) => shaded(128, (g) => drawMonkey(g, v, p), 0, monkeyEyes(v))));
 const humanCache = new Map();
 function humanSprite(look) {
-  const key = `${look.b}-${look.s}-${look.k}-${look.w.join(',')}`;
+  const key = `${look.b}-${look.s}-${look.k}-${look.c}-${look.w.join(',')}`;
   if (!humanCache.has(key)) humanCache.set(key, shaded(128, (g) => drawHuman(g, look), 0.2));
   return humanCache.get(key);
 }
@@ -604,7 +614,7 @@ function cleanLook(l) {
   const o = l && typeof l === 'object' ? l : {};
   const idx = (v, n) => (Number.isInteger(v) && v >= 0 && v < n ? v : 0);
   const w = Array.isArray(o.w) ? o.w.filter((id) => SHOP.some((s) => s.id === id)).slice(0, 8) : [];
-  return { s: idx(o.s, SHIRTS.length), k: idx(o.k, SKINS.length), b: idx(o.b, BODIES.length), w };
+  return { s: idx(o.s, SHIRTS.length), k: idx(o.k, SKINS.length), b: idx(o.b, BODIES.length), c: idx(o.c, BODY_COLORS.length), w };
 }
 // A random nickname is made of preset words; players can also type their own.
 const NICK_A = ['Kiire', 'Julge', 'Vapper', 'Kaval', 'Särav', 'Väle', 'Lustakas', 'Uljas', 'Salajane', 'Vilgas'];
@@ -620,11 +630,11 @@ function loadProfile() {
   try { o = JSON.parse(localStorage.getItem(STORE) || 'null'); } catch (e) { o = null; }
   if (!o || typeof o !== 'object') o = {};
   const owned = Array.isArray(o.owned) ? o.owned.filter((id) => SHOP.some((s) => s.id === id)) : [];
-  const look = cleanLook({ s: Number.isInteger(o.shirt) ? o.shirt : Math.floor(Math.random() * SHIRTS.length), k: o.skin, w: o.wear });
+  const look = cleanLook({ s: Number.isInteger(o.shirt) ? o.shirt : Math.floor(Math.random() * SHIRTS.length), k: o.skin, c: o.paint, w: o.wear });
   const bodies = Array.isArray(o.bodies) ? o.bodies.filter((id) => BODIES.some((b) => b.id === id && b.price)) : [];
   const b = BODIES[o.body];
   const body = Number.isInteger(o.body) && b && (!b.price || bodies.includes(b.id)) ? o.body : 0;
-  return { gems: Math.max(0, Math.floor(Number(o.gems) || 0)), owned, wear: look.w.filter((id) => owned.includes(id)), shirt: look.s, skin: look.k, bodies, body,
+  return { gems: Math.max(0, Math.floor(Number(o.gems) || 0)), owned, wear: look.w.filter((id) => owned.includes(id)), shirt: look.s, skin: look.k, paint: look.c, bodies, body,
     nick: okNick(o.nick) ? o.nick : newNick(),
     best: Math.max(0, Math.floor(Number(o.best) || 0)) };
 }
@@ -633,7 +643,7 @@ function saveProfile() {
   try { localStorage.setItem(STORE, JSON.stringify(me)); } catch (e) { /* private mode */ }
 }
 saveProfile(); // keeps a newly made nickname
-const myLook = () => ({ s: me.shirt, k: me.skin, b: me.body, w: me.wear.slice() });
+const myLook = () => ({ s: me.shirt, k: me.skin, b: me.body, c: me.paint, w: me.wear.slice() });
 
 // ---------- Sound (Web Audio, starts after the first tap) ----------
 
@@ -1043,7 +1053,7 @@ function aheadOf(t, n = 4) {
 
 // Each monkey goes for the closest living player, every one in its own way:
 // 0 the hunter runs straight at you, 1 the trapper cuts you off where you are heading,
-// 2 the sneaker roams slowly until it is close, then sprints.
+// 2 the sneaker roams slowly until it is close, then hurries, but stays a bit slower than a player.
 const MONKEY_TINT = ['#ff2a2a', '#ff9a1a', '#c04bff'];
 function simMonkeys(dt) {
   const ts = targets();
@@ -1066,7 +1076,7 @@ function simMonkeys(dt) {
     } else if (i % 3 === 2) {
       const close = near >= 0 && near <= 8;
       m.wander = close ? 0 : 0.85;
-      m.fast = close ? 1.25 : 0.8;
+      m.fast = close ? 1.1 : 0.8;
     }
     stepMonkey(m, dt, t, field);
     m.nx = m.x; m.ny = m.y;
@@ -2043,6 +2053,10 @@ function drawShop() {
   pickRow($('skinPick'), SKINS.map(() => ''), me.skin, (i) => { me.skin = i; }, SKINS);
   // Skin colour is only for people.
   for (const id of ['skinLabel', 'skinPick']) $(id).style.display = me.body === 0 ? '' : 'none';
+  // Robots, ghosts and aliens get a paint colour instead.
+  const bodyId = BODIES[me.body].id;
+  pickRow($('paintPick'), BODY_COLORS.map((c) => (c ? '' : '⭐')), me.paint, (i) => { me.paint = i; }, BODY_COLORS.map((c) => c || BODY_BASE[bodyId] || '#ccc'));
+  for (const id of ['paintLabel', 'paintPick']) $(id).style.display = me.body === 0 ? 'none' : '';
   const bodyBox = $('bodyItems');
   bodyBox.textContent = '';
   BODIES.forEach((body, i) => {

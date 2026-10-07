@@ -215,16 +215,59 @@ function texFor(x, y) {
   return wallTex.plain;
 }
 
-function drawGem(g, s, color) {
+// A cut diamond in 3D: a flat top, a ring of 8 sides and a pointed bottom.
+// It looks the same after 1/8 of a turn, so GEM_TURNS pictures make a full spin.
+const GEM_TURNS = 6;
+const DIAMOND = (() => {
+  const n = 8;
+  const ring = (y, r, off) => Array.from({ length: n }, (_, i) => {
+    const a = ((i + off) / n) * Math.PI * 2;
+    return [Math.cos(a) * r, y, Math.sin(a) * r];
+  });
+  const v = [...ring(-0.4, 0.55, 0.5), ...ring(-0.15, 1, 0), [0, 1.05, 0]];
+  const f = [Array.from({ length: n }, (_, i) => i)];
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    f.push([i, j, n + j, n + i], [n + i, n + j, 2 * n]);
+  }
+  return { v, f };
+})();
+
+function drawGem(g, s, color, turn) {
   const glow = g.createRadialGradient(s / 2, s / 2, 2, s / 2, s / 2, s / 2);
   glow.addColorStop(0, color + '88');
   glow.addColorStop(1, color + '00');
   g.fillStyle = glow; g.fillRect(0, 0, s, s);
-  poly(g, [16, 24, 24, 14, 40, 14, 48, 24, 32, 52], color);
-  poly(g, [24, 14, 32, 24, 40, 14], 'rgba(255,255,255,0.55)');
-  poly(g, [16, 24, 48, 24, 32, 52], 'rgba(0,0,0,0.2)');
-  poly(g, [24, 24, 32, 52, 40, 24], 'rgba(255,255,255,0.25)');
-  g.fillStyle = '#fff'; g.fillRect(26, 17, 3, 2);
+  const ang = (turn / GEM_TURNS) * (Math.PI / 4);
+  const ca = Math.cos(ang), sa = Math.sin(ang), ct = Math.cos(0.35), st = Math.sin(0.35);
+  const pts = DIAMOND.v.map(([x, y, z]) => {
+    const x1 = x * ca + z * sa, z1 = z * ca - x * sa;
+    return [x1, y * ct - z1 * st, y * st + z1 * ct];
+  });
+  const light = [-0.45, -0.7, 0.55].map((v) => v / Math.hypot(0.45, 0.7, 0.55));
+  const faces = [];
+  for (const f of DIAMOND.f) {
+    const p = f.map((i) => pts[i]);
+    const mid = [0, 1, 2].map((k) => p.reduce((a, q) => a + q[k], 0) / p.length);
+    const u = [0, 1, 2].map((k) => p[1][k] - p[0][k]);
+    const w = [0, 1, 2].map((k) => p[2][k] - p[0][k]);
+    let nv = [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]];
+    const len = Math.hypot(...nv);
+    nv = nv.map((v) => v / len);
+    if (nv[0] * mid[0] + nv[1] * mid[1] + nv[2] * mid[2] < 0) nv = nv.map((v) => -v);
+    if (nv[2] > 0) faces.push({ p, nv, z: mid[2] });
+  }
+  faces.sort((a, b) => a.z - b.z);
+  const k = 17, cx = s / 2, cy = s / 2 - 5.5;
+  for (const { p, nv } of faces) {
+    const d = Math.max(0, nv[0] * light[0] + nv[1] * light[1] + nv[2] * light[2]);
+    g.beginPath();
+    p.forEach(([x, y], i) => (i ? g.lineTo(cx + x * k, cy + y * k) : g.moveTo(cx + x * k, cy + y * k)));
+    g.closePath();
+    g.fillStyle = shade(color, 0.4 + 0.85 * d); g.fill();
+    g.fillStyle = `rgba(255,255,255,${(Math.pow(d, 12) * 0.8).toFixed(3)})`; g.fill();
+    g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 0.8; g.stroke();
+  }
 }
 
 function drawBall(g, s) {
@@ -566,7 +609,7 @@ function drawGhost(g, shirt, paint) {
   blob(g, 76, 44, 3, 2, shirt);
 }
 
-const gemSprites = GEM_COLORS.map((c) => shaded(64, (g, s) => drawGem(g, s, c), 0.45));
+const gemSprites = GEM_COLORS.map((c) => Array.from({ length: GEM_TURNS }, (_, t) => shaded(64, (g, s) => drawGem(g, s, c, t), 0.45)));
 const ballSprite = shaded(64, drawBall, 0.6);
 
 // A hanging hotel lamp, the soft halo around a bulb and the warm pool of light it throws on the floor.
@@ -1562,7 +1605,7 @@ function render(cam) {
     }
     else if (s.kind === 'human') drawSprite(humanSprite(e.look), 128, e.x, e.y, 0.9, Math.abs(Math.sin(e.walk)) * 0.03, view);
     else if (s.kind === 'ball') drawSprite(ballSprite, 64, e.x, e.y, 0.34, 0.22 + Math.sin(time * 3 + e.phase) * 0.05, view);
-    else drawSprite(gemSprites[e.color], 64, e.x, e.y, 0.3, 0.2 + Math.sin(time * 3 + e.phase) * 0.05, view);
+    else drawSprite(gemSprites[e.color][Math.floor((time * 1.5 + e.phase) * GEM_TURNS / (Math.PI / 4)) % GEM_TURNS], 64, e.x, e.y, 0.3, 0.2 + Math.sin(time * 3 + e.phase) * 0.05, view);
   }
 
   const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.25, W / 2, H / 2, Math.max(W, H) * 0.75);

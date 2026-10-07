@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ralf TI</title>
-<meta name="description" content="Ralf TI aitab Suvemäe õpilastel õppida lühikeste videote, mälukaartide ja lihtsa tekstiga.">
+<meta name="description" content="Ralf TI aitab Suvemäe õpilastel õppida lühikeste videote, mälukaartide, õpiku ja harjutustega.">
 <link rel="stylesheet" href="stiil.css">
 <script type="module" src="ralf.js"></script>
 </head>
@@ -51,6 +51,13 @@
   </div>
 </section>
 
+<section id="minu" class="minu">
+  <h2>⭐ Minu edenemine</h2>
+  <div id="minu-sisu"></div>
+  <p class="vihje">See jääb ainult sinu seadmesse.</p>
+  <p class="nupud"><button id="kustuta" class="kustuta" type="button" hidden>🧹 Alusta otsast</button></p>
+</section>
+
 <section>
   <h2>1. Vali aine</h2>
   <div id="ained" class="nupud"></div>
@@ -71,7 +78,8 @@
   <div class="nupud">
     <button type="button" data-viis="video">🎬 Lühike video</button>
     <button type="button" data-viis="kaardid">🃏 Mälukaardid</button>
-    <button type="button" data-viis="tekst">📖 Lihtne tekst</button>
+    <button type="button" data-viis="opik">📖 Õpik</button>
+    <button type="button" data-viis="harjutused">✏️ Harjutused</button>
   </div>
 </section>
 
@@ -97,6 +105,21 @@
   </p>
 </section>
 
-<section id="tekst" class="osa leht" hidden></section>
+<section id="opik" class="osa" hidden>
+  <details id="sisukord-kast" class="sisukord">
+    <summary id="sisukord-pealkiri">📑 Sisukord</summary>
+    <ol id="sisukord"></ol>
+  </details>
+  <div id="opik-leht" class="leht" aria-live="polite"></div>
+  <p class="nupud lk-nupud">
+    <button id="lk-eelmine" type="button">← eelmine</button>
+    <span id="lk-nr"></span>
+    <button id="lk-jargmine" type="button">järgmine →</button>
+  </p>
+</section>
+
+<section id="harjutused" class="osa" hidden>
+  <div id="harj" class="harj"></div>
+</section>
 </body>
 </html>

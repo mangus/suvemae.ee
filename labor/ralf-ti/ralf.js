@@ -1,7 +1,9 @@
 // Ralf TI: a friendly study helper. All lessons live in the ained/ folder, no outside requests.
-// Navigation: subject -> grade -> topic -> learning mode (video, flashcards, easy text).
+// Navigation: subject -> grade -> topic -> learning mode (video, flashcards, textbook, exercises).
 
 import { vasta } from './jutt.js';
+import { alustaHarjutused } from './harjutused.js';
+import * as minu from './edenemine.js';
 
 // Subject files in ained/, in the order their buttons are shown.
 const AINE_FAILID = [
@@ -14,6 +16,7 @@ const $ = (id) => document.getElementById(id);
 const ralf = $('ralf');
 let ained = [];
 let aine = null;
+let klass = null;
 let teema = null;
 let raagibTaimer = 0;
 
@@ -40,6 +43,12 @@ function margi(kast, valitud) {
 
 const klassideJarjekord = (a) => Object.keys(a.klassid).sort((x, y) => x - y);
 
+// A topic's button text, with a tick or a star once it has been studied.
+function teemaSilt(a, k, t) {
+  const m = minu.mark(minu.voti(a, k, t));
+  return t.emoji + ' ' + t.nimi + (m ? ' ' + m : '');
+}
+
 // Load every subject; one broken file must not break the others.
 async function laeAined() {
   const tulemused = await Promise.allSettled(
@@ -50,11 +59,13 @@ async function laeAined() {
     a.nupp = nupp(a.emoji + ' ' + a.nimi, $('ained'), () => valiAine(a));
   });
   teeIndeks();
+  naitaEdenemist();
   utle('Tere! Mina olen Ralf. Aitan sul õppida. Vali aine või kirjuta, mida tahad õppida!');
 }
 
 function valiAine(a) {
   aine = a;
+  klass = null;
   margi($('ained'), a.nupp);
   const kast = $('klassid');
   kast.replaceChildren();
@@ -69,11 +80,12 @@ function valiAine(a) {
 }
 
 function valiKlass(k, klassiNupp) {
+  klass = k;
   margi($('klassid'), klassiNupp);
   const kast = $('teemad');
   kast.replaceChildren();
   aine.klassid[k].forEach((t) => {
-    t.nupp = nupp(t.emoji + ' ' + t.nimi, kast, () => valiTeema(t));
+    t.nupp = nupp(teemaSilt(aine, k, t), kast, () => valiTeema(t));
   });
   $('teema-osa').hidden = false;
   $('viisid').hidden = true;
@@ -86,11 +98,12 @@ function valiTeema(t) {
   margi($('teemad'), t.nupp);
   peidaOsad();
   $('viisid').hidden = false;
+  minu.margi(minu.voti(aine, klass, t), { aeg: Date.now() });
   utle('Super! Õpime teemat "' + t.nimi + '". Kuidas tahad õppida?');
   $('viisid').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// Jump straight to a topic found by search.
+// Jump straight to a topic found by search or by "continue".
 function avaTeema(leid) {
   valiAine(leid.aine);
   const i = klassideJarjekord(leid.aine).indexOf(leid.klass);
@@ -203,7 +216,7 @@ $('kusi').addEventListener('submit', (e) => {
 });
 
 // Learning modes
-const OSAD = ['video', 'kaardid', 'tekst'];
+const OSAD = ['video', 'kaardid', 'opik', 'harjutused'];
 
 function peidaOsad() {
   peataVideo();
@@ -211,16 +224,18 @@ function peidaOsad() {
   document.querySelectorAll('[data-viis]').forEach((n) => n.classList.remove('valitud'));
 }
 
+function avaViis(viis) {
+  peidaOsad();
+  document.querySelector('[data-viis="' + viis + '"]').classList.add('valitud');
+  $(viis).hidden = false;
+  if (viis === 'video') alustaVideo();
+  if (viis === 'kaardid') alustaKaardid();
+  if (viis === 'opik') alustaOpik();
+  if (viis === 'harjutused') alustaHarj();
+}
+
 document.querySelectorAll('[data-viis]').forEach((n) => {
-  n.addEventListener('click', () => {
-    const viis = n.dataset.viis;
-    peidaOsad();
-    n.classList.add('valitud');
-    $(viis).hidden = false;
-    if (viis === 'video') alustaVideo();
-    if (viis === 'kaardid') alustaKaardid();
-    if (viis === 'tekst') naitaTeksti();
-  });
+  n.addEventListener('click', () => avaViis(n.dataset.viis));
 });
 
 // --- Video: scenes change every few seconds ---
@@ -327,19 +342,143 @@ function liiguKaart(suund) {
 $('eelmine').addEventListener('click', () => liiguKaart(-1));
 $('jargmine').addEventListener('click', () => liiguKaart(1));
 
-// --- Easy-to-read text ---
-function naitaTeksti() {
-  const leht = $('tekst');
-  leht.replaceChildren();
-  const pealkiri = document.createElement('h2');
-  pealkiri.textContent = teema.emoji + ' ' + teema.nimi;
-  leht.append(pealkiri);
-  teema.tekst.forEach((loik) => {
-    const p = document.createElement('p');
-    p.textContent = loik;
-    leht.append(p);
+// --- Textbook: one paragraph per page, a table of contents for the grade ---
+let lk = 0;
+
+function teeSisukord() {
+  $('sisukord-pealkiri').textContent = '📑 Sisukord: ' + aine.nimi + ', ' + klass + '. klass';
+  const ol = $('sisukord');
+  ol.replaceChildren();
+  aine.klassid[klass].forEach((t) => {
+    const li = document.createElement('li');
+    const n = nupp(teemaSilt(aine, klass, t), li, () => {
+      $('sisukord-kast').open = false;
+      valiTeema(t);
+      avaViis('opik');
+    });
+    n.classList.toggle('valitud', t === teema);
+    ol.append(li);
   });
-  utle('Loe rahulikult. Lühikesed laused on kergem meelde jätta!');
 }
+
+function naitaLk() {
+  const leht = $('opik-leht');
+  leht.replaceChildren();
+  if (lk === 0) {
+    const pealkiri = document.createElement('h2');
+    pealkiri.textContent = teema.emoji + ' ' + teema.nimi;
+    const kus = document.createElement('p');
+    kus.className = 'opik-aine';
+    kus.textContent = aine.emoji + ' ' + aine.nimi + ' · ' + klass + '. klass';
+    leht.append(pealkiri, kus);
+  }
+  const pilt = document.createElement('div');
+  pilt.className = 'opik-pilt';
+  pilt.setAttribute('aria-hidden', 'true');
+  pilt.textContent = teema.video[lk % teema.video.length][0];
+  const p = document.createElement('p');
+  p.textContent = teema.tekst[lk];
+  leht.append(pilt, p);
+
+  const viimane = lk === teema.tekst.length - 1;
+  $('lk-nr').textContent = 'lk ' + (lk + 1) + ' / ' + teema.tekst.length;
+  $('lk-eelmine').disabled = lk === 0;
+  $('lk-jargmine').textContent = viimane ? '✏️ Harjutused' : 'järgmine →';
+  if (viimane) minu.margi(minu.voti(aine, klass, teema), { loetud: true, aeg: Date.now() });
+}
+
+function alustaOpik() {
+  lk = 0;
+  teeSisukord();
+  naitaLk();
+  utle('Loe rahulikult. Lehte keerad all olevate nuppudega.');
+}
+
+$('lk-eelmine').addEventListener('click', () => {
+  if (lk > 0) lk--;
+  naitaLk();
+});
+
+$('lk-jargmine').addEventListener('click', () => {
+  if (lk === teema.tekst.length - 1) {
+    avaViis('harjutused');
+    return;
+  }
+  lk++;
+  naitaLk();
+});
+
+// --- Exercises, checked right away ---
+function alustaHarj() {
+  const [a, k, t] = [aine, klass, teema];
+  utle('Lahenda ülesanded. Ma kontrollin kohe!');
+  alustaHarjutused(t, $('harj'), utle, (protsent) => {
+    const v = minu.voti(a, k, t);
+    minu.margi(v, { parim: Math.max(minu.loe(v).parim ?? 0, protsent), aeg: Date.now() });
+  });
+}
+
+// --- My progress: kept only in this browser ---
+function naitaEdenemist() {
+  const kast = $('minu-sisu');
+  kast.replaceChildren();
+  let viimane = null;
+  ained.forEach((a) => {
+    let kokku = 0;
+    let opitud = 0;
+    let tahti = 0;
+    Object.entries(a.klassid).forEach(([k, teemad]) => {
+      teemad.forEach((t) => {
+        kokku++;
+        const e = minu.loe(minu.voti(a, k, t));
+        if (e.loetud || e.parim != null) opitud++;
+        if (e.parim >= 80) tahti++;
+        if (e.aeg && (!viimane || e.aeg > viimane.aeg)) viimane = { aeg: e.aeg, aine: a, klass: k, teema: t };
+      });
+    });
+    if (!opitud) return;
+    const rida = document.createElement('div');
+    rida.className = 'minu-rida';
+    const nimi = document.createElement('span');
+    nimi.textContent = a.emoji + ' ' + a.nimi;
+    const arv = document.createElement('span');
+    arv.textContent = opitud + ' / ' + kokku + ' teemat · ' + tahti + ' ⭐';
+    const riba = document.createElement('div');
+    riba.className = 'minu-riba';
+    const sees = document.createElement('div');
+    sees.style.width = (opitud / kokku) * 100 + '%';
+    riba.append(sees);
+    rida.append(nimi, arv, riba);
+    kast.append(rida);
+  });
+  if (viimane) {
+    const n = nupp('▶ Jätka: ' + viimane.teema.emoji + ' ' + viimane.teema.nimi, kast, () => avaTeema(viimane));
+    n.className = 'jatka';
+  }
+  if (!kast.querySelector('.minu-rida')) {
+    const p = document.createElement('p');
+    p.textContent = 'Siia tulevad sinu linnukesed ✔️ ja tähed ⭐. Loe õpikut ja tee harjutusi!';
+    kast.prepend(p);
+  }
+  $('kustuta').hidden = !viimane;
+}
+
+$('kustuta').addEventListener('click', () => {
+  if (confirm('Kas kustutan kogu sinu edenemise?')) {
+    minu.kustuta();
+    utle('Alustame otsast! 🧹');
+  }
+});
+
+// Keep topic buttons, the table of contents and the progress box up to date.
+minu.kuula(() => {
+  naitaEdenemist();
+  if (aine && klass) {
+    aine.klassid[klass].forEach((t) => {
+      if (t.nupp) t.nupp.textContent = teemaSilt(aine, klass, t);
+    });
+  }
+  if (teema && !$('opik').hidden) teeSisukord();
+});
 
 laeAined();

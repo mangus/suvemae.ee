@@ -56,7 +56,10 @@ a{color:inherit}
 .say::after{content:"";position:absolute;top:100%;left:50%;margin-left:-6px;border:6px solid transparent;border-top-color:var(--ink)}
 .say-good{background:#e4f8d4;color:#1f6b31}
 .d-bear{bottom:clamp(30px,5vw,84px);right:16%;width:clamp(72px,9vw,120px);pointer-events:none}
-.d-bear svg{display:block;width:100%;height:auto;transform-origin:50% 95%;animation:bear-sway 3s ease-in-out infinite}
+/* will-change keeps the bear on its own layer, so the browser turns it as one picture instead of redrawing it every
+   frame (redrawing snapped the mouth, the pot edge and the MESI letters to whole pixels, so they twitched on big screens) */
+.d-bear svg{display:block;width:100%;height:auto;transform-origin:50% 95%;will-change:transform;animation:bear-sway 3s ease-in-out infinite}
+.d-bear text{text-rendering:geometricPrecision}
 .d-bear .say{left:auto;right:-6px;transform:none}
 .d-bear .say::after{left:auto;right:24px}
 @keyframes bear-sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
@@ -238,7 +241,7 @@ footer .made-by a{color:#ffe27a}
 .d-mosquito:hover,.d-tick:hover{animation-play-state:paused}
 .d-mosquito:hover .say,.d-tick:hover .say{animation:none;opacity:1}
 @keyframes say-peek{0%,74%,100%{opacity:0}79%,95%{opacity:1}}
-@media (max-width:720px){.d-plane,.d-squiggle{display:none}.d-tick{left:44%;top:16px}.d-tick .say,.d-bear .say{display:none}.ah-track{--apex:calc(var(--bw)*-1.1 - 24px)}.d-ahv .say{animation-name:ah-say-m,none}.d-ahv .say::after{animation:none}}
+@media (max-width:720px){.d-plane,.d-squiggle{display:none}.d-ladybug{animation-delay:-8s}.d-tick{left:44%;top:16px}.d-tick .say,.d-bear .say{display:none}.ah-track{--apex:calc(var(--bw)*-1.1 - 24px)}.d-ahv .say{animation-name:ah-say-m,none}.d-ahv .say::after{animation:none}}
 @media (prefers-reduced-motion:reduce){.fly,.fly svg,.rays,.d-ladybug,.d-ladybug svg,.lb-leg,.lb-ant,.lb-bob,.d-mosquito,.d-mosquito .say,.mosq-wing,.d-tick,.d-tick .say,.sp-leg,.d-bear svg,.d-bee,.d-bee svg,.bee-wing,.bee-buzz,.d-brokoli,.d-brokoli svg,.br-body,.br-leg,.ah-track,.d-ahv,.d-ahv svg,.d-ahv .say,.d-ahv .say::after,.ah-say-t,.ah-arm,.ah-arm-f,.ah-reach,.ah-arm-l,.ah-arm-l-f,.ah-foot-l,.ah-foot-r,.ah-tail,.mb-gear,.fl,.fl-head,.fl-p{animation:none}.d-bee{left:12%}.door,.frame{transition:none}}
 </style>
 </head>

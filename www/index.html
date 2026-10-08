@@ -109,25 +109,21 @@ main{max-width:1000px;margin:0 auto;padding:0 20px}
 .frame small{font-size:.92rem;font-weight:700;color:var(--ink-soft)}
 footer{padding:26px 20px 34px;text-align:center;color:var(--ink-soft);font-size:.98rem}
 footer p{margin:.2rem 0}
-/* "Under the hood": the page's paper is peeled back in the bottom-right corner of the page, showing turning gears underneath.
-   Two sides sit on the page edges (the negative margins undo the footer padding), the other two are rolled up:
-   .mb-roll::before along the top, .mb-roll::after down the left side and footer .made-by::after across the cut corner */
-footer .made-by{position:relative;isolation:isolate;display:block;box-sizing:border-box;width:fit-content;max-width:calc(100% + 8px);margin:2.6rem -20px -34px auto;padding:1.9rem 1.6rem calc(1.7rem + env(safe-area-inset-bottom)) 2.7rem;text-align:left;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.82rem;font-weight:700;line-height:1.5;color:#c9f3ff;text-shadow:0 1px 2px #1c1630}
-footer .made-by::before,.mb-gears{content:"";position:absolute;inset:0;z-index:-1;overflow:hidden;clip-path:polygon(46px 0,100% 0,100% 100%,0 100%,0 46px)}
-footer .made-by::before{z-index:-2;background:radial-gradient(circle at 70% 30%,#30285a,#1c1630);box-shadow:inset 0 0 14px rgba(0,0,0,.7)}
+/* "Under the hood": a triangle in the bottom-right corner of the page, its right and bottom sides on the page edges (the
+   negative margins undo the footer padding) and its long side a fold where the paper bends away to show turning gears.
+   The floated ::before has a triangle shape-outside, so the text fills only the corner, kept clear of the fold. */
+footer .made-by{--s:clamp(250px,30vw,330px);position:relative;isolation:isolate;display:block;box-sizing:border-box;width:var(--s);height:var(--s);max-width:calc(100% + 40px);margin:2rem -20px -34px auto;padding:0 14px calc(12px + env(safe-area-inset-bottom)) 0;text-align:right;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.78rem;font-weight:700;line-height:1.45;color:#c9f3ff;text-shadow:0 1px 3px #1c1630,0 0 2px #1c1630;background:radial-gradient(circle at 80% 80%,#30285a,#1c1630 75%);clip-path:polygon(100% 0,100% 100%,0 100%)}
+footer .made-by::before{content:"";float:left;width:100%;height:100%;shape-outside:polygon(0 0,100% 0,0 100%);shape-margin:30px}
+.mb-gears{position:absolute;inset:0;z-index:-1;overflow:hidden;opacity:.8}
 .mb-gears svg{position:absolute;height:auto}
-.mb-gears .g-r{right:-10px;bottom:-30px;width:150px}
+.mb-gears .g-r{right:-14px;bottom:-26px;width:170px}
 .mb-gear{transform-box:fill-box;transform-origin:center;animation:mb-spin 12s linear infinite}
 .mb-gear.s{animation-duration:7.5s;animation-direction:reverse}
 .mb-gear.l{animation-duration:9s;animation-direction:reverse}
 @keyframes mb-spin{to{transform:rotate(1turn)}}
-/* The rolls lie on the open edges: light paper side outwards, shadow falling on the gears. The top and left rolls run off
-   the page edge, the corner roll covers their rounded ends */
-.mb-roll::before,.mb-roll::after{content:"";position:absolute}
-.mb-roll::before{top:-10px;left:36px;right:0;height:20px;border-radius:10px 0 0 10px;background:linear-gradient(#fffaf0,#fff 30%,#ebe3d1 65%,#c4b594);box-shadow:0 5px 7px rgba(43,35,64,.4)}
-.mb-roll::after{left:-10px;top:36px;bottom:0;width:20px;border-radius:10px 10px 0 0;background:linear-gradient(90deg,#fffaf0,#fff 30%,#ebe3d1 65%,#c4b594);box-shadow:5px 0 7px rgba(43,35,64,.4)}
-footer .made-by::after{content:"";position:absolute;left:-15px;top:13px;width:76px;height:20px;border-radius:10px;background:linear-gradient(#fffaf0,#fff 30%,#ebe3d1 65%,#c4b594);box-shadow:0 5px 7px rgba(43,35,64,.4);transform:rotate(-45deg);transition:transform .25s ease}
-footer .made-by:hover::after{transform:rotate(-45deg) translateY(-3px)}
+/* The fold: a strip centred on the long side and turned along it. Its outer half is cut off with the triangle; the inner
+   half starts in the page colour, so the paper seems to bend over the edge, and ends in a shadow on the gears. */
+.mb-fold{position:absolute;z-index:0;left:50%;top:50%;width:calc(var(--s)*1.42);height:48px;transform:translate(-50%,-50%) rotate(-45deg);background:linear-gradient(transparent 50%,var(--paper) 50%,#fff 57%,#ece3cf 70%,#c2b18c 81%,rgba(20,14,40,.55) 81%,transparent 100%)}
 footer .made-by a{color:#ffe27a}
 .d-bee{position:absolute;z-index:3;top:24%;left:0;width:clamp(44px,5.5vw,66px);pointer-events:none;animation:bee-x 26s linear infinite,bee-y 4.3s ease-in-out infinite alternate}
 .d-bee svg{display:block;width:100%;height:auto;animation:bee-bob 1.6s ease-in-out infinite alternate}
@@ -313,7 +309,7 @@ footer .made-by a{color:#ffe27a}
 </main>
 <footer>
 <p><strong>Suvemäe</strong> · Tallinna Kunstigümnaasiumi demokraatlik kooliosa</p>
-<p class="made-by"><span class="mb-gears" aria-hidden="true"><svg class="g-r" viewBox="0 0 150 90"><g class="mb-gear" fill="#55479a" stroke="#55479a"><circle cx="95.00" cy="60.00" r="21.50" fill="none" stroke-width="6" pathLength="16" stroke-dasharray="0.44 0.56"/><circle cx="95.00" cy="60.00" r="18.50" stroke="none"/><circle cx="95.00" cy="60.00" r="11.00" fill="none" stroke="#1c1630" stroke-width="2.5"/><circle cx="95.00" cy="60.00" r="3.5" fill="#1c1630" stroke="none"/></g><g class="mb-gear s" fill="#2f7385" stroke="#2f7385"><g transform="rotate(2.960 63.43 43.22)"><circle cx="63.43" cy="43.22" r="13.25" fill="none" stroke-width="6" pathLength="10" stroke-dasharray="0.44 0.56"/><circle cx="63.43" cy="43.22" r="10.25" stroke="none"/><circle cx="63.43" cy="43.22" r="6.88" fill="none" stroke="#1c1630" stroke-width="2.5"/><circle cx="63.43" cy="43.22" r="3.5" fill="#1c1630" stroke="none"/></g></g><g class="mb-gear l" fill="#6a4f8f" stroke="#6a4f8f"><g transform="rotate(7.133 113.08 26.00)"><circle cx="113.08" cy="26.00" r="16.00" fill="none" stroke-width="6" pathLength="12" stroke-dasharray="0.44 0.56"/><circle cx="113.08" cy="26.00" r="13.00" stroke="none"/><circle cx="113.08" cy="26.00" r="8.25" fill="none" stroke="#1c1630" stroke-width="2.5"/><circle cx="113.08" cy="26.00" r="3.5" fill="#1c1630" stroke="none"/></g></g></svg></span><span class="mb-roll" aria-hidden="true"></span>🤖 Selle kodulehe on teinud Suvemäe õpilased <a href="https://mintbot.ai/">mintbot.ai</a> AI-agentide abil.</p>
+<p class="made-by"><span class="mb-gears" aria-hidden="true"><svg class="g-r" viewBox="0 0 150 90"><g class="mb-gear" fill="#55479a" stroke="#55479a"><circle cx="95.00" cy="60.00" r="21.50" fill="none" stroke-width="6" pathLength="16" stroke-dasharray="0.44 0.56"/><circle cx="95.00" cy="60.00" r="18.50" stroke="none"/><circle cx="95.00" cy="60.00" r="11.00" fill="none" stroke="#1c1630" stroke-width="2.5"/><circle cx="95.00" cy="60.00" r="3.5" fill="#1c1630" stroke="none"/></g><g class="mb-gear s" fill="#2f7385" stroke="#2f7385"><g transform="rotate(2.960 63.43 43.22)"><circle cx="63.43" cy="43.22" r="13.25" fill="none" stroke-width="6" pathLength="10" stroke-dasharray="0.44 0.56"/><circle cx="63.43" cy="43.22" r="10.25" stroke="none"/><circle cx="63.43" cy="43.22" r="6.88" fill="none" stroke="#1c1630" stroke-width="2.5"/><circle cx="63.43" cy="43.22" r="3.5" fill="#1c1630" stroke="none"/></g></g><g class="mb-gear l" fill="#6a4f8f" stroke="#6a4f8f"><g transform="rotate(7.133 113.08 26.00)"><circle cx="113.08" cy="26.00" r="16.00" fill="none" stroke-width="6" pathLength="12" stroke-dasharray="0.44 0.56"/><circle cx="113.08" cy="26.00" r="13.00" stroke="none"/><circle cx="113.08" cy="26.00" r="8.25" fill="none" stroke="#1c1630" stroke-width="2.5"/><circle cx="113.08" cy="26.00" r="3.5" fill="#1c1630" stroke="none"/></g></g></svg></span><span class="mb-fold" aria-hidden="true"></span>🤖 Selle kodulehe on teinud Suvemäe õpilased <a href="https://mintbot.ai/">mintbot.ai</a> AI-agentide abil.</p>
 </footer>
 </body>
 </html>
